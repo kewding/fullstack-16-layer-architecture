@@ -30,7 +30,7 @@ jobs:
         run: |
           docker build \
             --build-arg NODE_ENV=production \
-            -t myorg/frontend:latest \
+            -t nyric/frontend:latest \
             ./infra/docker/frontend
 
       # 5. Build backend image
@@ -38,12 +38,12 @@ jobs:
         run: |
           docker build \
             --build-arg GO_ENV=production \
-            -t myorg/backend:latest \
+            -t nyric/backend:latest \
             ./infra/docker/backend
 
       # 6. Push images to Docker Hub
       - name: Push frontend image
-        run: docker push myorg/frontend:latest
+        run: docker push nyric/frontend:latest
 
       - name: Push backend image
-        run: docker push myorg/backend:latest
+        run: docker push nyric/backend:latest
