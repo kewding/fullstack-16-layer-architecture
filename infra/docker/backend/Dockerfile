@@ -1,5 +1,5 @@
 # Deterministic Go runtime
-FROM golang:1.25.6-alpine
+FROM golang@sha256:bc2596742c7a01aa8c520a075515c7fee21024b05bfaa18bd674fe82c100a05d
 
 # Create working directory
 WORKDIR /app

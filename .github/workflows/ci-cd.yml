@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Docker Buildx (BuildKit)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 3. Log in to Docker Hub
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Build frontend image
+      - name: Build frontend
+        run: |
+          docker build \
+            --build-arg NODE_ENV=production \
+            -t myorg/frontend:latest \
+            ./infra/docker/frontend
+
+      # 5. Build backend image
+      - name: Build backend
+        run: |
+          docker build \
+            --build-arg GO_ENV=production \
+            -t myorg/backend:latest \
+            ./infra/docker/backend
+
+      # 6. Push images to Docker Hub
+      - name: Push frontend image
+        run: docker push myorg/frontend:latest
+
+      - name: Push backend image
+        run: docker push myorg/backend:latest
