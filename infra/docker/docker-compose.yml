@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: backend-runtime
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-runtime
