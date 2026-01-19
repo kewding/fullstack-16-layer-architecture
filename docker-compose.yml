@@ -1,12 +1,12 @@
 services:
   backend:
     build:
-      context: ./infra/docker/backend
+      context: ./docker/backend
       dockerfile: Dockerfile
     container_name: backend-runtime
 
   frontend:
     build:
-      context: ./infra/docker/frontend
+      context: ./docker/frontend
       dockerfile: Dockerfile
     container_name: frontend-runtime
