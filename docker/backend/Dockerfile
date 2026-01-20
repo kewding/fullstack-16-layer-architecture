@@ -40,7 +40,7 @@ RUN go mod download
 COPY . .
 
 # Build a statically linked binary for Linux
-RUN CGO_ENABLED=0 GOOS=linux go build -o server .
+RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd
 
 # Stage 2: Production runtime
 FROM alpine:3.19 AS runtime
