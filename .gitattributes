@@ -1,0 +1,21 @@
+# Apply LF endings to all text files
+* text=auto eol=lf
+
+# Explicit rules for frontend
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+
+# Explicit rules for backend (Go)
+*.go text eol=lf
+
+# Optional: shell scripts, configs
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.dockerfile text eol=lf
