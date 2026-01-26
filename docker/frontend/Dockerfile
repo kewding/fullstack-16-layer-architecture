@@ -1,25 +1,25 @@
-# Deterministic Node runtime
-FROM node@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc213
+# # Deterministic Node runtime
+# FROM node@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc213
 
-WORKDIR /app
+# WORKDIR /app
 
-# Explicit runtime environment
-ENV NODE_ENV=development
+# # Explicit runtime environment
+# ENV NODE_ENV=development
 
-CMD ["node", "--version"]
+# CMD ["node", "--version"]
 
 #ci-cd failing due to unavailable files within ./frontend, temprarily using old runtime
 
-# # Stage 1: Build
-# FROM node@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc213 AS builder
-# WORKDIR /app
-# COPY package*.json ./
-# RUN npm install --frozen-lockfile
-# COPY . .
-# RUN npm run build
+# Stage 1: Build
+FROM node@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc213 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --frozen-lockfile
+COPY . .
+RUN npm run build
 
-# # Stage 2: Production runtime
-# FROM nginx:1.27.1-alpine AS runtime
-# COPY --from=builder /app/build /usr/share/nginx/html
-# EXPOSE 80
-# CMD ["nginx", "-g", "daemon off;"]
+# Stage 2: Production runtime
+FROM nginx:1.27.1-alpine AS runtime
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
