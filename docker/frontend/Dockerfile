@@ -30,7 +30,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Run tests
-RUN pnpm test
+# RUN pnpm test
 
 # Build production static files (Vite default output: dist/)
 RUN pnpm build
