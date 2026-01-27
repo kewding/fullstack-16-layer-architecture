@@ -17,7 +17,8 @@ FROM node@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc21
 WORKDIR /app
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@latest --activate
 
 # Copy only package files first for better caching
 COPY package.json pnpm-lock.yaml ./
