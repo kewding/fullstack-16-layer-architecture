@@ -63,7 +63,7 @@ jobs:
 
       - name: Run frontend tests
         run: |
-          docker run --rm nyric/frontend:latest npm test
+          docker run --rm nyric/frontend:latest pnpm test
 
       # 7. Push images to Docker Hub
       - name: Push frontend
