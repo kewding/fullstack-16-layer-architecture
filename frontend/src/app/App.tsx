@@ -1,13 +1,11 @@
-// // src/app/App.tsx
-// import { Router } from "./router"
+// src/app/App.tsx
+import { Router } from "./router"
 // import { Providers } from "./providers"
 
-// export function App() {
-//   return (
-//     <Providers>
-//       <Router />
-//     </Providers>
-//   )
-// }
-
-//need to fix providers first
+export function App() {
+  return (
+    // <Providers>
+      <Router />
+    // </Providers>
+  )
+}
