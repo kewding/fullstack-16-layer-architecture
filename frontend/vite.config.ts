@@ -21,7 +21,7 @@ export default defineConfig({
   test: {
     globals: true,           // Allows using describe/it/test without importing
     environment: 'jsdom',   // Simulates browser for React components
-    setupFiles: './src/setupTests.ts', // Global test setup (e.g., jest-dom)
+    setupFiles: './src/test/setupTests.ts', // Global test setup (e.g., jest-dom)
     include: ['src/**/*.{test,spec}.{ts,tsx}'], // Only test files
     coverage: {
       provider: 'v8',       // Fast and standard coverage tool
