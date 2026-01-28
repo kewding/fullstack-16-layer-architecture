@@ -28,3 +28,11 @@ dist-ssr
 .env.*
 .vite/
 coverage/
+
+# Dependencies
+*.yaml
+*.json
+*.config.*
+*.node.*
+*.node
+*.config
