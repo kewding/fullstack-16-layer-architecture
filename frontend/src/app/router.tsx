@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import { AppLayout } from "./layout"
 import { RequireAuth } from "./routes/RequireAuth"
 
@@ -12,8 +12,14 @@ const allRoutes = [
     path:"/", 
     element: <AppLayout />, 
     children: [
+      {
+        index: true,
+        element: <Navigate to="/login" replace />,
+      },
+
       //public page accessible to anyone
       ...authRoutes, 
+
       {
         //protected routes, needs authentication through element before proceeding
         element: <RequireAuth />, 
