@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import { AppLayout } from "./layout"
+import { RequireAuth } from "./routes/RequireAuth"
 
 import { authRoutes } from "@/features/auth/routes"
 import { userRoutes } from "@/features/user/routes"
@@ -7,9 +8,22 @@ import { adminRoutes } from "@/features/admin/routes"
 
 const allRoutes = [
   {
+    //defining root layout
     path:"/", 
     element: <AppLayout />, 
-    children: [...authRoutes, ...userRoutes, ...adminRoutes],
+    children: [
+      //public page accessible to anyone
+      ...authRoutes, 
+      {
+        //protected routes, needs authentication through element before proceeding
+        element: <RequireAuth />, 
+        children: [
+          ...userRoutes,
+          ...adminRoutes,
+
+        ]
+      }
+    ]
   }
 ]
 
