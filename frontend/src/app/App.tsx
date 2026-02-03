@@ -1,11 +1,10 @@
-// src/app/App.tsx
 import { Router } from "./router"
-// import { Providers } from "./providers"
+import { Providers } from "./providers/Providers" 
 
 export function App() {
   return (
-    // <Providers>
+    <Providers>
       <Router />
-    // </Providers>
+    </Providers>
   )
 }
