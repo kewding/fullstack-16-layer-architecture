@@ -1,6 +1,6 @@
 import React from "react";
 
-export const UserSettingPage = () => {
+export const UserSettingPage: React.FC = () => {
     return (
         <div>
             <p>
