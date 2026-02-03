@@ -13,6 +13,7 @@ const allRoutes = [
     element: <AppLayout />, 
     children: [
       {
+        //this populates the root layout as initial page
         index: true,
         element: <Navigate to="/login" replace />,
       },

@@ -1,19 +1,16 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/providers/AuthProvider";
 
+//guards routes in this sub-tree by requiring authentication
 export function RequireAuth() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
     return (
-    <Navigate 
-    to="/login" 
-    replace
-    state = {{from: location.pathname}} />
-  );
+      < Navigate to="/login" replace state = {{from: location.pathname}} />
+    );
   }
-  
 
   return <Outlet />;
 }
