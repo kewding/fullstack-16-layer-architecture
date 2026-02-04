@@ -93,12 +93,16 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     services:
-      oracle-db:
-        image: oracleinanutshell/oracle-xe-11g
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
         ports:
-          - 1521:1521
+          - 5432:5432
         options: >-
-          --health-cmd="exit 0"
+          --health-cmd="pg_isready -U test -d testdb"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
