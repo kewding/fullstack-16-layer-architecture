@@ -1,3 +1,69 @@
+name: Full CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 3. Login to Docker Hub
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Build frontend image
+      - name: Build frontend image
+        run: |
+          docker build \
+            --progress=plain \
+            --build-arg NODE_ENV=production \
+            -t nyric/frontend:latest \
+            -f docker/frontend/Dockerfile \
+            ./frontend
+
+      # 5. Run frontend tests (builder stage)
+      - name: Run frontend tests
+        run: |
+          docker build \
+            --target builder \
+            --progress=plain \
+            -t nyric/frontend-test:latest \
+            -f docker/frontend/Dockerfile \
+            ./frontend
+          docker run --rm nyric/frontend-test:latest pnpm test
+
+      # 6. Build backend image
+      - name: Build backend image
+        run: |
+          docker build \
+            --progress=plain \
+            --build-arg GO_ENV=production \
+            -t nyric/backend:latest \
+            -f docker/backend/Dockerfile \
+            ./backend
+
+      # 7. Push images (only if all previous steps succeed)
+      - name: Push frontend image
+        run: docker push nyric/frontend:latest
+
+      - name: Push backend image
+        run: docker push nyric/backend:latest
+
 # name: Full CI/CD Pipeline
 
 # on:
@@ -10,18 +76,22 @@
 #   build-and-deploy:
 #     runs-on: ubuntu-latest
 #     services:
-#       oracle-db:
-#         image: oracleinanutshell/oracle-xe-11g
+#       postgres:
+#         image: postgres:16.2
+#         env:
+#           POSTGRES_USER: test
+#           POSTGRES_PASSWORD: test
+#           POSTGRES_DB: testdb
 #         ports:
-#           - 1521:1521
+#           - 5432:5432
 #         options: >-
-#           --health-cmd="exit 0"
+#           --health-cmd="pg_isready -U test -d testdb"
 #           --health-interval=10s
 #           --health-timeout=5s
 #           --health-retries=5
 
 #     steps:
-#       # 1. Checkout code
+#       # 1. Checkout repository
 #       - name: Checkout repository
 #         uses: actions/checkout@v3
 
@@ -36,7 +106,7 @@
 #           username: ${{ secrets.DOCKER_USERNAME }}
 #           password: ${{ secrets.DOCKER_PASSWORD }}
 
-#       # 4. Build frontend image (multi-stage)
+#       # 4. Build frontend image (multi-stage with tests)
 #       - name: Build frontend
 #         run: |
 #           docker build \
@@ -56,23 +126,27 @@
 #             ./backend \
 #             -f docker/backend/Dockerfile
 
-#       # 6. Run frontend/backend tests (optional)
-#       - name: Run backend tests
-#         run: |
-#           docker run --rm nyric/backend:latest ./server --test
+#       # 6. Run backend tests (inside backend image)
 
+#       # 7. Run frontend tests (inside builder stage)
 #       - name: Run frontend tests
 #         run: |
-#           docker run --rm nyric/frontend:latest pnpm test
+#           docker build \
+#             --target builder \
+#             --progress=plain \
+#             -t nyric/frontend-test:latest \
+#             ./frontend \
+#             -f docker/frontend/Dockerfile
+#           docker run --rm nyric/frontend-test:latest pnpm test
 
-#       # 7. Push images to Docker Hub
+#       # 8. Push images to Docker Hub (only if tests pass)
 #       - name: Push frontend
 #         run: docker push nyric/frontend:latest
 
 #       - name: Push backend
 #         run: docker push nyric/backend:latest
 
-#       # 8. Optional: Deploy to Kubernetes
+#       # 9. Optional: Deploy to Kubernetes
 #       # - name: Deploy to Kubernetes
 #       #   uses: azure/k8s-deploy@v3
 #       #   with:
@@ -80,97 +154,3 @@
 #       #     images: |
 #       #       nyric/frontend:latest
 #       #       nyric/backend:latest
-
-name: Full CI/CD Pipeline
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16.2
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U test -d testdb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      # 1. Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # 2. Set up Docker Buildx (BuildKit)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      # 3. Login to Docker Hub
-      - name: Docker login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # 4. Build frontend image (multi-stage with tests)
-      - name: Build frontend
-        run: |
-          docker build \
-            --progress=plain \
-            --build-arg NODE_ENV=production \
-            -t nyric/frontend:latest \
-            ./frontend \
-            -f docker/frontend/Dockerfile
-
-      # 5. Build backend image (multi-stage)
-      - name: Build backend
-        run: |
-          docker build \
-            --progress=plain \
-            --build-arg GO_ENV=production \
-            -t nyric/backend:latest \
-            ./backend \
-            -f docker/backend/Dockerfile
-
-      # 6. Run backend tests (inside backend image)
-      - name: Run backend tests
-        run: |
-          docker run --rm nyric/backend:latest ./server --test
-
-      # 7. Run frontend tests (inside builder stage)
-      - name: Run frontend tests
-        run: |
-          docker build \
-            --target builder \
-            --progress=plain \
-            -t nyric/frontend-test:latest \
-            ./frontend \
-            -f docker/frontend/Dockerfile
-          docker run --rm nyric/frontend-test:latest pnpm test
-
-      # 8. Push images to Docker Hub (only if tests pass)
-      - name: Push frontend
-        run: docker push nyric/frontend:latest
-
-      - name: Push backend
-        run: docker push nyric/backend:latest
-
-      # 9. Optional: Deploy to Kubernetes
-      # - name: Deploy to Kubernetes
-      #   uses: azure/k8s-deploy@v3
-      #   with:
-      #     manifests: infra/k8s/*.yaml
-      #     images: |
-      #       nyric/frontend:latest
-      #       nyric/backend:latest
