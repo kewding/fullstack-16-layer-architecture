@@ -9,7 +9,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewPostgres(cfg config.Config) (*sql.DB, error) {
+// typedefinition
+type DB struct {
+	sql *sql.DB
+}
+
+func NewPostgres(cfg config.Config) (*DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		cfg.DBHost,
@@ -20,20 +25,24 @@ func NewPostgres(cfg config.Config) (*sql.DB, error) {
 		cfg.DBSSLMode,
 	)
 
-	db, err := sql.Open("postgres", dsn)
+	sqlDB, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Connection pool tuning (important)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	// Verify connection early
-	if err := db.Ping(); err != nil {
+	if err := sqlDB.Ping(); err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	return &DB{sql: sqlDB}, nil
+}
+
+func (db *DB) Close() error {
+	return db.sql.Close()
 }
