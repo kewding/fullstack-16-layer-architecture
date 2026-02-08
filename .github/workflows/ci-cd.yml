@@ -7,8 +7,23 @@ on:
     branches: [main]
 
 jobs:
-  build-and-push:
+  build-test-and-push:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       # 1. Checkout repository
@@ -57,7 +72,33 @@ jobs:
             -f docker/backend/Dockerfile \
             ./backend
 
-      # 7. Push images (only if all previous steps succeed)
+      # 7. Run backend + assert DB health
+      - name: Backend DB health check
+        run: |
+          docker run -d \
+            --name backend-test \
+            -p 8080:8080 \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=test \
+            -e DB_PASSWORD=test \
+            -e DB_NAME=testdb \
+            nyric/backend:latest
+
+          echo "Waiting for backend to be ready..."
+          for i in {1..10}; do
+            if curl -sf http://localhost:8080/health/db; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Backend failed health check"
+          docker logs backend-test
+          exit 1
+
+      # 8. Push images (only if all previous steps succeed)
       - name: Push frontend image
         run: docker push nyric/frontend:latest
 
