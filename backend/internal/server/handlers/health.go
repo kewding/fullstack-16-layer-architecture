@@ -7,7 +7,7 @@ import (
 )
 
 type HealthHandler struct {
-	Checker *health.Checker
+	Checker *health.Checker //VariableName *path_reference.struct
 }
 
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
