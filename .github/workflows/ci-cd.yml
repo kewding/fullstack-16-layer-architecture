@@ -7,8 +7,23 @@ on:
     branches: [main]
 
 jobs:
-  build-and-push:
+  build-test-and-push:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       # 1. Checkout repository
@@ -57,7 +72,64 @@ jobs:
             -f docker/backend/Dockerfile \
             ./backend
 
-      # 7. Push images (only if all previous steps succeed)
+      # container-level integration test
+      # place holder docker database container, entirely for testing
+      - name: Create CI network
+        run: docker network create ci-test-net
+
+      - name: Start Postgres for backend tests
+        run: |
+          docker run -d \
+            --name postgres-test \
+            --network ci-test-net \
+            -e POSTGRES_USER=test \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=testdb \
+            postgres:16.2
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..10}; do
+            if docker exec postgres-test pg_isready -U test -d testdb; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs postgres-test
+          exit 1
+
+      # 7. Run backend + assert DB health
+      - name: Backend DB health check
+        run: |
+          docker run -d \
+           --name backend-test \
+           --network ci-test-net \
+            -e DB_HOST=postgres-test \
+           -e DB_PORT=5432 \
+            -e DB_USER=test \
+            -e DB_PASSWORD=test \
+           -e DB_NAME=testdb \
+            nyric/backend:latest
+
+          echo "Waiting for backend DB health..."
+          for i in {1..10}; do
+            if curl -sf http://$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' backend-test):8080/health/db; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs backend-test
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f backend-test postgres-test || true
+          docker network rm ci-test-net || true
+
+      # 8. Push images (only if all previous steps succeed)
       - name: Push frontend image
         run: docker push nyric/frontend:latest
 
