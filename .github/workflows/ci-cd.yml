@@ -10,20 +10,22 @@ jobs:
   build-test-and-push:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16.2
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U test -d testdb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+    # Irrelevant this usess github actions, not a container to container connection.
+
+    # services:
+    #   postgres:
+    #     image: postgres:16.2
+    #     env:
+    #       POSTGRES_USER: test
+    #       POSTGRES_PASSWORD: test
+    #       POSTGRES_DB: testdb
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd="pg_isready -U test -d testdb"
+    #       --health-interval=10s
+    #       --health-timeout=5s
+    #       --health-retries=5
 
     steps:
       # 1. Checkout repository
