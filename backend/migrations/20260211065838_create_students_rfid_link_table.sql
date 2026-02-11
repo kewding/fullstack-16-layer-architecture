@@ -1,25 +1,17 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE admins (
+CREATE TABLE students_rfid (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    first_name TEXT NOT NULL,
-    middle_name TEXT,
-    last_name TEXT NOT NULL,
-
-    birth_date DATE NOT NULL,
-    contact_no TEXT,
-    
-    -- fk
-    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL UNIQUE REFERENCES students(id) ON DELETE CASCADE,
+    rfid_tag TEXT NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+)
 
--- updated trigger
-CREATE TRIGGER update_admins_changetimestamp
-BEFORE UPDATE ON admins
+CREATE TRIGGER update_students_rfid_changetimestamp
+BEFORE UPDATE ON students_rfid
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
