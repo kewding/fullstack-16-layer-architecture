@@ -9,7 +9,7 @@ CREATE TABLE students (
     last_name TEXT NOT NULL,
 
     birth_date DATE NOT NULL,
-    mobile_number TEXT,
+    contact_no TEXT,
 
     -- for data utility/analytics
     -- this could add another table specifically for normalization
