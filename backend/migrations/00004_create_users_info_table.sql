@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE admins (
+CREATE TABLE users_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     first_name TEXT NOT NULL,
@@ -18,8 +18,8 @@ CREATE TABLE admins (
 );
 
 -- updated trigger
-CREATE TRIGGER update_admins_changetimestamp
-BEFORE UPDATE ON admins
+CREATE TRIGGER update_users_info_changetimestamp
+BEFORE UPDATE ON users_info
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
