@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import {z} from "zod";
+import { z } from "zod";
 import { useState } from "react";
 
 
@@ -22,6 +22,14 @@ const registerSchema = z.object({
 export const LoginPage: React.FC = () => {
     const location = useLocation();
     const from = location.state?.from;
+
+    {
+      from && (
+        <p style = {{color: "red"}}>
+          You need to have the necessary role to access <strong>{from}</strong>
+        </p>
+      )
+    }
 
     //
     const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
