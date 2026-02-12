@@ -17,6 +17,8 @@ CREATE TABLE users_info (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_users_name_lookup ON users_info(last_name, first_name);
+
 -- updated trigger
 CREATE TRIGGER update_users_info_changetimestamp
 BEFORE UPDATE ON users_info
