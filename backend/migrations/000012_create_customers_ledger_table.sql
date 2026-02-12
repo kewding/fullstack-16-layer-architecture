@@ -11,7 +11,7 @@ CREATE TABLE customers_ledger (
 
     --
     reference_id UUID NOT NULL,
-    reference_type transaction_type TYPE NOT NULL,
+    reference_type transaction_type NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now() 
 );
