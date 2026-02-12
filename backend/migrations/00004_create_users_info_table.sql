@@ -1,8 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE students (
+CREATE TABLE users_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id_number TEXT NOT NULL UNIQUE,
 
     first_name TEXT NOT NULL,
     middle_name TEXT,
@@ -10,11 +9,6 @@ CREATE TABLE students (
 
     birth_date DATE NOT NULL,
     contact_no TEXT,
-
-    -- for data utility/analytics
-    -- this could add another table specifically for normalization
-    -- department TEXT NOT NULL, 
-    -- program TEXT NOT NULL,
     
     -- fk
     user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -23,9 +17,11 @@ CREATE TABLE students (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_users_name_lookup ON users_info(last_name, first_name);
+
 -- updated trigger
-CREATE TRIGGER update_students_changetimestamp
-BEFORE UPDATE ON students
+CREATE TRIGGER update_users_info_changetimestamp
+BEFORE UPDATE ON users_info
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 

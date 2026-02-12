@@ -11,7 +11,8 @@ CREATE TABLE user_roles (
 
 INSERT INTO user_roles (slug, display_name) VALUES 
 ('admin', 'Administrator'),
-('student', 'Student');
+('customer', 'Customer'),
+('vendor', 'Stall Owner');
 
 -- trigger function for update_at
 CREATE TRIGGER update_user_roles_changetimestamp

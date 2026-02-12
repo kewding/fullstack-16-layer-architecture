@@ -15,6 +15,8 @@ CREATE TABLE users (
     deleted_at TIMESTAMPTZ
 );
 
+CREATE INDEX idx_active_users ON users(id) WHERE deleted_at IS NULL;
+
 -- updated trigger
 CREATE TRIGGER update_users_changetimestamp
 BEFORE UPDATE ON users
