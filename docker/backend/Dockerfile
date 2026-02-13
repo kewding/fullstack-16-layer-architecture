@@ -35,16 +35,15 @@ WORKDIR /app
 
 # Copy dependency files first for better caching
 COPY go.mod go.sum ./
-# COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY . .
 
 # Build a statically linked binary for Linux
-RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/api
 
 # Stage 2: Production runtime
-FROM alpine:3.19 AS runtime
+FROM alpine:3.19
 WORKDIR /app
 
 # Only copy the final executable

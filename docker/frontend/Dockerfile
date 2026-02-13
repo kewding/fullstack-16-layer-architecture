@@ -26,7 +26,7 @@ COPY package.json pnpm-lock.yaml ./
 
 
 # Install dependencies using pnpm
-RUN pnpm install --frozen-lockfile 
+RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy the rest of the application source code
 COPY . .
@@ -35,7 +35,7 @@ COPY . .
 # RUN pnpm test
 
 # Build production static files (Vite default output: dist/)
-RUN pnpm build
+RUN pnpm build 
 
 # Stage 2: Production runtime
 FROM nginx:1.27.1-alpine AS runtime
