@@ -21,13 +21,13 @@ RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
 
 # Copy only package files first for better caching
-COPY package.json pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
 
 # Install dependencies using pnpm
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile 
 
 # Copy the rest of the application source code
-COPY . .
+COPY frontend/ .
 
 # Run tests
 # RUN pnpm test
