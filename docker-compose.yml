@@ -20,8 +20,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
     container_name: backend-runtime
     ports:
       - "${APP_PORT}:${APP_PORT}"
@@ -38,8 +38,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
     container_name: frontend-runtime
     ports:
       - "3000:80"

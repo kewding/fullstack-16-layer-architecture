@@ -1,0 +1,67 @@
+# ===============================
+# Binaries / Build Artifacts
+# ===============================
+bin/
+tmp/
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+
+# Go build output (common names)
+server
+app
+
+# ===============================
+# Go test / coverage
+# ===============================
+coverage.out
+*.test
+
+# ===============================
+# Dependency directories (rare in Go, but safe)
+# ===============================
+vendor/
+
+# ===============================
+# Environment files (NEVER commit secrets)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Logs
+# ===============================
+*.log
+logs/
+
+# ===============================
+# Database files (if ever local SQLite etc.)
+# ===============================
+*.db
+*.sqlite
+*.sqlite3
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Editors / IDEs
+# ===============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===============================
+# Misc
+# ===============================
+*.local
