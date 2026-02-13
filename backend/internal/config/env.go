@@ -3,6 +3,7 @@ package config
 import "os"
 
 type Config struct {
+	Port       string
 	DBHost     string
 	DBPort     string
 	DBUser     string
@@ -11,8 +12,9 @@ type Config struct {
 	DBSSLMode  string
 }
 
-func Load() Config {
-	return Config{
+func LoadEnv() *Config {
+	return &Config{
+		Port:       getEnv("APP_PORT", "8080"),
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "test"),

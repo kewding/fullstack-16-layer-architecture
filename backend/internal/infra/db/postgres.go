@@ -1,4 +1,4 @@
-package database
+package db
 
 import (
 	"database/sql"
@@ -10,11 +10,12 @@ import (
 )
 
 // typedefinition
-type DB struct {
-	sql *sql.DB
+type PostgresDB struct {
+	Connection *sql.DB
 }
 
-func NewPostgres(cfg config.Config) (*DB, error) {
+// func Function_Name(var package.type) ()
+func Connect(cfg config.Config) (*PostgresDB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		cfg.DBHost,
@@ -30,19 +31,20 @@ func NewPostgres(cfg config.Config) (*DB, error) {
 		return nil, err
 	}
 
-	// Connection pool tuning (important)
+	// connection pool tuning (important)
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
-	// Verify connection early
+	// ping verifies connection early
 	if err := sqlDB.Ping(); err != nil {
 		return nil, err
 	}
 
-	return &DB{sql: sqlDB}, nil
+	return &PostgresDB{Connection: sqlDB}, nil
 }
 
-func (db *DB) Close() error {
-	return db.sql.Close()
+func (database *PostgresDB) Close() error {
+	return database.Connection.Close()
 }

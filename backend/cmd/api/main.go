@@ -3,24 +3,37 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/kewding/backend/internal/adapter/controller"
 	"github.com/kewding/backend/internal/config"
-	"github.com/kewding/backend/internal/database"
-	"github.com/kewding/backend/internal/server"
+	"github.com/kewding/backend/internal/infra/db"
 )
 
 func main() {
-	cfg := config.Load()
+	//load config
+	cfg := config.LoadEnv()
 
-	db, err := database.NewPostgres(cfg)
+	dbNode, err := db.Connect(*cfg)
 	if err != nil {
-		log.Fatalf("database connection failed: %v", err)
+		log.Fatalf("Could not connect to database: %v", err)
+	}
+	defer dbNode.Close()
+
+	//pass dbNode to router
+	appRouter := controller.NewRouter(dbNode)
+
+	//configure http server
+	server := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      appRouter,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
-	defer db.Close()
-
-	handler := server.NewServer(db)
-
-	log.Println("API listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	//start
+	log.Printf("Server starting on port %s...", cfg.Port)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server failed: %v", err)
+	}
 }
