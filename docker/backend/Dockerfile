@@ -34,10 +34,11 @@ FROM golang@sha256:bc2596742c7a01aa8c520a075515c7fee21024b05bfaa18bd674fe82c100a
 WORKDIR /app
 
 # Copy dependency files first for better caching
-COPY backend/go.mod backend/go.sum ./
+COPY go.mod go.sum ./
+# COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-COPY backend/ .
+COPY . .
 
 # Build a statically linked binary for Linux
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/api/main.go
