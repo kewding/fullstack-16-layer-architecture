@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { ViteLogo } from '@/shared/assets';
 
 export const LoginPage: React.FC = () => {
   const location = useLocation();
@@ -14,65 +15,77 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg z-10">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Welcome Back</h2>
-          <p className="mt-2 text-sm text-gray-600">Please sign in to your account</p>
-        </div>
+    //adapts to device screen
+    <div className="w-screen h-screen bg-neutral-900 flex ">
+      {/* gives max space according to screen, padding (p-3) is for mobile ux*/}
 
-        <form className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+      {/* content */}
+
+      {/* jjust disable comment for checking borders
+      <main className="flex flex-col h-full w-full p-10 gap-8 items-center justify-stretch overflow-y-auto border-4 border-green-700">*/}
+
+      <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-stretch overflow-y-auto">
+        <header className="flex flex-col gap-1 items-center">
+          <img src={ViteLogo} alt="Vite Logo" className="w-7 h-7" />
+          <h1 className="font-bold text-white">Login Page</h1>
+        </header>
+
+        {/* login section */}
+
+        {/* just disable comment for checking borders
+        <section className="w-full max-w-[340px] flex flex-col gap-4 items-center font-medium text-white border-4 border-red-700"> */}
+
+        <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-white">
+          {/* login form */}
+          <form action="post" className="flex flex-col w-full gap-4">
+            <div className="flex flex-col w-full gap-1.5">
+              <label htmlFor="email" className="text-sm">
+                Email
+              </label>
               <input
-                type="email"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="you@example.com"
+                id="email"
+                type="text"
+                className="h-12 bg-neutral-900 border border-neutral-500 rounded p-3 focus:border-white focus:outline-none"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="••••••••"
-              />
-            </div>
+
+            <button type="submit" className="bg-green-500 rounded-full text-black font-bold h-13">
+              Continue
+            </button>
+          </form>
+
+          <p className="font-normal">or</p>
+
+          {/* login using other things section */}
+          <div className="flex flex-col gap-2 w-full">
+            <button className="border border-neutral-500 rounded-full h-13">Google</button>
+            <button className="border border-neutral-500 rounded-full h-13">Facebook</button>
           </div>
+        </section>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label className="ml-2 block text-sm text-gray-900">Remember me</label>
-            </div>
-            <div className="text-sm">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Forgot password?
-              </a>
-            </div>
-          </div>
+        {/* register section */}
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
-            >
-              Sign in
+        {/* just disable comment for checking borders
+        <section className="w-full max-w-[340px] flex flex-col gap-4 items-center border-4 border-red-700"> */}
+
+        <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
+          <div className="flex flex-col gap-1 w-full items-center">
+            <p className="text-neutral-300">Don't have account?</p>
+            <button className="w-full bg-neutral-900 rounded-full font-bold h-13 focus:ring-0">
+              Register
             </button>
           </div>
-        </form>
+        </section>
 
-        <p className="text-center text-sm text-gray-500">
-          Don't have an account?{' '}
-          <a href="#" className="font-semibold text-indigo-600 hover:underline">
-            Sign up
-          </a>
-        </p>
-      </div>
+        {/* eula things */}
+        <footer className="w-full max-w-[330px] text-xs text-center">
+          This site is protected by your MOM and our self imposed
+          <a href=""> EULA </a>
+          and
+          <a href=""> Terms of Service </a>
+          apply
+        </footer>
+      </main>
     </div>
   );
 };
