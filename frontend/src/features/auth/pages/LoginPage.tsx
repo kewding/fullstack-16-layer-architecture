@@ -21,20 +21,18 @@ export const LoginPage: React.FC = () => {
 
       {/* content */}
 
-      {/* jjust disable comment for checking borders
-      <main className="flex flex-col h-full w-full p-10 gap-8 items-center justify-stretch overflow-y-auto border-4 border-green-700">*/}
-
-      <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-stretch overflow-y-auto">
+      {/* jjust disable comment for checking borders */}
+      {/* <main className="flex flex-col h-full w-full p-10 gap-8 items-center justify-stretch overflow-y-auto border-4 border-green-700"> */}
+      <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-between overflow-y-auto">
         <header className="flex flex-col gap-1 items-center">
           <img src={ViteLogo} alt="Vite Logo" className="w-7 h-7" />
-          <h1 className="font-bold text-white">Login Page</h1>
+          <h1 className="font-bold text-white text-center">Login Page</h1>
         </header>
 
         {/* login section */}
 
-        {/* just disable comment for checking borders
-        <section className="w-full max-w-[340px] flex flex-col gap-4 items-center font-medium text-white border-4 border-red-700"> */}
-
+        {/* just disable comment for checking borders */}
+        {/* <section className="w-full max-w-[340px] flex flex-col gap-4 items-center font-medium text-white border-4 border-red-700"> */}
         <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-white">
           {/* login form */}
           <form action="post" className="flex flex-col w-full gap-4">
