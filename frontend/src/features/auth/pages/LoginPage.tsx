@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { ViteLogo } from '@/shared/assets';
+import { Link } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
   const location = useLocation();
@@ -69,9 +70,11 @@ export const LoginPage: React.FC = () => {
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
             <p className="text-neutral-300">Don't have account?</p>
-            <button className="w-full bg-neutral-900 rounded-full font-bold h-13 focus:ring-0">
-              Register
-            </button>
+            <Link to="/register" className="w-full">
+              <button className="w-full bg-neutral-900 rounded-full font-bold h-13 focus:ring-0">
+                Register
+              </button>
+            </Link>
           </div>
         </section>
 
