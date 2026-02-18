@@ -1,5 +1,5 @@
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
+import { LoginPage } from './login/pages/LoginPage';
+import { RegisterPage } from './register/pages/RegisterPage';
 
 export const authRoutes = [
   { path: 'login', element: <LoginPage /> },
