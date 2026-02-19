@@ -51,11 +51,10 @@ export const RegisterPage: React.FC = () => {
   const StepComponent = STEP_MAP[currentStepConfig.id];
 
   const {
-    getValues,
     formState: { isValid, errors /*isValidating*/ },
   } = form;
 
-  const watchedFields = form.watch(currentStepFields as any);
+  form.watch(currentStepFields as any);
 
   const password = form.watch('password');
   const confirmPassword = form.watch('confirmPassword');
