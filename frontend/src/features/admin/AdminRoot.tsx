@@ -1,9 +1,17 @@
-import React from "react";
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Outlet } from 'react-router-dom';
+import { AdminSidebar } from './admin-components/Sidebar';
 
-export const AdminSettingsPage: React.FC = () => {
+export function AdminRootPage() {
   return (
-    <div>
-      <h1>AdminDBpage</h1>
+    <div className='px-6 py-4'>
+      <SidebarProvider>
+        <AdminSidebar />
+        <main>
+          <SidebarTrigger />
+          <Outlet />
+        </main>
+      </SidebarProvider>
     </div>
   );
-};
+}
