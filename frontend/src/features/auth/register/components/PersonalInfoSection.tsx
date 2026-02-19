@@ -1,6 +1,6 @@
 import React from 'react';
 import { type UseFormReturn } from 'react-hook-form';
-import type { RegisterInput } from '../schemas/register.schema';
+import { type RegisterInput } from '../schemas/register.schema';
 
 interface SectionProps {
   form: UseFormReturn<RegisterInput>;
@@ -9,8 +9,21 @@ interface SectionProps {
 export const RegisterSectionPersonal: React.FC<SectionProps> = ({ form }) => {
   const {
     register,
+    watch,
+    setValue,
     formState: { errors },
   } = form;
+
+  const middleNameValue = watch('middleName');
+  const isNA = middleNameValue === 'N/A';
+
+  const handleCheckboxChange = (noMiddleNameCheckBox: React.ChangeEvent<HTMLInputElement>) => {
+    if (noMiddleNameCheckBox.target.checked) {
+      setValue('middleName', 'N/A', { shouldValidate: true });
+    } else {
+      setValue('middleName', '');
+    }
+  };
 
   return (
     <div className="flex flex-col w-full gap-4">
@@ -35,17 +48,27 @@ export const RegisterSectionPersonal: React.FC<SectionProps> = ({ form }) => {
 
       {/* Middle Name */}
       <div className="flex flex-col w-full gap-1.5">
-        <label htmlFor="middleName" className="text-sm ">
-          Middle Name
-        </label>
+        <div className="flex justify-between items-center">
+          <label className="text-sm">Middle Name</label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-[11px] text-neutral-500">I don't have one</span>
+            <input
+              type="checkbox"
+              checked={isNA}
+              onChange={handleCheckboxChange}
+              className="w-4 h-4 rounded border-neutral-500 bg-neutral-900 text-blue-600"
+            />
+          </label>
+        </div>
+
         <input
-          id="middleName"
-          type="text"
-          placeholder="Middle Name"
           {...register('middleName')}
-          className={`h-12 p-3 rounded border focus:outline-none ${
+          readOnly={isNA}
+          placeholder={isNA ? 'N/A' : 'Middle Name'}
+          className={`h-12 p-3 rounded border focus:outline-none transition-all ${
             errors.middleName ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } bg-neutral-900 text-white`}
+          } ${isNA ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' : 'bg-neutral-900 text-white'}`}
         />
         {errors.middleName && (
           <span className="text-red-500 text-xs">{errors.middleName.message}</span>
@@ -77,7 +100,7 @@ export const RegisterSectionPersonal: React.FC<SectionProps> = ({ form }) => {
         <input
           id="birthDate"
           type="date"
-          {...register('birthDate', { valueAsDate: true})}
+          {...register('birthDate', { valueAsDate: true })}
           className={`h-12 p-3 rounded border focus:outline-none ${
             errors.birthDate ? 'border-red-500' : 'border-neutral-500 focus:border-white'
           } bg-neutral-900 text-white`}

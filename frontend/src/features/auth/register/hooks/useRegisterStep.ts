@@ -3,6 +3,7 @@ import type { FieldPath, UseFormReturn } from 'react-hook-form';
 
 export function useRegisterStep<TFieldValues extends Record<string, any>>(
   form: UseFormReturn<TFieldValues>,
+  
   //enables finding "nested keys"
   stepFields: FieldPath<TFieldValues>[][],
 ) {
