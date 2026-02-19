@@ -1,6 +1,6 @@
 import React from 'react';
 import { type UseFormReturn } from 'react-hook-form';
-import type { RegisterInput } from '../schemas/register.schema';
+import { type RegisterInput } from '../schemas/register.schema';
 
 interface SectionProps {
   form: UseFormReturn<RegisterInput>;

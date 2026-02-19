@@ -1,20 +1,32 @@
+// dependencies
 import { ReactLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+
+// components
 import { RegisterSectionContact } from '../components/ContactSection';
 import { RegisterSectionID } from '../components/IDSection';
+import { RegisterSectionPassword } from '../components/PasswordSection';
 import { RegisterSectionPersonal } from '../components/PersonalInfoSection';
+
+// ui functions
 import { REGISTER_STEPS } from '../constants/registerSteps';
 import { useRegisterStep } from '../hooks/useRegisterStep';
 import { registerSchema, type RegisterInput } from '../schemas/register.schema';
 
+const STEP_MAP: Record<string, React.FC<{ form: UseFormReturn<RegisterInput> }>> = {
+  'id-section': RegisterSectionID,
+  contact: RegisterSectionContact,
+  personal: RegisterSectionPersonal,
+  security: RegisterSectionPassword,
+};
 
 export const RegisterPage: React.FC = () => {
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    mode: 'onChange',
+    mode: 'all',
     defaultValues: {
       institutionalID: '',
       email: '',
@@ -23,52 +35,59 @@ export const RegisterPage: React.FC = () => {
       middleName: '',
       lastName: '',
       birthDate: undefined,
+      password: '',
+      confirmPassword: '',
     },
   });
 
   const { currentStepIndex, nextStep, previousStep, isFirstStep, isLastStep } = useRegisterStep(
     form,
-    REGISTER_STEPS,
+    REGISTER_STEPS.map((sections) => sections.fields),
   );
 
-  const renderStep = () => {
-    switch (currentStepIndex) {
-      case 0:
-        return <RegisterSectionID form={form} />;
-      case 1:
-        return <RegisterSectionContact form={form} />;
-      case 2:
-        return <RegisterSectionPersonal form={form} />;
-      default:
-        return null;
-    }
-  };
+  const currentStepConfig = REGISTER_STEPS[currentStepIndex];
+  const currentStepFields = currentStepConfig.fields;
 
-  const currentStepFields = (() => {
-    switch (currentStepIndex) {
-      case 0:
-        return ['institutionalID'] as const;
-      case 1:
-        return ['email', 'contactNumber'] as const;
-      case 2:
-        return ['firstName', 'middleName', 'lastName', 'birthDate'] as const;
-      default:
-        return [];
-    }
-  })();
+  const StepComponent = STEP_MAP[currentStepConfig.id];
 
-  const isStepValid = currentStepFields.every(
-    (field) => !form.formState.errors[field] && form.getValues(field),
-  );
+  const {
+    formState: { isValid, errors /*isValidating*/ },
+  } = form;
+
+  form.watch(currentStepFields as any);
+
+  const password = form.watch('password');
+  const confirmPassword = form.watch('confirmPassword');
+
+  // const isStepValid =
+  //   currentStepFields.every((field) => {
+  //     const fieldName = field as keyof RegisterInput;
+  //     // Ensure the field has a value AND there is no error for it
+  //     return !!getValues(fieldName) && !errors[fieldName];
+  //   }) && (errors.confirmPassword ? false : true);
+
+  const isStepValid =
+    currentStepFields.every((field) => {
+      const fieldName = field as keyof RegisterInput;
+
+      const hasValue = !!form.getValues(fieldName);
+      const hasNoError = !errors[fieldName];
+
+      return hasValue && hasNoError;
+    }) &&
+    (currentStepFields.includes('confirmPassword')
+      ? password === confirmPassword && confirmPassword !== ''
+      : true);
 
   const handleContinue = async () => {
-    const valid = await nextStep();
-    if (valid && isLastStep) {
-      // final submission
-      form.handleSubmit((data) => {
+    if (isLastStep && isValid) {
+      await form.handleSubmit((data) => {
         console.log('Final Register Data:', data);
-        // call your register.service.ts here to send data to backend
+        // registerService.execute(data);
       })();
+    } else {
+      // move to the next section
+      await nextStep();
     }
   };
 
@@ -95,19 +114,11 @@ export const RegisterPage: React.FC = () => {
           {/* register form */}
           <form className="flex flex-col w-full gap-4">
             {/* Render current step section */}
-            {renderStep()}
+            {StepComponent && <StepComponent form={form} />}
 
             {/* Navigation buttons */}
             <div className="flex flex-col gap-3">
-              {!isFirstStep && (
-                <button
-                  type="button"
-                  className="bg-neutral-700 rounded-full text-white font-bold h-12"
-                  onClick={previousStep}
-                >
-                  Back
-                </button>
-              )}
+              {/* continue or submmit button */}
               <button
                 type="button"
                 className={`rounded-full h-12 font-bold transition-colors
@@ -121,6 +132,17 @@ export const RegisterPage: React.FC = () => {
               >
                 {isLastStep ? 'Submit' : 'Continue'}
               </button>
+
+              {/* back button */}
+              {!isFirstStep && (
+                <button
+                  type="button"
+                  className="bg-neutral-700 rounded-full text-white font-bold h-12"
+                  onClick={previousStep}
+                >
+                  Back
+                </button>
+              )}
             </div>
           </form>
         </section>
