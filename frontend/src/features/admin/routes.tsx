@@ -10,11 +10,11 @@ export const adminRoutes = [
     path: 'admin',
     element: <AdminRootPage />,
     children: [
-      { path: 'admin/dashboard', element: <AdminDashboardPage /> },
-      { path: 'admin/profile', element: <AdminProfilePage /> },
-      { path: 'admin/settings', element: <AdminSettingsPage /> },
-      { path: 'admin/user_record', element: <UserRecordPage /> },
-      { path: 'admin/transactions', element: <AdminTransactionsPage /> },
+      { path: 'dashboard', element: <AdminDashboardPage /> },
+      { path: 'profile', element: <AdminProfilePage /> },
+      { path: 'settings', element: <AdminSettingsPage /> },
+      { path: 'user_record', element: <UserRecordPage /> },
+      { path: 'transactions', element: <AdminTransactionsPage /> },
     ],
   },
 ];
