@@ -1,7 +1,7 @@
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
-import { AdminSidebar } from './admin-components/sidebar';
-import { SiteHeader } from './admin-components/site-header';
+import { AdminSidebar } from './admin-components/Sidebar';
+import { SiteHeader } from './admin-components/SiteHeader';
 
 export function AdminRootPage() {
   return (
