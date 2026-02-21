@@ -10,13 +10,11 @@ import {
 import { NavLink, useLocation } from 'react-router-dom';
 import { AdminSidebarSections } from '../admin-constants/sidebar-sections';
 
-
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="icon" {...props} className="pr-0 pl-0">
+    <Sidebar collapsible="icon" {...props} className="pr-0">
       <SidebarContent className="py-20">
         <SidebarGroup>
           {/* <SidebarGroupLabel>Application</SidebarGroupLabel> */}
@@ -33,23 +31,12 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    className={`flex flex-row w-full h-[3.15rem] gap-2 transition-colors ${
-                      isActive
-                        ? '!bg-black !text-white' 
-                        : 'hover:bg-sidebar-accent/50'
+                    className={`flex flex-row w-full h-[3rem] justify-stretch gap-2 p-3 transition-colors ${
+                      isActive ? '!bg-black !text-white' : 'hover:bg-sidebar-accent/50'
                     }`}
                   >
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center w-full h-full gap-2 px-3 transition-colors ${
-                          isActive
-                            ? 'bg-red-800 text-sidebar-accent-foreground shadow-sm'
-                            : 'hover:bg-sidebar-accent/50'
-                        }`
-                      }
-                    >
-                      <Icon className="!size-4" />
+                    <NavLink to={item.url}>
+                      <Icon />
                       <span className="font-normal">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
