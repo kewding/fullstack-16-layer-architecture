@@ -5,12 +5,12 @@ import { SiteHeader } from './admin-components/SiteHeader';
 
 export function AdminRootPage() {
   return (
-    <div className="w-screen h-screen">
-      <SidebarProvider className="flex flex-row w-full " style={{ "--sidebar-width": "12rem" } as React.CSSProperties}>
-        <AdminSidebar variant="inset" className='flex'/>
+    <div className="w-screen h-screen overflow-x-auto">
+      <SidebarProvider className="flex min-w-0" style={{ "--sidebar-width": "12rem" } as React.CSSProperties}>
+        <AdminSidebar variant="inset" className=''/>
         <SidebarInset className='flex p-6 gap-1 bg-black'>
           <SiteHeader />
-          <section>
+          <section className='overflow-x-auto'>
             <Outlet />
           </section>
         </SidebarInset>

@@ -1,0 +1,29 @@
+export const MOCK_SALES = [
+  {
+    id: "6f92021a-1015-4999-b14a-d68377778b4d",
+    date: new Date('2026-02-02T11:00:00'),
+    name: 'Kenneth Gabriel E. Tapang',
+    type: 'purchase',
+    details: 'Stall 1',
+    amount: 189.00,
+    status: 'completed',
+  },
+  {
+    id: "a4d9e843-7f21-4f1b-8c8e-32906d28913c",
+    date: new Date('2026-02-02T11:00:00'),
+    name: 'Shereece Claire C. Degula',
+    type: 'purchase',
+    details: 'Stall 2',
+    amount: 99.00,
+    status: 'completed',
+  },
+  {
+    id: "18c39b2a-5d1e-428a-8f5b-b9d1045f2e12",
+    date: new Date('2026-02-02T11:00:00'),
+    name: 'John Loyd B. Timon',
+    type: 'remmitance',
+    details: 'Payout',
+    amount: 200.00,
+    status: 'remmited',
+  },
+];
