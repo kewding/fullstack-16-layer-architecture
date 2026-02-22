@@ -1,8 +1,8 @@
 import React from 'react';
-import { TransactionsSalesTable } from '../components/navigation-section/SalesTable';
-import { useTransactions } from '../hooks/useTransaction';
-import { SALES_TABLE_COLUMNS } from '../constants/salesTableColumns';
-import { NavigationSection } from '../components/navigation-section';
+import { NavigationSection } from './components/navigation-section';
+import { TransactionsSalesTable } from './components/navigation-section/SalesTable';
+import { SALES_TABLE_COLUMNS } from './constants/salesTableColumns';
+import { useTransactions } from './hooks/useTransaction';
 
 export const AdminTransactionsPage: React.FC = () => {
   const { data, isLoading, isError, error } = useTransactions();
