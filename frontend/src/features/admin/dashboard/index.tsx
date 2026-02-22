@@ -1,6 +1,6 @@
 import React from 'react';
-import { KpiCardsSection } from '../components/KpiCardsSection';
-import { RevenueSection } from '../components/RevenueSection';
+import { KpiCardsSection } from './components/KpiCardsSection';
+import { RevenueSection } from './components/RevenueSection';
 
 export const AdminDashboardPage: React.FC = () => {
   return (
