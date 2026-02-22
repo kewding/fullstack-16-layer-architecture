@@ -10,9 +10,21 @@ const TransactionTabFilter = TransactionTabFilterTypesEnum.map((items) => ({
 export function TrsansactionsTabFilter() {
   return (
     <Tabs defaultValue="all" className="w-full">
-      <TabsList className="flex w-full justify-start gap-2 bg-transparent border-none p-0 h-auto">
+      <TabsList
+        className="
+    flex flex-col h-auto w-full justify-start gap-2 bg-transparent p-0 
+    lg:flex-row lg:w-auto
+  "
+      >
         {TransactionTabFilter.map((tab) => (
-          <TabsTrigger key={tab.id} value={tab.id} className='w-auto border-none text-sm bg-transparent rounded-lg'>
+          <TabsTrigger
+            key={tab.id}
+            value={tab.id}
+            className="
+          w-full lg:w-auto h-auto px-4 py-2 
+          bg-transparent border-none rounded-lg 
+        "
+          >
             {tab.title}
           </TabsTrigger>
         ))}

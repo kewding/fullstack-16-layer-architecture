@@ -20,7 +20,7 @@ export const AdminTransactionsPage: React.FC = () => {
 
   return (
     <div className="px-1 w-full">
-      <main className="flex flex-col w-full h-full gap-3">
+      <main className="flex flex-col w-full h-full gap-4">
         <h1 className="text-2xl font-semibold">Transactions</h1>
         <NavigationSection/>
         <TransactionsSalesTable columns={SALES_TABLE_COLUMNS} data={data ?? []} isLoading={isLoading} />

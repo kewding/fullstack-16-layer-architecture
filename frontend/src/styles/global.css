@@ -71,8 +71,6 @@ button:focus-visible {
   }
 }
 
-
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -143,4 +141,10 @@ button:focus-visible {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  .custom-date-input::-webkit-calendar-picker-indicator {
+  /* Inverts the color (e.g., black to white) */
+  filter: invert(1);
+  /* You can use other filters for more specific color results */
+  /* filter: invert(1) brightness(0.5); */
+}
 }
