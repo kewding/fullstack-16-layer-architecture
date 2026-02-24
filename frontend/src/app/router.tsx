@@ -5,6 +5,7 @@ import { RequireAuth } from "./routes/RequireAuth"
 import { authRoutes } from "@/features/auth/routes"
 import { userRoutes } from "@/features/user/routes"
 import { adminRoutes } from "@/features/admin/routes"
+import { cashierRoutes } from "@/features/cashier/routes"
 
 const allRoutes = [
   {
@@ -27,6 +28,7 @@ const allRoutes = [
         children: [
           ...userRoutes,
           ...adminRoutes,
+          ...cashierRoutes,
 
         ]
       }
