@@ -1,7 +1,10 @@
+import { Card } from '@/components/ui/card';
 import React from 'react';
 import { UserBalanceSection } from './components/BalanceSection';
+import { UserProgressBar } from './components/NutritionIntakeSection';
 import { UserPurchasesSection } from './components/PurchasesSection';
 import { UPFIndicatorSection } from './components/UpfIndicatorSection';
+import { NUTRITION_DATA } from './constants/mockNutriIntake';
 
 //make sure to remove this or transport this to another file later
 const Name: string = 'Kenneth';
@@ -32,6 +35,17 @@ export const UserDashboardPage: React.FC = () => {
 
           <div className="flex flex-col gap-4 lg:col-span-2">
             <UPFIndicatorSection />
+            <Card className='flex flex-col gap-2 p-6 lg:grid grid-cols-2'>
+              {NUTRITION_DATA.map((nutrient) => (
+                <UserProgressBar
+                  key={nutrient.id}
+                  title={nutrient.title}
+                  currentValue={nutrient.currentValue}
+                  limit={nutrient.limit}
+                  unit={nutrient.unit}
+                />
+              ))}
+            </Card>
           </div>
         </div>
       </main>

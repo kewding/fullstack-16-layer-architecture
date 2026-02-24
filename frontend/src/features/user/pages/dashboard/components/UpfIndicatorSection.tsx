@@ -14,9 +14,9 @@ export function UPFIndicatorSection() {
           {healthMetrics.map((item) => (
             <div
               key={item.nutrient}
-              className="flex flex-col items-center flex-1 min-w-0 aspect-square"
+              className="flex flex-col items-center flex-1 min-w-0 aspect-square p-0"
             >
-              <div className="h-full w-full">
+              <div className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart
                     innerRadius="70%"
@@ -38,14 +38,14 @@ export function UPFIndicatorSection() {
                       y="50%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="fill-foreground text-[10px] font-bold"
+                      className="fill-foreground text-xl font-bold sm:text-xl"
                     >
                       {`${item.value}%`}
                     </text>
                   </RadialBarChart>
                 </ResponsiveContainer>
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground mt-1 truncate w-full text-center">
+              <span className="text-base font-medium text-muted-foreground mt-1 truncate w-full text-center">
                 {item.nutrient}
               </span>
             </div>
