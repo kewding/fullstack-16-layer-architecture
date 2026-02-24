@@ -37,7 +37,7 @@ export function UserPurchasesSection() {
   };
 
   return (
-    <div>
+    <div className='flex flex-col h-full'>
       <Card className="@container/card">
         <CardHeader>
           <CardTitle className="flex flex-row justify-between text-2xl font-semibold">
