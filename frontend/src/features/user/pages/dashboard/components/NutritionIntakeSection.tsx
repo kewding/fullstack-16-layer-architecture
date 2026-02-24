@@ -32,7 +32,7 @@ export function UserProgressBar({ title, currentValue, limit, unit }: NutrientPr
             htmlFor={`intake-${title.toLowerCase()}`}
             className="flex justify-between items-end w-full mb-1"
           >
-            <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+            <span className="text-xs tracking-wider text-muted-foreground font-semibold">
               {title}
             </span>
             <span

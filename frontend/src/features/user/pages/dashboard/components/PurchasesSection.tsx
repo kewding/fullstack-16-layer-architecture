@@ -39,7 +39,7 @@ export function UserPurchasesSection() {
   return (
     <div className='flex flex-col h-full'>
       <Card className="@container/card">
-        <CardHeader>
+        <CardHeader className='pb-2'>
           <CardTitle className="flex flex-row justify-between text-2xl font-semibold">
             Purchases
             <Button variant="ghost" className="bg-transparent text-muted-foreground">
