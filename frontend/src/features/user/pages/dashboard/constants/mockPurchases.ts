@@ -26,4 +26,22 @@ export const MOCK_PURCHASES = [
     amount: 200.00,
     status: 'remmited',
   },
+  {
+    id: "18c39b2a-5d1e-428a-8f5b-b9d1045f2e13",
+    date: new Date('2026-02-02T11:00:00'),
+    name: 'John Loyd B. Timon',
+    type: 'remmitance',
+    details: 'Payout',
+    amount: 100.00,
+    status: 'remmited',
+  },
+  {
+    id: "18c39b2a-5d1e-428a-8f5b-b9d1045f2e14",
+    date: new Date('2026-02-02T11:00:00'),
+    name: 'John Loyd B. Timon',
+    type: 'remmitance',
+    details: 'Payout',
+    amount: 50.00,
+    status: 'remmited',
+  },
 ];

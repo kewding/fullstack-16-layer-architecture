@@ -24,6 +24,20 @@ export const MOCK_PURCHASE_HISTORY = [
         amountspent: 120.00,
         date: new Date('2026-02-21T18:15:00'),
       },
+      {
+        foodname: "Kare-Kare",
+        foodimage: "/images/foods/pares.jpg",
+        stallname: "Stall 1 - Pinoy Delights",
+        amountspent: 140.00,
+        date: new Date('2026-02-21T18:15:00'),
+      },
+      {
+        foodname: "Bistek",
+        foodimage: "/images/foods/pares.jpg",
+        stallname: "Stall 1 - Pinoy Delights",
+        amountspent: 80.00,
+        date: new Date('2026-02-21T18:15:00'),
+      },
     ],
   },
   {
