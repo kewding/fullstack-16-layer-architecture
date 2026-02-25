@@ -6,10 +6,10 @@ import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 // components
-import { RegisterSectionContact } from '../components/ContactSection';
-import { RegisterSectionID } from '../components/IDSection';
-import { RegisterSectionPassword } from '../components/PasswordSection';
-import { RegisterSectionPersonal } from '../components/PersonalInfoSection';
+import { RegisterContactSection } from '../components/ContactSection';
+import { RegisterIDSection } from '../components/IDSection';
+import { RegisterPasswordSection } from '../components/PasswordSection';
+import { RegisterPersonalSection } from '../components/PersonalInfoSection';
 
 // ui functions
 import { REGISTER_STEPS } from '../constants/registerSteps';
@@ -17,10 +17,10 @@ import { useRegisterStep } from '../hooks/useRegisterStep';
 import { registerSchema, type RegisterInput } from '../schemas/register.schema';
 
 const STEP_MAP: Record<string, React.FC<{ form: UseFormReturn<RegisterInput> }>> = {
-  'id-section': RegisterSectionID,
-  contact: RegisterSectionContact,
-  personal: RegisterSectionPersonal,
-  security: RegisterSectionPassword,
+  'id-section': RegisterIDSection,
+  contact: RegisterContactSection,
+  personal: RegisterPersonalSection,
+  security: RegisterPasswordSection,
 };
 
 export const RegisterPage: React.FC = () => {
@@ -58,13 +58,6 @@ export const RegisterPage: React.FC = () => {
 
   const password = form.watch('password');
   const confirmPassword = form.watch('confirmPassword');
-
-  // const isStepValid =
-  //   currentStepFields.every((field) => {
-  //     const fieldName = field as keyof RegisterInput;
-  //     // Ensure the field has a value AND there is no error for it
-  //     return !!getValues(fieldName) && !errors[fieldName];
-  //   }) && (errors.confirmPassword ? false : true);
 
   const isStepValid =
     currentStepFields.every((field) => {

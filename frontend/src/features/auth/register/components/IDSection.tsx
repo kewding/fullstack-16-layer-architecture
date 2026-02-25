@@ -6,7 +6,7 @@ interface SectionProps {
   form: UseFormReturn<RegisterInput>;
 }
 
-export const RegisterSectionID: React.FC<SectionProps> = ({ form }) => {
+export const RegisterIDSection: React.FC<SectionProps> = ({ form }) => {
   // RHF context from parent form
   const {
     register,

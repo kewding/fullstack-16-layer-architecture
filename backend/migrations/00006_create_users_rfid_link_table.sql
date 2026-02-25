@@ -4,7 +4,7 @@ CREATE TABLE users_rfid (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- inst = institutional
-    rfid_tag TEXT NOT NULL UNIQUE,
+    rfid_tag TEXT UNIQUE,
 
     --fk 
     user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
