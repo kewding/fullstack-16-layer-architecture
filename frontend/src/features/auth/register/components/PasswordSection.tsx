@@ -6,7 +6,7 @@ interface SectionProps {
   form: UseFormReturn<RegisterInput>;
 }
 
-export const RegisterSectionPassword: React.FC<SectionProps> = ({ form }) => {
+export const RegisterPasswordSection: React.FC<SectionProps> = ({ form }) => {
   const {
     register,
     formState: { errors },

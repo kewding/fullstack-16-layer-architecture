@@ -4,11 +4,11 @@ CREATE TABLE users_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     first_name TEXT NOT NULL,
-    middle_name TEXT,
+    middle_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
 
     birth_date DATE NOT NULL,
-    contact_no TEXT,
+    contact_no TEXT NOT NULL,
     
     -- fk
     user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
