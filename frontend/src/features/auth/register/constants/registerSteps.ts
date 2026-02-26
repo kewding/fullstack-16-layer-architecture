@@ -7,7 +7,7 @@ export type RegisterStepConfig = {
 }
 
 export const REGISTER_STEPS: RegisterStepConfig[] = [
-  { id: 'id-section', fields: ['institutionalID'] },
+  { id: 'id-section', fields: ['institutionalId'] },
   { id: 'contact', fields: ['email', 'contactNumber'] },
   { id: 'personal', fields: ['firstName', 'middleName', 'lastName', 'birthDate'] },
   { id: 'security', fields: ['password', 'confirmPassword'] },
