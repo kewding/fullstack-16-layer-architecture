@@ -5,7 +5,7 @@ CREATE TABLE institutional_id (
     institution_id TEXT NOT NULL UNIQUE
 );
 
-INSERT INTO instirutional_id (institution_id) VALUES ("2022c021")
+INSERT INTO institutional_id (institution_id) VALUES ('2022c021');
 -- +goose StatementEnd
 
 -- +goose Down

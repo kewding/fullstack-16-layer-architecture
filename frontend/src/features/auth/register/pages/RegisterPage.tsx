@@ -75,12 +75,16 @@ export const RegisterPage: React.FC = () => {
       : true);
 
   const handleContinue = async () => {
+    const isFieldsValid = await form.trigger(currentStepFields as any);
+    if (!isFieldsValid) return;
+
     // Step 0: Institutional ID
     if (currentStepIndex === 0) {
       const id = form.getValues('institutionalId');
       const response = await registerService.checkID(id);
       if (!response.success) {
         form.setError('institutionalId', {
+          type: 'manual',
           message: ERROR_MESSAGES[response.error?.code || 'default'],
         });
         return;
@@ -93,6 +97,7 @@ export const RegisterPage: React.FC = () => {
       const response = await registerService.checkEmail(email);
       if (!response.success) {
         form.setError('email', {
+          type: 'manual',
           message: ERROR_MESSAGES[response.error?.code || 'default'],
         });
         return;
