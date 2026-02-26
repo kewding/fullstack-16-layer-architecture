@@ -15,6 +15,7 @@ const allRoutes = [
     children: [
       {
         //this populates the root layout as initial page
+        path: "",
         index: true,
         element: <Navigate to="/login" replace />,
       },

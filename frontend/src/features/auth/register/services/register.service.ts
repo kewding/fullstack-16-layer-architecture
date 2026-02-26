@@ -11,7 +11,7 @@ export interface APIResponse<T = any> {
   error?: APIError;
 }
 
-const BASE_URL = '/api/register';
+const BASE_URL = 'http://localhost:8080/api/register';
 
 export const registerService = {
   // POST /api/register/check-institutional-id [2, 6]
