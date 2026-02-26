@@ -52,7 +52,7 @@ export const personalInfoSchema = z.object({
 
 export type PersonalInfoInput = z.infer<typeof personalInfoSchema>;
 
-export const passwordSchema = z
+const passwordObject = z
   .object({
     password: z.string()
   .min(8, 'Minimum 8 characters')
@@ -62,34 +62,22 @@ export const passwordSchema = z
   .regex(/[0-9]/, 'Must contain a number'),
     confirmPassword: z.string(), // Removed invalid .omit()
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
 
-export type PasswordInput = z.infer<typeof passwordSchema>;
+export const passwordSchema = passwordObject.refine(
+  (data) => data.password === data.confirmPassword, 
+  { message: "Passwords don't match", path: ['confirmPassword'] }
+);
 
-export const baseRegisterSchema = z.object({
+export const registerSchema = z.object({
   ...institutionalIDSchema.shape,
   ...contactSchema.shape,
   ...personalInfoSchema.shape,
-  ...passwordSchema.shape,
+  ...passwordObject.shape, // Use passwordObject here, NOT passwordSchema
+})
+.refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
 });
-
-export const registerSchema = baseRegisterSchema
-  .extend(z.object({
-    password: z.string()
-      .min(8, 'Minimum 8 characters')
-      .max(64, 'Maximum 64 characters')
-      .regex(/[A-Z]/, 'Must contain an uppercase letter')
-      .regex(/[a-z]/, 'Must contain a lowercase letter')
-      .regex(/[0-9]/, 'Must contain a number'),
-    confirmPassword: z.string(),
-  }))
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
 
 export type RegisterInput = z.input<typeof registerSchema>;
 // export type RegisterOutput = z.output<typeof registerSchema>;
