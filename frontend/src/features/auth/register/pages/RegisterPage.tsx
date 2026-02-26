@@ -2,7 +2,7 @@
 import { ReactLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
-import { useForm, type UseFormReturn } from 'react-hook-form';
+import { useForm, type UseFormReturn} from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 // components
@@ -12,9 +12,11 @@ import { RegisterPasswordSection } from '../components/PasswordSection';
 import { RegisterPersonalSection } from '../components/PersonalInfoSection';
 
 // ui functions
+import { ERROR_MESSAGES } from '../constants/register.constants';
 import { REGISTER_STEPS } from '../constants/registerSteps';
 import { useRegisterStep } from '../hooks/useRegisterStep';
 import { registerSchema, type RegisterInput } from '../schemas/register.schema';
+import { registerService } from '../services/register.service';
 
 const STEP_MAP: Record<string, React.FC<{ form: UseFormReturn<RegisterInput> }>> = {
   'id-section': RegisterIDSection,
@@ -25,24 +27,24 @@ const STEP_MAP: Record<string, React.FC<{ form: UseFormReturn<RegisterInput> }>>
 
 export const RegisterPage: React.FC = () => {
   const form = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
-    mode: 'all',
-    defaultValues: {
-      institutionalID: '',
-      email: '',
-      contactNumber: '',
-      firstName: '',
-      middleName: '',
-      lastName: '',
-      birthDate: undefined,
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  resolver: zodResolver(registerSchema),
+  mode: 'all',
+  defaultValues: {
+    institutionalId: '',
+    email: '',
+    contactNumber: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    birthDate: undefined, 
+    password: '',
+    confirmPassword: '',
+  },
+});
 
   const { currentStepIndex, nextStep, previousStep, isFirstStep, isLastStep } = useRegisterStep(
     form,
-    REGISTER_STEPS.map((sections) => sections.fields),
+    REGISTER_STEPS.map((step) => step.fields),
   );
 
   const currentStepConfig = REGISTER_STEPS[currentStepIndex];
@@ -73,15 +75,40 @@ export const RegisterPage: React.FC = () => {
       : true);
 
   const handleContinue = async () => {
-    if (isLastStep && isValid) {
-      await form.handleSubmit((data) => {
-        console.log('Final Register Data:', data);
-        // registerService.execute(data);
-      })();
-    } else {
-      // move to the next section
-      await nextStep();
+    // Step 0: Institutional ID
+    if (currentStepIndex === 0) {
+      const id = form.getValues('institutionalId');
+      const response = await registerService.checkID(id);
+      if (!response.success) {
+        form.setError('institutionalId', {
+          message: ERROR_MESSAGES[response.error?.code || 'default'],
+        });
+        return;
+      }
     }
+
+    // Step 1: Contact (Email)
+    if (currentStepIndex === 1) {
+      const email = form.getValues('email');
+      const response = await registerService.checkEmail(email);
+      if (!response.success) {
+        form.setError('email', {
+          message: ERROR_MESSAGES[response.error?.code || 'default'],
+        });
+        return;
+      }
+    }
+
+    // Final Step: Submit
+    if (isLastStep && isValid) {
+    // When calling handleSubmit, 'data' will correctly be the RegisterOutput type (string)
+    await form.handleSubmit((data) => {
+      console.log('Final Register Data (Transformed):', data);
+      // registerService.submit(data as RegisterOutput);
+    })();
+  } else {
+    await nextStep();
+  }
   };
 
   return (

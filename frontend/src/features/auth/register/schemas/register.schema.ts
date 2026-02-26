@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const institutionalIDSchema = z.object({
-  institutionalID: z
+  institutionalId: z
     .string()
     .trim()
     .toLowerCase()
@@ -33,7 +33,7 @@ export const personalInfoSchema = z.object({
     .toLowerCase()
     .max(128, 'Middle name too long.'),
   lastName: z.string().trim().toLowerCase().nonempty('Required').max(128, 'Last name too long'),
-  birthDate: z
+  birthDate: z.coerce
     .date('Invalid date format.')
     .refine((date) => {
       const fourYearsAgo = new Date();
@@ -44,41 +44,53 @@ export const personalInfoSchema = z.object({
       const sixtyYearsAgo = new Date();
       sixtyYearsAgo.setFullYear(sixtyYearsAgo.getFullYear() - 60);
       return date >= sixtyYearsAgo;
-    }, 'You must be less than 60 years old to register.'),
+    }, 'You must be less than 60 years old to register.')
+    // Access the first element [0] to return a string, not an array
+    .transform((date) => date.toISOString().split('T')[0]),
+    
 });
 
 export type PersonalInfoInput = z.infer<typeof personalInfoSchema>;
 
 export const passwordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(64, 'Password too long')
-      // one uppercase letter
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      // one lowercase letter
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-      // one number
-      .regex(/[0-9]/, 'Password must contain at least one number')
-      // one special character
-      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-
-    confirmPassword: z.string(),
+    password: z.string()
+  .min(8, 'Minimum 8 characters')
+  .max(64, 'Maximum 64 characters')
+  .regex(/[A-Z]/, 'Must contain an uppercase letter')
+  .regex(/[a-z]/, 'Must contain a lowercase letter')
+  .regex(/[0-9]/, 'Must contain a number'),
+    confirmPassword: z.string(), // Removed invalid .omit()
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'], // ensures the error is attached to confirmPassword
+    path: ['confirmPassword'],
   });
 
 export type PasswordInput = z.infer<typeof passwordSchema>;
 
-export const registerSchema = z.object({
+export const baseRegisterSchema = z.object({
   ...institutionalIDSchema.shape,
   ...contactSchema.shape,
   ...personalInfoSchema.shape,
   ...passwordSchema.shape,
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
+export const registerSchema = baseRegisterSchema
+  .extend(z.object({
+    password: z.string()
+      .min(8, 'Minimum 8 characters')
+      .max(64, 'Maximum 64 characters')
+      .regex(/[A-Z]/, 'Must contain an uppercase letter')
+      .regex(/[a-z]/, 'Must contain a lowercase letter')
+      .regex(/[0-9]/, 'Must contain a number'),
+    confirmPassword: z.string(),
+  }))
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+export type RegisterInput = z.input<typeof registerSchema>;
 // export type RegisterOutput = z.output<typeof registerSchema>;
+export type RegisterOutput = z.output<typeof registerSchema>;

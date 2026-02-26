@@ -1,19 +1,46 @@
-import { contactSchema } from '../schemas/register.schema';
+import { type RegisterInput } from '../schemas/register.schema';
 
-export const checkEmailAvailability = async (rawEmail: string): Promise<boolean> => {
-  const isValid = contactSchema.pick({ email: true }).safeParse({ email: rawEmail });
+export interface APIError {
+  code: string;
+  message: string;
+}
 
-  if (!isValid.success) {
-    return false;
-  }
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: APIError;
+}
 
-  try {
-    const response = await fetch(`/api/users/check-email?email=${isValid.data.email}`);
-    if (!response.ok) return false;
-    const data = await response.json();
-    return data.available;
-  } catch (error) {
-    console.error('Email check failed:', error);
-    return false;
+const BASE_URL = '/api/register';
+
+export const registerService = {
+  // POST /api/register/check-institutional-id [2, 6]
+  checkID: async (institutionalId: string): Promise<APIResponse<void>> => {
+    const response = await fetch(`${BASE_URL}/check-institutional-id`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ institutionalId }),
+    });
+    return response.json();
+  },
+
+  // POST /api/register/check-email [2, 7]
+  checkEmail: async (email: string): Promise<APIResponse<void>> => {
+    const response = await fetch(`${BASE_URL}/check-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return response.json();
+  },
+
+  // POST /api/register/ [2, 5]
+  submit: async (data: RegisterInput): Promise<APIResponse<void>> => {
+    const response = await fetch(`${BASE_URL}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return response.json();
   }
 };
