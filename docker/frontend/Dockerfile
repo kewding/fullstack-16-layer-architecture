@@ -48,13 +48,27 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 RUN echo 'server { \
     listen 80; \
+    server_name localhost; \
+    \
+    gzip on; \
+    gzip_types text/plain text/css application/json application/javascript text/xml; \
+    \
     root /usr/share/nginx/html; \
     index index.html; \
+    \
     location /api/ { \
         proxy_pass http://backend:8080; \
+        proxy_http_version 1.1; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "upgrade"; \
         proxy_set_header Host $host; \
         proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $scheme; \
+        proxy_read_timeout 90; \
+        proxy_connect_timeout 90; \
     } \
+    \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
