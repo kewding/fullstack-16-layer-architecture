@@ -22,14 +22,14 @@ export const RegisterIDSection: React.FC<SectionProps> = ({ form }) => {
         id="institutionalID"
         type="text"
         placeholder="Enter your institutional ID"
-        {...register('institutionalID')}
+        {...register('institutionalId')}
         className={`h-12 p-3 rounded border focus:outline-none ${
-          errors.institutionalID ? 'border-red-500' : 'border-neutral-500 focus:border-white'
+          errors.institutionalId ? 'border-red-500' : 'border-neutral-500 focus:border-white'
         } bg-neutral-900 text-white`}
       />
-      {errors.institutionalID && (
+      {errors.institutionalId && (
         // <p className="text-red-500 text-xs">{errors.institutionalID.message}</p>
-        <span className=" text-red-500 text-xs">{errors.institutionalID.message}</span>
+        <span className=" text-red-500 text-xs">{errors.institutionalId.message}</span>
       )}
     </div>
   );
