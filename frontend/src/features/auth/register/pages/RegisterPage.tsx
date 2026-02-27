@@ -2,8 +2,8 @@
 import { ReactLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
-import { useForm, type UseFormReturn} from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { useForm, type UseFormReturn } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
 
 // components
 import { RegisterContactSection } from '../components/ContactSection';
@@ -27,20 +27,22 @@ const STEP_MAP: Record<string, React.FC<{ form: UseFormReturn<RegisterInput> }>>
 
 export const RegisterPage: React.FC = () => {
   const form = useForm<RegisterInput>({
-  resolver: zodResolver(registerSchema),
-  mode: 'all',
-  defaultValues: {
-    institutionalId: '',
-    email: '',
-    contactNumber: '',
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    birthDate: undefined, 
-    password: '',
-    confirmPassword: '',
-  },
-});
+    resolver: zodResolver(registerSchema),
+    mode: 'all',
+    defaultValues: {
+      institutionalId: '',
+      email: '',
+      contactNumber: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      birthDate: undefined,
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const navigate = useNavigate();
 
   const { currentStepIndex, nextStep, previousStep, isFirstStep, isLastStep } = useRegisterStep(
     form,
@@ -53,7 +55,7 @@ export const RegisterPage: React.FC = () => {
   const StepComponent = STEP_MAP[currentStepConfig.id];
 
   const {
-    formState: { isValid, errors /*isValidating*/ },
+    formState: { isValid, errors /*isValidating*/, isSubmitting },
   } = form;
 
   form.watch(currentStepFields as any);
@@ -75,12 +77,17 @@ export const RegisterPage: React.FC = () => {
       : true);
 
   const handleContinue = async () => {
+    const isFieldsValid = await form.trigger(currentStepFields as any);
+    if (!isFieldsValid) return;
+
     // Step 0: Institutional ID
     if (currentStepIndex === 0) {
-      const id = form.getValues('institutionalId');
-      const response = await registerService.checkID(id);
+      const rawId = form.getValues('institutionalId');
+      const cleanId = rawId.trim().toLowerCase().replace(/-/g, ''); //to match zod transform
+      const response = await registerService.checkID(cleanId);
       if (!response.success) {
         form.setError('institutionalId', {
+          type: 'manual',
           message: ERROR_MESSAGES[response.error?.code || 'default'],
         });
         return;
@@ -93,6 +100,7 @@ export const RegisterPage: React.FC = () => {
       const response = await registerService.checkEmail(email);
       if (!response.success) {
         form.setError('email', {
+          type: 'manual',
           message: ERROR_MESSAGES[response.error?.code || 'default'],
         });
         return;
@@ -101,14 +109,36 @@ export const RegisterPage: React.FC = () => {
 
     // Final Step: Submit
     if (isLastStep && isValid) {
-    // When calling handleSubmit, 'data' will correctly be the RegisterOutput type (string)
-    await form.handleSubmit((data) => {
-      console.log('Final Register Data (Transformed):', data);
-      // registerService.submit(data as RegisterOutput);
-    })();
-  } else {
-    await nextStep();
-  }
+      // When calling handleSubmit, 'data' will correctly be the RegisterOutput type (string)
+      await form.handleSubmit(async (data) => {
+        try {
+          const response = await registerService.submit(data);
+
+          if (response.success) {
+            // redirect to a success page or login
+            console.log('Registration Successful!');
+
+            navigate('/login', {
+              replace: true,
+              state: { registrationSuccess: true },
+            });
+          } else {
+            // handle specific backend errors (e.g., "Email already taken" during final save)
+            if (response.error?.code === 'email_exists') {
+              form.setError('email', { message: ERROR_MESSAGES.email_exists });
+            } else {
+              // Generic fallback
+              alert(ERROR_MESSAGES.default);
+            }
+          }
+        } catch (error) {
+          console.error('Submission failed:', error);
+          alert('A network error occurred. Please try again.');
+        }
+      })();
+    } else {
+      await nextStep();
+    }
   };
 
   return (
@@ -148,9 +178,9 @@ export const RegisterPage: React.FC = () => {
                     : 'bg-neutral-700 text-white cursor-not-allowed'
                 }`}
                 onClick={handleContinue}
-                disabled={!isStepValid}
+                disabled={!isStepValid || isSubmitting}
               >
-                {isLastStep ? 'Submit' : 'Continue'}
+                {isSubmitting ? 'Registering...' : isLastStep ? 'Submit' : 'Continue'}
               </button>
 
               {/* back button */}
@@ -159,6 +189,7 @@ export const RegisterPage: React.FC = () => {
                   type="button"
                   className="bg-neutral-700 rounded-full text-white font-bold h-12"
                   onClick={previousStep}
+                  disabled={isSubmitting}
                 >
                   Back
                 </button>
