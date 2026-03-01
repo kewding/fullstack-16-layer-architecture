@@ -3,22 +3,25 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kewding/backend/internal/infra/db"
-	"github.com/kewding/backend/internal/login" // Import added
+	"github.com/kewding/backend/internal/login" 
 	"github.com/kewding/backend/internal/register"
 )
 
 type Dependencies struct {
 	RegisterController *register.Controller
-	LoginController    *login.Controller // Correctly included
+	LoginController    *login.Controller 
+	HealthHandler      *HealthHandler
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 	r := gin.Default()
 
+	r.GET("/health/db", gin.WrapH(deps.HealthHandler))
+
 	// --- Route Mapping ---
 	api := r.Group("/api")
 	{
-		// Registration Group 
+		// Registration Group
 		reg := api.Group("/register")
 		{
 			reg.POST("/check-institutional-id", deps.RegisterController.CheckInstitutionalID)
