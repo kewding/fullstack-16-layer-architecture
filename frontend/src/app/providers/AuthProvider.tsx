@@ -1,27 +1,61 @@
-import React, { createContext, useContext, useState } from 'react';
+import { loginService } from '@/features/auth/login/services/login.service';
+import React, { createContext, useEffect, useState } from 'react';
 
-//authentication type initialization
+type User = { id: string; email: string; roleId: number };
 type AuthContextType = {
   isAuthenticated: boolean;
+  user: User | null;
+  loading: boolean;
+  login: (user: User) => void;
 };
 
-//creates state handling for null
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider(
-  { children }: { children: React.ReactNode } /*tells the component that it accepts children*/,
-) {
-  const [isAuthenticated] = useState(true);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return <AuthContext.Provider value={{ isAuthenticated }}>{children}</AuthContext.Provider>;
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        // This call sends the HttpOnly cookie automatically
+        const response = await loginService.checkSession();
+        if (response.success && response.data) {
+          setUser(response.data);
+        }
+      } catch (error) {
+        console.error('Session restoration failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  const login = (userData: User) => setUser(userData);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!user,
+        user,
+        loading,
+        login,
+      }}
+    >
+      {/* Prevent rendering the app until the session check is finished */}
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }
 
-//handling missing AuthProvider when using AuthContext
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
 
+  // Ensures that useAuth is only used within components wrapped by AuthProvider
   if (!context) {
-    throw new Error('useAuth must be inside AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
 
   return context;

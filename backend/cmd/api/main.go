@@ -10,7 +10,7 @@ import (
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/validation"
 	"github.com/kewding/backend/internal/register"
-	"github.com/kewding/backend/internal/login" // Import login package
+	"github.com/kewding/backend/internal/login"
 )
 
 func main() {
