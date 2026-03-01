@@ -31,16 +31,25 @@ export const LoginPage: React.FC = () => {
   // handle standard API response
   const onSubmit = async (data: LoginInput) => {
     setServerError(null);
-
     const response = await loginService.login(data);
 
     if (response.success && response.data) {
-      // pass the data (id, email, roleId) to the AuthProvider state
-      auth.login(response.data);
+      auth.login(response.data); 
 
-      navigate(from, { replace: true });
+      // Determine the redirect path
+      let targetPath = from;
+      if (from === '/') {
+        const rolePaths: Record<number, string> = {
+          1: '/admin',
+          2: '/user/dashboard',
+          4: '/cashier',
+        };
+        targetPath = rolePaths[response.data.roleId] || '/login';
+      }
+
+      navigate(targetPath, { replace: true });
     } else {
-      setServerError(response.error?.message || 'Authentication failed');
+      setServerError(response.error?.message || 'Login failed');
     }
   };
 

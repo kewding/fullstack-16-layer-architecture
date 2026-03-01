@@ -36,7 +36,7 @@ func main() {
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
         RegisterController: registerController,
-        LoginController:    loginController, // Add login controller to deps
+        LoginController:    loginController, 
     }
 
 	appRouter := controller.NewRouter(dbNode, deps)
