@@ -8,9 +8,11 @@ import (
 	"github.com/kewding/backend/internal/adapter/controller"
 	"github.com/kewding/backend/internal/config"
 	"github.com/kewding/backend/internal/infra/db"
-	"github.com/kewding/backend/internal/validation"
-	"github.com/kewding/backend/internal/register"
+	"github.com/kewding/backend/internal/infra/health"
 	"github.com/kewding/backend/internal/login"
+	"github.com/kewding/backend/internal/register"
+	"github.com/kewding/backend/internal/usecase/service"
+	"github.com/kewding/backend/internal/validation"
 )
 
 func main() {
@@ -22,6 +24,20 @@ func main() {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
 	defer dbNode.Close()
+
+	// --- Health Module Wiring ---
+
+	dbHealthChecker := &health.DatabaseHealthChecker{
+		Database: dbNode,
+	}
+
+	healthService := &service.HealthService{
+		HealthCheckProvider: dbHealthChecker,
+	}
+
+	healthHandler := &controller.HealthHandler{
+		HealthService: healthService,
+	}
 
 	// --- Registration Module Wiring [5] ---
 	registerRepo := register.NewPostgresRepository(dbNode.Connection)
@@ -35,9 +51,10 @@ func main() {
 
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-        RegisterController: registerController,
-        LoginController:    loginController, 
-    }
+		RegisterController: registerController,
+		LoginController:    loginController,
+		HealthHandler:      healthHandler,
+	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
 
