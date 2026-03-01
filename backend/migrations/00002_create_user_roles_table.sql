@@ -12,7 +12,7 @@ CREATE TABLE user_roles (
 INSERT INTO user_roles (slug, display_name) VALUES 
 ('admin', 'Administrator'),
 ('customer', 'Customer'),
-('vendor', 'Stall Owner');
+('vendor', 'Stall Owner'),
 ('cashier', 'Cashier');
 
 -- trigger function for update_at
