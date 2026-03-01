@@ -3,19 +3,19 @@ package controller
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kewding/backend/internal/usecase/service"
 )
 
 type HealthHandler struct {
-	HealthService *service.HealthService //VariableName *path_reference.struct
+	HealthService *service.HealthService
 }
 
-func (handler *HealthHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if err := handler.HealthService.ExecuteHealthCheck(request.Context()); err != nil {
-		http.Error(writer, "unhealthy", http.StatusServiceUnavailable)
+func (h *HealthHandler) Check(c *gin.Context) {
+	if err := h.HealthService.ExecuteHealthCheck(c.Request.Context()); err != nil {
+		c.String(http.StatusServiceUnavailable, "unhealthy")
 		return
 	}
 
-	writer.WriteHeader(http.StatusOK)
-	writer.Write([]byte("ok"))
+	c.String(http.StatusOK, "ok")
 }

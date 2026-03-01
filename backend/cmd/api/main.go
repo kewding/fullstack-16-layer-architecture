@@ -8,14 +8,15 @@ import (
 	"github.com/kewding/backend/internal/adapter/controller"
 	"github.com/kewding/backend/internal/config"
 	"github.com/kewding/backend/internal/infra/db"
-	"github.com/kewding/backend/internal/validation"
+	"github.com/kewding/backend/internal/infra/health"
+	"github.com/kewding/backend/internal/login"
 	"github.com/kewding/backend/internal/register"
+	"github.com/kewding/backend/internal/usecase/service"
+	"github.com/kewding/backend/internal/validation"
 )
 
 func main() {
-	validation.Init()
-
-	//load config
+	validation.Init() // [4]
 	cfg := config.LoadEnv()
 
 	dbNode, err := db.Connect(*cfg)
@@ -24,19 +25,39 @@ func main() {
 	}
 	defer dbNode.Close()
 
+	// --- Health Module Wiring ---
+
+	dbHealthChecker := &health.DatabaseHealthChecker{
+		Database: dbNode,
+	}
+
+	healthService := &service.HealthService{
+		HealthCheckProvider: dbHealthChecker,
+	}
+
+	healthHandler := &controller.HealthHandler{
+		HealthService: healthService,
+	}
+
+	// --- Registration Module Wiring [5] ---
 	registerRepo := register.NewPostgresRepository(dbNode.Connection)
 	registerUseCase := register.NewUseCase(registerRepo)
 	registerController := register.NewController(registerUseCase)
 
-	//all controllers in the Dependencies struct
-	deps := &controller.Dependencies{
-        RegisterController: registerController,
-    }
+	// --- Login Module Wiring ---
+	loginRepo := login.NewPostgresRepository(dbNode.Connection)
+	loginUseCase := login.NewUseCase(loginRepo)
+	loginController := login.NewController(loginUseCase)
 
-	//pass dbNode to router
+	// --- Dependency Injection ---
+	deps := &controller.Dependencies{
+		RegisterController: registerController,
+		LoginController:    loginController,
+		HealthHandler:      healthHandler,
+	}
+
 	appRouter := controller.NewRouter(dbNode, deps)
 
-	//configure http server
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      appRouter,
@@ -44,11 +65,8 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	//start
-	log.Printf("Server starting on port %s...", cfg.Port)
+	log.Printf("Server starting on port %s...", cfg.Port) // [6]
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}
-
-	
 }

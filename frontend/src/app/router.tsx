@@ -1,44 +1,58 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
-import { AppLayout } from "./layout"
-import { RequireAuth } from "./routes/RequireAuth"
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { AppLayout } from './layout';
+import { RequireAuth } from './routes/RequireAuth';
 
-import { authRoutes } from "@/features/auth/routes"
-import { userRoutes } from "@/features/user/routes"
-import { adminRoutes } from "@/features/admin/routes"
-import { cashierRoutes } from "@/features/cashier/routes"
+import { adminRoutes } from '@/features/admin/routes';
+import { authRoutes } from '@/features/auth/routes';
+import { cashierRoutes } from '@/features/cashier/routes';
+import { userRoutes } from '@/features/user/routes';
+
+/**
+ * Role ID Mapping (Derived from user_roles schema):
+ * 1: Admin
+ * 2: Customer (User Section)
+ * 3: Vendor (Stall Owner)
+ * 4: Cashier (Distinct from Vendor)
+ */
 
 const allRoutes = [
   {
-    //defining root layout
-    path:"/", 
-    element: <AppLayout />, 
+    path: '/',
+    element: <AppLayout />,
     children: [
       {
-        //this populates the root layout as initial page
-        path: "",
+        path: '',
         index: true,
         element: <Navigate to="/login" replace />,
       },
 
-      //public page accessible to anyone
-      ...authRoutes, 
+      // public routes: Login and Register
+      ...authRoutes,
+
+      // --- Protected Routes with Strict Role Access ---
+      {
+        // admin only section
+        element: <RequireAuth allowedRoles={[1]} />,
+        children: [...adminRoutes],
+      },
 
       {
-        //protected routes, needs authentication through element before proceeding
-        element: <RequireAuth />, 
-        children: [
-          ...userRoutes,
-          ...adminRoutes,
-          ...cashierRoutes,
+        // customer only section (User Routes)
+        element: <RequireAuth allowedRoles={[2]} />,
+        children: [...userRoutes],
+      },
 
-        ]
-      }
-    ]
-  }
-]
+      {
+        // cashier only section
+        element: <RequireAuth allowedRoles={[4]} />,
+        children: [...cashierRoutes],
+      },
+    ],
+  },
+];
 
-const router = createBrowserRouter(allRoutes)
+const router = createBrowserRouter(allRoutes);
 
 export function Router() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }
