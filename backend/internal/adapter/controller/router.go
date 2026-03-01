@@ -10,10 +10,13 @@ import (
 type Dependencies struct {
 	RegisterController *register.Controller
 	LoginController    *login.Controller
+	HealthHandler      *HealthHandler
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 	r := gin.Default()
+
+	r.GET("/health/db", deps.HealthHandler.Check)
 
 	// --- Route Mapping ---
 	api := r.Group("/api")
