@@ -9,7 +9,7 @@ export interface APIResponse<T = any> {
   error?: APIError;
 }
 
-const BASE_URL = '/api/tagging';
+// const BASE_URL = '/api/tagging';
 
 // export const taggingService = {
 //   checkUUID: async (uuid: string): Promise<APIResponse<void>> => {
