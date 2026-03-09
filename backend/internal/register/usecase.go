@@ -74,7 +74,7 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 	}()
 
 	// Requirement #1: Only customers allowed for this flow
-    const roleSlug = "customer" 
+    const roleSlug = "cashier" // CUSTOMER DAPAT TO
     // Requirement #2: RFID is always null/empty during initial registration
     const rfidTag = "" 
 
