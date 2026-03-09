@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	validation.Init() // [4]
+	validation.Init() 
 	cfg := config.LoadEnv()
 
 	dbNode, err := db.Connect(*cfg)
@@ -39,7 +39,7 @@ func main() {
 		HealthService: healthService,
 	}
 
-	// --- Registration Module Wiring [5] ---
+	// --- Registration Module Wiring ---
 	registerRepo := register.NewPostgresRepository(dbNode.Connection)
 	registerUseCase := register.NewUseCase(registerRepo)
 	registerController := register.NewController(registerUseCase)
@@ -65,7 +65,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	log.Printf("Server starting on port %s...", cfg.Port) // [6]
+	log.Printf("Server starting on port %s...", cfg.Port) 
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}
