@@ -38,7 +38,7 @@ func (w *sqlTxWrapper) Rollback(ctx context.Context) error {
 // 	return wrapper.tx, nil
 // }
 
-// checks for account existence and ignores soft-deleted users [5, 6]
+// checks for account existence and ignores soft-deleted users
 func (r *postgresRepository) EmailExists(ctx context.Context, email string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL)`
 	var exists bool

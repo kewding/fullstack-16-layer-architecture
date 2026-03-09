@@ -35,7 +35,7 @@ func AuthMiddleware(repo login.Repository, allowedRoles ...int) gin.HandlerFunc 
 			return
 		}
 
-		// 3. RBAC: Check if the user's role_id matches the required IDs [3, 4]
+		// RBAC: Check if the user's role_id matches the required IDs [3, 4]
 		if len(allowedRoles) > 0 {
 			roleAllowed := false
 			for _, role := range allowedRoles {
@@ -54,7 +54,7 @@ func AuthMiddleware(repo login.Repository, allowedRoles ...int) gin.HandlerFunc 
 			}
 		}
 
-		// 4. Inject user data into the context for downstream controllers
+		// Inject user data into the context for downstream controllers
 		c.Set("user_id", user.ID)
 		c.Set("role_id", user.RoleID)
 		c.Next()
