@@ -14,7 +14,7 @@ export interface APIResponse<T = any> {
 const BASE_URL = '/api/register';
 
 export const registerService = {
-  // POST /api/register/check-institutional-id [2, 6]
+  // POST /api/register/check-institutional-id
   checkID: async (institutionalId: string): Promise<APIResponse<void>> => {
     const response = await fetch(`${BASE_URL}/check-institutional-id`, {
       method: 'POST',
