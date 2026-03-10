@@ -1,6 +1,7 @@
 import { CashierRootPage } from './CashierRoot';
-import { CashierDashboardPage } from './dashboard';
-import { CashierRfidTaggingPage } from './rfid-tagging';
+import { CashierDashboardPage } from './pages/dashboard';
+import { CashierRfidTaggingPage } from './pages/rfid-tagging';
+import { CashierTopUpPage } from './pages/top-up';
 
 export const cashierRoutes = [
   {
@@ -8,7 +9,8 @@ export const cashierRoutes = [
     element: <CashierRootPage />,
     children: [
       { path: 'dashboard', element: <CashierDashboardPage /> },
-      { path: 'rfid-tagging', element: <CashierRfidTaggingPage/>}
+      { path: 'rfid-tagging', element: <CashierRfidTaggingPage/>},
+      {path: 'top-up', element: <CashierTopUpPage/>}
     ],
   },
 ];

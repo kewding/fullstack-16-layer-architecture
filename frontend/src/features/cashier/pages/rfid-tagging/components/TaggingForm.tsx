@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-export function TaggingField() {
+export function TaggingForm() {
   return (
     <FieldSet className="w-full max-w-sm p-2">
       <FieldLegend>User Information</FieldLegend>
