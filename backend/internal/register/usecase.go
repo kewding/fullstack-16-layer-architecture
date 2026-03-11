@@ -74,12 +74,15 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 	}()
 
 	// Requirement #1: Only customers allowed for this flow
-	const roleSlug = "cashier" // CUSTOMER DAPAT TO
+	const roleSlug = "customer" // CUSTOMER DAPAT TO
 	// Requirement #2: RFID is always null/empty during initial registration
 	const rfidTag = ""
 
 	// Hash password
-	hashedPassword, _ := security.HashPassword(req.Password)
+	hashedPassword, err := security.HashPassword(req.Password)
+	if err != nil {
+		return fmt.Errorf("%w: failed to hash password: %v", ErrRegistrationFailed, err)
+	}
 
 	// Insert into users
 	userID, err := u.repo.CreateUser(ctx, tx, req, hashedPassword, roleSlug)
