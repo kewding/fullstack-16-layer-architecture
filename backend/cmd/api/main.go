@@ -11,12 +11,13 @@ import (
 	"github.com/kewding/backend/internal/infra/health"
 	"github.com/kewding/backend/internal/login"
 	"github.com/kewding/backend/internal/register"
+	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/validation"
 )
 
 func main() {
-	validation.Init() 
+	validation.Init()
 	cfg := config.LoadEnv()
 
 	dbNode, err := db.Connect(*cfg)
@@ -49,11 +50,17 @@ func main() {
 	loginUseCase := login.NewUseCase(loginRepo)
 	loginController := login.NewController(loginUseCase)
 
+	// --- RFID Tagging ---
+	rfidTaggingRepo := rfidtagging.NewPostgresRepository(dbNode.Connection)
+	rfidTaggingUseCase := rfidtagging.NewUseCase(rfidTaggingRepo)
+	rfidTaggingController := rfidtagging.NewController(rfidTaggingUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-		RegisterController: registerController,
-		LoginController:    loginController,
-		HealthHandler:      healthHandler,
+		RegisterController:    registerController,
+		LoginController:       loginController,
+		HealthHandler:         healthHandler,
+		RfidTaggingController: rfidTaggingController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
@@ -65,7 +72,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	log.Printf("Server starting on port %s...", cfg.Port) 
+	log.Printf("Server starting on port %s...", cfg.Port)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}

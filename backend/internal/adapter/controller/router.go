@@ -5,12 +5,14 @@ import (
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
 	"github.com/kewding/backend/internal/register"
+	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 )
 
 type Dependencies struct {
 	RegisterController *register.Controller
 	LoginController    *login.Controller
 	HealthHandler      *HealthHandler
+	RfidTaggingController            *rfidtagging.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -33,6 +35,12 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", deps.LoginController.Login)
+		}
+
+		//Tagging Group for rfid
+		tag := api.Group("/tag")
+		{
+			tag.POST("/rfid-tagging", deps.RfidTaggingController.RfidTagging)
 		}
 	}
 

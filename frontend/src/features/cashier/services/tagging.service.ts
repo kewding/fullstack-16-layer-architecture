@@ -1,3 +1,5 @@
+import type { TaggingInput } from "../pages/rfid-tagging/schemas/tagging.schema";
+
 export interface APIError {
   code: string;
   message: string;
@@ -9,24 +11,21 @@ export interface APIResponse<T = any> {
   error?: APIError;
 }
 
-// const BASE_URL = '/api/tagging';
+const BASE_URL = '/api/tag';
 
-// export const taggingService = {
-//   checkUUID: async (uuid: string): Promise<APIResponse<void>> => {
-//     const response = await fetch(`${BASE_URL}/check-institutional-id`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ institutionalId }),
-//     });
-//     return response.json();
-//   },
+export interface TaggingData {
+  userId: string; // whatever your backend returns in `data`
+}
 
-//   checkRFID: async (rfid: string): Promise<APIResponse<void>> => {
-//     const response = await fetch(`${BASE_URL}/check-institutional-id`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ institutionalId }),
-//     });
-//     return response.json();
-//   },
-// };
+export const taggingService = {
+  async submitTagging(payload: TaggingInput): Promise<APIResponse<TaggingData>> {
+    const response = await fetch(`${BASE_URL}/rfid-tagging`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const json: APIResponse<TaggingData> = await response.json();
+    return json;
+  },
+};
