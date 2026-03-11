@@ -44,6 +44,7 @@ export function TaggingForm({ onSubmit }: { onSubmit: (data: TaggingInput) => vo
               }`}
               placeholder="f47ac10b..."
             />
+            {errors.uuid && <p className="text-red-500 text-sm mt-1">{errors.uuid.message}</p>}
           </Field>
           <Field>
             <FieldLabel htmlFor="rfid">RFID Tag</FieldLabel>
@@ -56,6 +57,7 @@ export function TaggingForm({ onSubmit }: { onSubmit: (data: TaggingInput) => vo
               }`}
               placeholder="860-960"
             />
+            {errors.rfid && <p className="text-red-500 text-sm mt-1">{errors.rfid.message}</p>}
           </Field>
 
           <Button type="submit" disabled={isSubmitting}>

@@ -57,7 +57,7 @@ func (r *postgresRepository) UserUuidExists(ctx context.Context, uuid string) (b
 	return exists, nil
 }
 
-func (r *postgresRepository) UserRfidExists(ctx context.Context, userID string) (bool, error) {
+func (r *postgresRepository) UserRfidExists(ctx context.Context, uuid string) (bool, error) {
     // check for a row where the user_id matches AND the rfid_tag is NOT NULL
     query := `
         SELECT EXISTS (
@@ -67,9 +67,9 @@ func (r *postgresRepository) UserRfidExists(ctx context.Context, userID string) 
         )`
     
     var exists bool
-    err := r.db.QueryRowContext(ctx, query, userID).Scan(&exists)
+    err := r.db.QueryRowContext(ctx, query, uuid).Scan(&exists)
     if err != nil {
-        return false, fmt.Errorf("failed to check rfid status for user %s: %w", userID, err)
+        return false, fmt.Errorf("failed to check rfid status for user %s: %w", uuid, err)
     }
     
     return exists, nil

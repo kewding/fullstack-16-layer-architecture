@@ -35,24 +35,25 @@ func (u *useCase) CheckRfid(ctx context.Context, rfid string) error {
 	if taken { // was: if err != nil || !found — wrong condition
 		return ErrRfidTaken
 	}
-
-	hasRfid, err := u.repo.UserRfidExists(ctx, rfid)
-	if err != nil {
-		return fmt.Errorf("failed to check availability: %w", err)
-	}
-	if hasRfid {
-		return ErrRfidPresent
-	}
 	return nil
 }
 
 func (u *useCase) RfidTagging(ctx context.Context, req RfidTaggingRequest) (err error) {
-	// Re-run checks for safety before touching the DB
 	if err := u.CheckUuid(ctx, req.Uuid); err != nil {
-		return err // ErrUuidNotFound
+		return err
 	}
+
+	// Block if user already has an rfid tag assigned
+	hasRfid, err := u.repo.UserRfidExists(ctx, req.Uuid)
+	if err != nil {
+		return fmt.Errorf("failed to check user rfid status: %w", err)
+	}
+	if hasRfid {
+		return ErrRfidPresent
+	}
+
 	if err := u.CheckRfid(ctx, req.Rfid); err != nil {
-		return err // ErrRfidTaken or ErrRfidPresent
+		return err
 	}
 
 	tx, err := u.repo.BeginTx(ctx)

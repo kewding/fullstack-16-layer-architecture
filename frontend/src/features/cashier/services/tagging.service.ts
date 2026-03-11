@@ -1,4 +1,4 @@
-import type { TaggingInput } from "../pages/rfid-tagging/schemas/tagging.schema";
+import type { TaggingInput } from '../pages/rfid-tagging/schemas/tagging.schema';
 
 export interface APIError {
   code: string;
@@ -18,11 +18,11 @@ export interface TaggingData {
 }
 
 export const taggingService = {
-  async submitTagging(payload: TaggingInput): Promise<APIResponse<TaggingData>> {
+  async submitTagging(data: TaggingInput): Promise<APIResponse<TaggingData>> {
     const response = await fetch(`${BASE_URL}/rfid-tagging`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(data),
     });
 
     const json: APIResponse<TaggingData> = await response.json();
