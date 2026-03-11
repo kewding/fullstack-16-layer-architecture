@@ -24,21 +24,21 @@ func NewUseCase(repo Repository) UseCase {
 // Step 1: Check Institutional ID
 // if institutional ID is valid, check for availability ***
 func (u *useCase) CheckInstitutionalID(ctx context.Context, institutionalID string) error {
-    // 1. Check if it exists in master list
-    found, err := u.repo.InstitutionalIDExists(ctx, institutionalID)
-    if err != nil || !found {
-        return ErrInstitutionalIDNotFound
-    }
+	// 1. Check if it exists in master list
+	found, err := u.repo.InstitutionalIDExists(ctx, institutionalID)
+	if err != nil || !found {
+		return ErrInstitutionalIDNotFound
+	}
 
-    // 2. Check if it is already taken (Requirement #3)
-    taken, err := u.repo.InstitutionalIDTaken(ctx, institutionalID)
-    if err != nil {
-        return fmt.Errorf("failed to check availability: %w", err)
-    }
-    if taken {
-        return ErrInstitutionalIDAlreadyTaken
-    }
-    return nil
+	// 2. Check if it is already taken (Requirement #3)
+	taken, err := u.repo.InstitutionalIDTaken(ctx, institutionalID)
+	if err != nil {
+		return fmt.Errorf("failed to check availability: %w", err)
+	}
+	if taken {
+		return ErrInstitutionalIDAlreadyTaken
+	}
+	return nil
 }
 
 // Step 2: Check Email
@@ -74,12 +74,15 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 	}()
 
 	// Requirement #1: Only customers allowed for this flow
-    const roleSlug = "cashier" // CUSTOMER DAPAT TO
-    // Requirement #2: RFID is always null/empty during initial registration
-    const rfidTag = "" 
+	const roleSlug = "customer" // CUSTOMER DAPAT TO
+	// Requirement #2: RFID is always null/empty during initial registration
+	const rfidTag = ""
 
 	// Hash password
-    hashedPassword, _ := security.HashPassword(req.Password)
+	hashedPassword, err := security.HashPassword(req.Password)
+	if err != nil {
+		return fmt.Errorf("%w: failed to hash password: %v", ErrRegistrationFailed, err)
+	}
 
 	// Insert into users
 	userID, err := u.repo.CreateUser(ctx, tx, req, hashedPassword, roleSlug)
@@ -94,9 +97,9 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 
 	// Insert into users_inst_link (resolve PK internally in repo)
 	_, err = u.repo.CreateUserInstLink(ctx, tx, userID, req.InstitutionalID)
-if err != nil {
-    return fmt.Errorf("%w: failed to link user to institutional ID: %v", ErrRegistrationFailed, err)
-}
+	if err != nil {
+		return fmt.Errorf("%w: failed to link user to institutional ID: %v", ErrRegistrationFailed, err)
+	}
 
 	// Insert into users_rfid_link (nullable rfid_tag)
 	if err := u.repo.CreateUserRFIDLink(ctx, tx, userID, rfidTag); err != nil {
