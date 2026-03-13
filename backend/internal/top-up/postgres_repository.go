@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/shopspring/decimal"
 )
 
 // postgresRepository implements the Repository interface
@@ -44,23 +46,23 @@ func getTx(tx Tx) (*sql.Tx, error) {
 }
 
 func (r *postgresRepository) RfidExists(ctx context.Context, rfid string) (bool, string, error) {
-    // check for a row where the user_id matches AND the rfid_tag is NOT NULL
-    query := `
+	// check for a row where the user_id matches AND the rfid_tag is NOT NULL
+	query := `
         SELECT user_id 
         FROM users_rfid
         WHERE rfid_tag = $1 AND user_id IS NOT NULL
         LIMIT 1`
-    
-    var userID string
-    err := r.db.QueryRowContext(ctx, query, rfid).Scan(&userID)
-    if err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return false, "", nil // RFID not found — not an error
-        }
-        return false, "", fmt.Errorf("failed to check rfid %s: %w", rfid, err)
-    }
 
-    return true, userID, nil
+	var userID string
+	err := r.db.QueryRowContext(ctx, query, rfid).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, "", nil // RFID not found — not an error
+		}
+		return false, "", fmt.Errorf("failed to check rfid %s: %w", rfid, err)
+	}
+
+	return true, userID, nil
 }
 
 // BeginTx initializes a new SQL transaction
@@ -72,22 +74,23 @@ func (r *postgresRepository) BeginTx(ctx context.Context) (Tx, error) {
 	return &sqlTxWrapper{tx: tx}, nil
 }
 
-func (r *postgresRepository) CreditTopupAmount(ctx context.Context, tx Tx, userID string, amount string) (string, error) {
-    sqlTx, err := getTx(tx)
-    if err != nil {
-        return "", err
-    }
+// postgres_repository.go
+func (r *postgresRepository) CreditTopupAmount(ctx context.Context, tx Tx, userID string, amount decimal.Decimal) (string, error) {
+	sqlTx, err := getTx(tx)
+	if err != nil {
+		return "", err
+	}
 
-    query := `
+	query := `
         INSERT INTO top_up_transactions (user_id, amount) 
         VALUES ($1, $2)
-        RETURNING id`  // adjust "id" to match your actual PK column name
+        RETURNING id` // adjust "id" to match your actual PK column name
 
-    var transactionID string
-    err = sqlTx.QueryRowContext(ctx, query, userID, amount).Scan(&transactionID)
-    if err != nil {
-        return "", fmt.Errorf("failed to insert top-up for user %s: %w", userID, err)
-    }
+	var transactionID string
+	err = sqlTx.QueryRowContext(ctx, query, userID, amount).Scan(&transactionID)
+	if err != nil {
+		return "", fmt.Errorf("failed to insert top-up for user %s: %w", userID, err)
+	}
 
-    return transactionID, nil
+	return transactionID, nil
 }

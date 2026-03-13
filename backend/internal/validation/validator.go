@@ -1,11 +1,12 @@
 package validation
 
 import (
-    "reflect"
-    "strings"
-    "sync"
+	"reflect"
+	"strings"
+	"sync"
 
-    "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -24,5 +25,13 @@ func Init() {
             }
             return name
         })
+
+        Validator.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
+			if d, ok := field.Interface().(decimal.Decimal); ok {
+				f, _ := d.Float64()
+				return f
+			}
+			return nil
+		}, decimal.Decimal{})
     })
 }
