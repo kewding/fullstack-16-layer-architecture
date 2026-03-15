@@ -7,7 +7,7 @@ export const CashierTopUpPage: React.FC = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleTagging = async (data: TopupInput) => {
+  const handleTopup = async (data: TopupInput) => {
     setServerError(null);
     setSuccess(false);
 
@@ -28,7 +28,7 @@ export const CashierTopUpPage: React.FC = () => {
         <h1 className="text-2xl font-semibold">Top-Up</h1>
         {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
         {success && <p className="text-green-500 text-sm">credit successfully.</p>}
-        <TopUpForm onSubmit={handleTagging} />
+        <TopUpForm onSubmit={handleTopup} />
       </main>
     </div>
   );

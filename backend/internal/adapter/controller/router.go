@@ -6,13 +6,15 @@ import (
 	"github.com/kewding/backend/internal/login"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
+	topup "github.com/kewding/backend/internal/top-up"
 )
 
 type Dependencies struct {
-	RegisterController *register.Controller
-	LoginController    *login.Controller
-	HealthHandler      *HealthHandler
-	RfidTaggingController            *rfidtagging.Controller
+	RegisterController    *register.Controller
+	LoginController       *login.Controller
+	HealthHandler         *HealthHandler
+	RfidTaggingController *rfidtagging.Controller
+	CreditTopupController *topup.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -41,6 +43,12 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		tag := api.Group("/tag")
 		{
 			tag.POST("/rfid-tagging", deps.RfidTaggingController.RfidTagging)
+		}
+
+		//Top-up Group
+		topup := api.Group("/credit")
+		{
+			topup.POST("/top-up", deps.CreditTopupController.CreditTopup)
 		}
 	}
 

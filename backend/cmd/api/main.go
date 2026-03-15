@@ -12,6 +12,7 @@ import (
 	"github.com/kewding/backend/internal/login"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
+	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/validation"
 )
@@ -55,12 +56,19 @@ func main() {
 	rfidTaggingUseCase := rfidtagging.NewUseCase(rfidTaggingRepo)
 	rfidTaggingController := rfidtagging.NewController(rfidTaggingUseCase)
 
+	// --- Credit Top-up ---
+	topupRepo := topup.NewPostgresRepository(dbNode.Connection)
+	topupNotifier := topup.NewPrintNotifier()
+	topupUsecase := topup.NewUseCase(topupRepo, topupNotifier)
+	topupController := topup.NewController(topupUsecase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:    registerController,
 		LoginController:       loginController,
 		HealthHandler:         healthHandler,
 		RfidTaggingController: rfidTaggingController,
+		CreditTopupController: topupController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

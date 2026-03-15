@@ -12,14 +12,17 @@ export interface APIResponse<T = any> {
 }
 
 export interface TopupData {
-  userId: string; // whatever your backend returns in `data`
+  transaction_id: string;
+  user_id: string;
+  amount: string;
+  timestamp: string;
 }
 
-const BASE_URL = '/api/top-up';
+const BASE_URL = '/api/credit';
 
 export const topupService = {
   async submitTopup(data: TopupInput): Promise<APIResponse<TopupData>> {
-    const response = await fetch(`${BASE_URL}/credit`, {
+    const response = await fetch(`${BASE_URL}/top-up`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
