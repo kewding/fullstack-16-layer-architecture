@@ -10,9 +10,9 @@ CREATE TABLE sales_items (
 
     quantity INTEGER NOT NULL,
 
-    extended_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    extended_price DECIMAL(12,2) NOT NULL DEFAULT 0.00
 
-)
+);
 -- +goose StatementEnd
 
 -- +goose Down
