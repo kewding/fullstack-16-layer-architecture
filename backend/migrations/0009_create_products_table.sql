@@ -9,9 +9,8 @@ CREATE TABLE products (
     image_url TEXT,
     price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
 
-    quantity INTEGER NOT NULL,
-    
-)
+    quantity INTEGER NOT NULL
+);
 -- +goose StatementEnd
 
 -- +goose Down

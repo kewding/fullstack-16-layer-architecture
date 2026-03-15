@@ -13,7 +13,7 @@ CREATE TABLE stalls (
 
     -- deletion handling
     deleted_at TIMESTAMPTZ
-)
+);
 
 -- updated trigger
 CREATE TRIGGER update_stalls_changetimestamp

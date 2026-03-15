@@ -8,11 +8,11 @@ CREATE TABLE sales (
 
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
 
-    stall_id UUID NOT NULL REFERENCES stalls(id) ON DELETE CASCADE
+    stall_id UUID NOT NULL REFERENCES stalls(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
-)
+);
 -- +goose StatementEnd
 
 -- +goose Down
