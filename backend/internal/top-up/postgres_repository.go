@@ -45,8 +45,7 @@ func getTx(tx Tx) (*sql.Tx, error) {
 	return wrapper.tx, nil
 }
 
-func (r *postgresRepository) RfidExists(ctx context.Context, rfid string) (bool, string, error) {
-	// check for a row where the user_id matches AND the rfid_tag is NOT NULL
+func (r *postgresRepository) RfidExists(ctx context.Context, rfid string) (string, error) {
 	query := `
         SELECT user_id 
         FROM users_rfid
@@ -57,12 +56,12 @@ func (r *postgresRepository) RfidExists(ctx context.Context, rfid string) (bool,
 	err := r.db.QueryRowContext(ctx, query, rfid).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, "", nil // RFID not found — not an error
+			return "", ErrRfidUnregistered
 		}
-		return false, "", fmt.Errorf("failed to check rfid %s: %w", rfid, err)
+		return "", fmt.Errorf("failed to check rfid %s: %w", rfid, err)
 	}
 
-	return true, userID, nil
+	return userID, nil
 }
 
 // BeginTx initializes a new SQL transaction
@@ -74,7 +73,6 @@ func (r *postgresRepository) BeginTx(ctx context.Context) (Tx, error) {
 	return &sqlTxWrapper{tx: tx}, nil
 }
 
-// postgres_repository.go
 func (r *postgresRepository) CreditTopupAmount(ctx context.Context, tx Tx, userID string, amount decimal.Decimal) (string, error) {
 	sqlTx, err := getTx(tx)
 	if err != nil {
@@ -84,7 +82,7 @@ func (r *postgresRepository) CreditTopupAmount(ctx context.Context, tx Tx, userI
 	query := `
         INSERT INTO top_up_transactions (user_id, amount) 
         VALUES ($1, $2)
-        RETURNING id` // adjust "id" to match your actual PK column name
+        RETURNING id`
 
 	var transactionID string
 	err = sqlTx.QueryRowContext(ctx, query, userID, amount).Scan(&transactionID)
@@ -93,4 +91,24 @@ func (r *postgresRepository) CreditTopupAmount(ctx context.Context, tx Tx, userI
 	}
 
 	return transactionID, nil
+}
+
+func (r *postgresRepository) LedgerRecordsCredit(ctx context.Context, tx Tx, userID string, amount decimal.Decimal, transactionID string, transactionType string) (string, error) {
+	sqlTx, err := getTx(tx)
+	if err != nil {
+		return "", err
+	}
+
+	query := `
+        INSERT INTO customer_ledger (user_id, debit, reference_id, reference_type) 
+        VALUES ($1, $2, $3, $4)
+        RETURNING id`
+
+	var ledgerID string
+	err = sqlTx.QueryRowContext(ctx, query, userID, amount, transactionID, transactionType).Scan(&ledgerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to insert ledger record for user %s: %w", userID, err)
+	}
+
+	return ledgerID, nil
 }
