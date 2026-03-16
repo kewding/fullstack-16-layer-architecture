@@ -10,14 +10,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { topupSchema, type TopupInput } from '../schemas/topup.schema';
+import { topupSchema, type TopupFormValues, type TopupInput } from '../schemas/topup.schema';
 
 export function TopUpForm({ onSubmit }: { onSubmit: (data: TopupInput) => void }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<TopupInput>({
+  } = useForm<TopupFormValues, any, TopupInput>({
     resolver: zodResolver(topupSchema),
     mode: 'onTouched',
     defaultValues: {
