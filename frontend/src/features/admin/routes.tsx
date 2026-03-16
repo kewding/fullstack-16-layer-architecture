@@ -1,9 +1,9 @@
 import { AdminRootPage } from './AdminRoot';
-import { AdminDashboardPage } from './dashboard';
-import { AdminProfilePage } from './profile-page/pages/AdminProfilePage';
-import { AdminSettingsPage } from './settings/pages/AdminSettingsPage';
-import { AdminTransactionsPage } from './transactions';
-import { UserRecordPage } from './user-records/pages/UserRecordPage';
+import { AdminDashboardPage } from './pages/dashboard';
+import { AdminProfilePage } from './pages/profile-page/pages/AdminProfilePage';
+import { AdminSettingsPage } from './pages/settings/pages/AdminSettingsPage';
+import { AdminTransactionsPage } from './pages/transactions';
+import { UserRecordPage } from './pages/user-records/pages/UserRecordPage';
 
 export const adminRoutes = [
   {
