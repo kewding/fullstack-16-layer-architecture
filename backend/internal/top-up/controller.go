@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kewding/backend/internal/response"
 	"github.com/kewding/backend/internal/validation"
 )
 
@@ -18,27 +19,56 @@ func NewController(uc UseCase) *Controller {
 
 func (c *Controller) CreditTopup(ctx *gin.Context) {
 	var req TopupCreditingRequest
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "invalid_request_body",
+				Message: "Failed to parse request body",
+			},
+		})
 		return
 	}
 
 	if err := validation.Validator.Struct(req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "validation_error",
+				Message: err.Error(),
+			},
+		})
 		return
 	}
 
 	res, err := c.uc.CreditTopup(ctx.Request.Context(), req)
 	if err != nil {
-		if errors.Is(err, ErrRfidUnregistered) {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
+		switch {
+		case errors.Is(err, ErrRfidUnregistered):
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "rfid_unregistered",
+					Message: "RFID tag is not registered to any user",
+				},
+			})
+		default:
+			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "internal_error",
+					Message: "An unexpected error occurred",
+				},
+			})
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, res)
+	ctx.JSON(http.StatusOK, response.APIResponse{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (c *Controller) RegisterRoutes(rg *gin.RouterGroup) {
