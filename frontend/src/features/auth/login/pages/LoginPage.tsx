@@ -11,7 +11,8 @@ export const LoginPage: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || '/';
+  const from = location.state?.from ?? '/';
+  const showAccessWarning = from !== '/' && location.state?.from != null;
   const [serverError, setServerError] = useState<string | null>(null);
 
   // initialize form with Zod validation
@@ -75,7 +76,7 @@ export const LoginPage: React.FC = () => {
         <header className="flex flex-col gap-1 items-center">
           <img src={ViteLogo} alt="Vite Logo" className="w-7 h-7" />
           <h1 className="font-bold text-white text-center">Login Page</h1>
-          {from !== '/' && (
+          {showAccessWarning && (
             <p className="text-red-500 text-sm mt-2 text-center px-4">
               You need to have the necessary role to access <strong>{from}</strong>
             </p>

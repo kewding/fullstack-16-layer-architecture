@@ -42,4 +42,11 @@ export const loginService = {
     });
     return response.json();
   },
+
+  logout: async (): Promise<APIResponse> => {
+    const response = await fetch(`${BASE_URL}/logout`, {
+      method: 'POST',
+    });
+    return response.json();
+  },
 };

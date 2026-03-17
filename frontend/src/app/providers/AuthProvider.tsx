@@ -13,6 +13,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (user: User) => void;
+  logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = (userData: User) => setUser(userData);
+  const logout = () => setUser(null);
 
   return (
     <AuthContext.Provider
@@ -53,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         login,
+        logout,
       }}
     >
       {/* Prevent rendering the app until the session check is finished */}
