@@ -11,29 +11,35 @@ export interface APIResponse<T = any> {
   error?: APIError;
 }
 
+export interface LoginResponseData {
+  id: string;
+  email: string;
+  roleId: number;
+}
+
+export interface MeResponseData {
+  id: string;
+  email: string;
+  role_id: number;
+  first_name: string;
+}
+
 const BASE_URL = '/api/auth';
 
 export const loginService = {
-  login: async (data: LoginInput): Promise<APIResponse> => {
+  login: async (data: LoginInput): Promise<APIResponse<LoginResponseData>> => {
     const response = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-
     return response.json();
   },
 
-  checkSession: async (): Promise<APIResponse> => {
+  checkSession: async (): Promise<APIResponse<MeResponseData>> => {
     const response = await fetch(`${BASE_URL}/me`, {
       method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
     });
-
     return response.json();
   },
 };

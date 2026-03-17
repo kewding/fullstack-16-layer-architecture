@@ -1,7 +1,13 @@
 import { loginService } from '@/features/auth/login/services/login.service';
 import React, { createContext, useEffect, useState } from 'react';
 
-type User = { id: string; email: string; roleId: number };
+type User = {
+  id: string;
+  email: string;
+  roleId: number;
+  firstName: string;
+};
+
 type AuthContextType = {
   isAuthenticated: boolean;
   user: User | null;
@@ -18,10 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        // This call sends the HttpOnly cookie automatically
         const response = await loginService.checkSession();
         if (response.success && response.data) {
-          setUser(response.data);
+          // remap snake_case from /api/auth/me to camelCase
+          setUser({
+            id: response.data.id,
+            email: response.data.email,
+            roleId: response.data.role_id,
+            firstName: response.data.first_name,
+          });
         }
       } catch (error) {
         console.error('Session restoration failed:', error);
