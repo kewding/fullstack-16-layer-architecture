@@ -10,6 +10,7 @@ import (
 type UseCase interface {
 	// Updated to return the string (token)
 	Login(ctx context.Context, req LoginRequest) (*User, string, error)
+	Me(ctx context.Context, token string) (*MeResponse, error)
 }
 
 type useCase struct {
@@ -49,4 +50,8 @@ func (u *useCase) Login(ctx context.Context, req LoginRequest) (*User, string, e
     }
 
     return user, token, nil
+}
+
+func (u *useCase) Me(ctx context.Context, token string) (*MeResponse, error) {
+	return u.repo.GetMe(ctx, token)
 }

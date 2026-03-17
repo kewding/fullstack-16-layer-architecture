@@ -15,8 +15,11 @@ type User struct {
 type Repository interface {
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	EmailExists(ctx context.Context, email string) (bool, error)
+
 	SaveSession(ctx context.Context, token string, userID string, expiresAt time.Time) error
 	VerifySession(ctx context.Context, token string) (*UserSessionDTO, error)
+	
+	GetMe(ctx context.Context, token string) (*MeResponse, error) 
 }
 
 type Tx interface {

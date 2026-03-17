@@ -100,7 +100,7 @@ func (r *postgresRepository) LedgerRecordsCredit(ctx context.Context, tx Tx, use
 	}
 
 	query := `
-        INSERT INTO customer_ledger (user_id, debit, reference_id, reference_type) 
+        INSERT INTO customers_ledger (user_id, debit, reference_id, reference_type) 
         VALUES ($1, $2, $3, $4)
         RETURNING id`
 

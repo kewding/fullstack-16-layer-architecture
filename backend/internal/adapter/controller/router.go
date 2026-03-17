@@ -7,6 +7,7 @@ import (
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	topup "github.com/kewding/backend/internal/top-up"
+	"github.com/kewding/backend/internal/user"
 )
 
 type Dependencies struct {
@@ -15,6 +16,7 @@ type Dependencies struct {
 	HealthHandler         *HealthHandler
 	RfidTaggingController *rfidtagging.Controller
 	CreditTopupController *topup.Controller
+	UserInfoController    *user.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -37,6 +39,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", deps.LoginController.Login)
+			auth.GET("/me", deps.LoginController.Me)
 		}
 
 		//Tagging Group for rfid
@@ -49,6 +52,11 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		topup := api.Group("/credit")
 		{
 			topup.POST("/top-up", deps.CreditTopupController.CreditTopup)
+		}
+
+		userinfo := api.Group("/user")
+		{
+			userinfo.GET("/:id", deps.UserInfoController.GetUser)
 		}
 	}
 

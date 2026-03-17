@@ -104,6 +104,34 @@ func (r *postgresRepository) SaveSession(ctx context.Context, token string, user
 	return nil
 }
 
+func (r *postgresRepository) GetMe(ctx context.Context, token string) (*MeResponse, error) {
+	query := `
+		SELECT u.id, u.email, u.role_id, ui.first_name
+		FROM sessions s
+		JOIN users u ON u.id = s.user_id
+		JOIN users_info ui ON ui.user_id = u.id
+		WHERE s.token = $1
+		  AND s.expires_at > NOW()
+		  AND u.deleted_at IS NULL
+		LIMIT 1`
+
+	var res MeResponse
+	err := r.db.QueryRowContext(ctx, query, token).Scan(
+		&res.ID,
+		&res.Email,
+		&res.RoleID,
+		&res.FirstName,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("failed to get session user: %w", err)
+	}
+
+	return &res, nil
+}
+
 // initializes a new SQL transaction
 func (r *postgresRepository) BeginTx(ctx context.Context) (Tx, error) {
 	tx, err := r.db.BeginTx(ctx, nil)

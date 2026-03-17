@@ -3,7 +3,7 @@ import { ViteLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { loginSchema, type LoginInput } from '../schemas/login.schema';
 import { loginService } from '../services/login.service';
 
@@ -28,24 +28,40 @@ export const LoginPage: React.FC = () => {
     },
   });
 
+  const { isAuthenticated, user, loading } = useAuth();
+
+  // redirect already-authenticated users away from login
+  if (!loading && isAuthenticated) {
+    const rolePaths: Record<number, string> = {
+      1: '/admin/dashboard',
+      2: '/user/dashboard',
+      4: '/cashier/rfid-tagging',
+    };
+    return <Navigate to={rolePaths[user?.roleId ?? 0] || '/'} replace />;
+  }
+
   // handle standard API response
   const onSubmit = async (data: LoginInput) => {
     setServerError(null);
     const response = await loginService.login(data);
 
     if (response.success && response.data) {
-      auth.login(response.data); 
+      auth.login({
+        id: response.data.id,
+        email: response.data.email,
+        roleId: response.data.roleId,
+        firstName: '',
+      });
 
-      // Determine the redirect path
-      let targetPath = from;
-      if (from === '/') {
-        const rolePaths: Record<number, string> = {
-          1: '/admin',
-          2: '/user/dashboard',
-          4: '/cashier',
-        };
-        targetPath = rolePaths[response.data.roleId] || '/login';
-      }
+      const rolePaths: Record<number, string> = {
+        1: '/admin',
+        2: '/user/dashboard',
+        4: '/cashier',
+      };
+
+      // If they were redirected from a protected route, send them back there.
+      // Otherwise use their role's default path.
+      const targetPath = from !== '/' ? from : rolePaths[response.data.roleId] || '/login';
 
       navigate(targetPath, { replace: true });
     } else {
