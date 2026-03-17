@@ -77,7 +77,7 @@ func (c *Controller) Login(ctx *gin.Context) {
 		3600*24, 
 		"/", 
 		"", 
-		true, // secure: only sent over https
+		false, // secure: only sent over https, should be tru in prod
 		true, // httponly: blocks JavaScript access to prevent XSS
 	)
 
@@ -89,5 +89,46 @@ func (c *Controller) Login(ctx *gin.Context) {
 			"email":  user.Email,
 			"roleId": user.RoleID,
 		},
+	})
+}
+
+func (c *Controller) Me(ctx *gin.Context) {
+	token, err := ctx.Cookie("session_id")
+	if err != nil || token == "" {
+		ctx.JSON(http.StatusUnauthorized, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "no_session",
+				Message: "No active session",
+			},
+		})
+		return
+	}
+
+	me, err := c.usecase.Me(ctx.Request.Context(), token)
+	if err != nil {
+		if errors.Is(err, ErrSessionNotFound) {
+			ctx.JSON(http.StatusUnauthorized, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "session_expired",
+					Message: "Session not found or expired",
+				},
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "internal_error",
+				Message: "An unexpected error occurred",
+			},
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.APIResponse{
+		Success: true,
+		Data:    me,
 	})
 }
