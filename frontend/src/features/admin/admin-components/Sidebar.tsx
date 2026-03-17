@@ -1,3 +1,4 @@
+import { useAuth } from '@/app/providers/AuthProvider';
 import {
   Sidebar,
   SidebarContent,
@@ -7,11 +8,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { NavLink, useLocation } from 'react-router-dom';
+import { loginService } from '@/features/auth/login/services/login.service';
+import { LogOut } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AdminSidebarSections } from '../admin-constants/sidebar-sections';
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await loginService.logout();
+    logout();
+    navigate('/login', { replace: true, state: {} });
+  };
 
   return (
     <Sidebar collapsible="icon" {...props} className="pr-0">
@@ -46,7 +57,20 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>{/* User profile or Logout button goes here */}</SidebarFooter>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Logout"
+              onClick={handleLogout}
+              className="flex flex-row w-full h-[3rem] justify-stretch gap-2 p-3 transition-colors hover:bg-red-500/10 hover:text-red-400"
+            >
+              <LogOut className="shrink-0" />
+              <span className="font-normal">Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -40,6 +40,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		{
 			auth.POST("/login", deps.LoginController.Login)
 			auth.GET("/me", deps.LoginController.Me)
+			auth.POST("/logout", deps.LoginController.Logout)
 		}
 
 		//Tagging Group for rfid

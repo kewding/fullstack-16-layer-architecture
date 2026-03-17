@@ -132,3 +132,33 @@ func (c *Controller) Me(ctx *gin.Context) {
 		Data:    me,
 	})
 }
+
+func (c *Controller) Logout(ctx *gin.Context) {
+	token, err := ctx.Cookie("session_id")
+	if err != nil || token == "" {
+		ctx.JSON(http.StatusUnauthorized, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "no_session",
+				Message: "No active session",
+			},
+		})
+		return
+	}
+
+	if err := c.usecase.Logout(ctx.Request.Context(), token); err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "internal_error",
+				Message: "An unexpected error occurred",
+			},
+		})
+		return
+	}
+
+	// Clear the cookie by setting MaxAge to -1
+	ctx.SetCookie("session_id", "", -1, "/", "", true, true)
+
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
+}

@@ -132,6 +132,20 @@ func (r *postgresRepository) GetMe(ctx context.Context, token string) (*MeRespon
 	return &res, nil
 }
 
+func (r *postgresRepository) InvalidateSession(ctx context.Context, token string) error {
+	query := `
+		UPDATE sessions 
+		SET expires_at = NOW() 
+		WHERE token = $1`
+
+	_, err := r.db.ExecContext(ctx, query, token)
+	if err != nil {
+		return fmt.Errorf("failed to invalidate session: %w", err)
+	}
+
+	return nil
+}
+
 // initializes a new SQL transaction
 func (r *postgresRepository) BeginTx(ctx context.Context) (Tx, error) {
 	tx, err := r.db.BeginTx(ctx, nil)

@@ -11,6 +11,7 @@ type UseCase interface {
 	// Updated to return the string (token)
 	Login(ctx context.Context, req LoginRequest) (*User, string, error)
 	Me(ctx context.Context, token string) (*MeResponse, error)
+	Logout(ctx context.Context, token string) error
 }
 
 type useCase struct {
@@ -54,4 +55,8 @@ func (u *useCase) Login(ctx context.Context, req LoginRequest) (*User, string, e
 
 func (u *useCase) Me(ctx context.Context, token string) (*MeResponse, error) {
 	return u.repo.GetMe(ctx, token)
+}
+
+func (u *useCase) Logout(ctx context.Context, token string) error {
+	return u.repo.InvalidateSession(ctx, token)
 }

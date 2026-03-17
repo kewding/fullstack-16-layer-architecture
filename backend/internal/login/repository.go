@@ -20,6 +20,8 @@ type Repository interface {
 	VerifySession(ctx context.Context, token string) (*UserSessionDTO, error)
 	
 	GetMe(ctx context.Context, token string) (*MeResponse, error) 
+
+	InvalidateSession(ctx context.Context, token string) error
 }
 
 type Tx interface {
