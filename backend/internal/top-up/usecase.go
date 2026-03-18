@@ -6,12 +6,10 @@ import (
 	"time"
 )
 
-// UseCase defines the business logic contract
 type UseCase interface {
 	CreditTopup(ctx context.Context, req TopupCreditingRequest) (*TopupCreditingResponse, error)
 }
 
-// Notifier is a stub interface
 type Notifier interface {
 	NotifyTopupSuccess(ctx context.Context, res *TopupCreditingResponse) error
 }
@@ -38,25 +36,32 @@ func (uc *topupUseCase) CreditTopup(ctx context.Context, req TopupCreditingReque
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	// Step 3: Insert top-up record and user ledger
+	// Step 3: Insert top-up transaction record
 	transactionID, err := uc.repo.CreditTopupAmount(ctx, tx, userID, req.Amount)
 	if err != nil {
 		_ = tx.Rollback(ctx)
 		return nil, fmt.Errorf("failed to credit top-up: %w", err)
 	}
 
+	// Step 4: Insert ledger record
 	_, err = uc.repo.LedgerRecordsCredit(ctx, tx, userID, req.Amount, transactionID, "top-up")
 	if err != nil {
 		_ = tx.Rollback(ctx)
 		return nil, fmt.Errorf("failed to insert ledger record: %w", err)
 	}
 
-	// Step 4: Commit
+	// Step 5: Update wallet balance atomically
+	if err := uc.repo.UpdateWalletBalance(ctx, tx, userID, req.Amount); err != nil {
+		_ = tx.Rollback(ctx)
+		return nil, err // ErrInsufficientBalance or wrapped db error
+	}
+
+	// Step 6: Commit — all three operations succeed or none do
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Step 5: Build response
+	// Step 7: Build response
 	res := &TopupCreditingResponse{
 		TransactionID: transactionID,
 		UserID:        userID,
@@ -64,10 +69,12 @@ func (uc *topupUseCase) CreditTopup(ctx context.Context, req TopupCreditingReque
 		Timestamp:     time.Now().UTC(),
 	}
 
-	// Step 6: Notify fire-and-forget
+	// Step 8: Notify fire-and-forget
 	go func() {
+		if uc.notifier == nil {
+			return
+		}
 		if err := uc.notifier.NotifyTopupSuccess(context.Background(), res); err != nil {
-			// log only — notification failure does not affect the committed result
 			fmt.Printf("notification failed for transaction %s: %v\n", res.TransactionID, err)
 		}
 	}()

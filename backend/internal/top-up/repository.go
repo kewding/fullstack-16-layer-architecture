@@ -13,6 +13,7 @@ type Repository interface {
 
 	CreditTopupAmount(ctx context.Context, tx Tx, userID string, amount decimal.Decimal) (string, error)
 	LedgerRecordsCredit(ctx context.Context, tx Tx, userID string, amount decimal.Decimal, transactionID string, transactionType string) (string, error)
+	UpdateWalletBalance(ctx context.Context, tx Tx, userID string, amount decimal.Decimal) error 
 }
 
 type Tx interface {
