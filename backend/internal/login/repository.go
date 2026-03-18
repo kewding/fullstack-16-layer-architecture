@@ -18,6 +18,7 @@ type Repository interface {
 
 	SaveSession(ctx context.Context, token string, userID string, expiresAt time.Time) error
 	VerifySession(ctx context.Context, token string) (*UserSessionDTO, error)
+	RefreshSession(ctx context.Context, token string) error
 	
 	GetMe(ctx context.Context, token string) (*MeResponse, error) 
 
