@@ -176,3 +176,18 @@ func (r *postgresRepository) CreateUserRFIDLink(ctx context.Context, tx Tx, user
 
     return nil
 }
+
+func (r *postgresRepository) CreateWallet(ctx context.Context, tx Tx, userID string) error {
+	sqlTx, err := getTx(tx)
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO wallets (user_id) VALUES ($1)`
+	_, err = sqlTx.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to create wallet for user %s: %w", userID, err)
+	}
+
+	return nil
+}

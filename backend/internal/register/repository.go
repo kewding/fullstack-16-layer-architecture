@@ -16,6 +16,7 @@ type Repository interface {
 	CreateUserInfo(ctx context.Context, tx Tx, userID string, req RegisterRequest) error
 	CreateUserInstLink(ctx context.Context, tx Tx, userID string, institutionalID string) (string, error)
 	CreateUserRFIDLink(ctx context.Context, tx Tx, userID string, rfidTag string) error
+	CreateWallet(ctx context.Context, tx Tx, userID string) error
 }
 
 type Tx interface {

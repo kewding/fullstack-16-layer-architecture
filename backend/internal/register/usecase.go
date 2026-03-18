@@ -106,5 +106,10 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 		return fmt.Errorf("%w: failed to create RFID link: %v", ErrRegistrationFailed, err)
 	}
 
+	// Create wallet with no balance
+	if err := u.repo.CreateWallet(ctx, tx, userID); err != nil {
+		return fmt.Errorf("%w: failed to create wallet: %v", ErrRegistrationFailed, err)
+	}
+
 	return nil
 }
