@@ -1,7 +1,7 @@
 import { useAuth } from '@/app/providers/AuthProvider';
 import { ViteLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { loginSchema, type LoginInput } from '../schemas/login.schema';
@@ -9,11 +9,25 @@ import { loginService } from '../services/login.service';
 
 export const LoginPage: React.FC = () => {
   const auth = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from ?? '/';
-  const showAccessWarning = from !== '/' && location.state?.from != null;
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showAccessWarning, setShowAccessWarning] = useState(false);
+
+  useEffect(() => {
+    // skip warning entirely if navigated here via logout
+    if (location.state?.loggedOut) return;
+
+    const timer = setTimeout(() => {
+      if (location.state?.from && location.state.from !== '/') {
+        setShowAccessWarning(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [location.state]);
 
   // initialize form with Zod validation
   const {
@@ -28,8 +42,6 @@ export const LoginPage: React.FC = () => {
       password: '',
     },
   });
-
-  const { isAuthenticated, user, loading } = useAuth();
 
   // redirect already-authenticated users away from login
   if (!loading && isAuthenticated) {

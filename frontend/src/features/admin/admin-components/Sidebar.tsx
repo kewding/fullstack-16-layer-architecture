@@ -10,18 +10,18 @@ import {
 } from '@/components/ui/sidebar';
 import { loginService } from '@/features/auth/login/services/login.service';
 import { LogOut } from 'lucide-react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { AdminSidebarSections } from '../admin-constants/sidebar-sections';
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleLogout = async () => {
     await loginService.logout();
     logout();
-    navigate('/login', { replace: true, state: {} });
+    window.location.replace('/login');
   };
 
   return (
