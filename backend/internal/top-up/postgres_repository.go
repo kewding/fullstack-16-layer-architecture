@@ -112,3 +112,27 @@ func (r *postgresRepository) LedgerRecordsCredit(ctx context.Context, tx Tx, use
 
 	return ledgerID, nil
 }
+
+func (r *postgresRepository) UpdateWalletBalance(ctx context.Context, tx Tx, userID string, amount decimal.Decimal) error {
+	sqlTx, err := getTx(tx)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE wallets
+		SET balance = balance + $1
+		WHERE user_id = $2 AND balance + $1 >= 0
+		RETURNING id`
+
+	var id string
+	err = sqlTx.QueryRowContext(ctx, query, amount, userID).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrInsufficientBalance
+		}
+		return fmt.Errorf("failed to update wallet for user %s: %w", userID, err)
+	}
+
+	return nil
+}

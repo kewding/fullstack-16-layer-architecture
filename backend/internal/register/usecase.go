@@ -107,8 +107,14 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 	}
 
 	// Create wallet with no balance
-	if err := u.repo.CreateWallet(ctx, tx, userID); err != nil {
-		return fmt.Errorf("%w: failed to create wallet: %v", ErrRegistrationFailed, err)
+	walletRoles := map[string]bool{
+		"customer": true,
+		"vendor":   true,
+	}
+	if walletRoles[roleSlug] {
+		if err := u.repo.CreateWallet(ctx, tx, userID); err != nil {
+			return fmt.Errorf("%w: failed to create wallet: %v", ErrRegistrationFailed, err)
+		}
 	}
 
 	return nil

@@ -53,6 +53,14 @@ func (c *Controller) CreditTopup(ctx *gin.Context) {
 					Message: "RFID tag is not registered to any user",
 				},
 			})
+		case errors.Is(err, ErrInsufficientBalance):
+			ctx.JSON(http.StatusUnprocessableEntity, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "insufficient_balance",
+					Message: "Insufficient wallet balance",
+				},
+			})
 		default:
 			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
