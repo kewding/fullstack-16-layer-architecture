@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { CashierSidebarSections } from '../cashier-constants/sidebar-sections';
 import { loginService } from '@/features/auth/login/services/login.service';
 import { LogOut } from 'lucide-react';
@@ -16,12 +16,12 @@ import { LogOut } from 'lucide-react';
 export function CashierSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleLogout = async () => {
     await loginService.logout();
     logout();
-    navigate('/login', { replace: true, state: {} });
+    window.location.replace('/login');
   };
 
   return (
