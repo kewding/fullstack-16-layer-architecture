@@ -116,6 +116,7 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 			return fmt.Errorf("%w: failed to create wallet: %v", ErrRegistrationFailed, err)
 		}
 	}
+	//changes
 
 	return nil
 }
