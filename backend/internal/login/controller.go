@@ -72,16 +72,16 @@ func (c *Controller) Login(ctx *gin.Context) {
 
 	// parameters: Name, Value, MaxAge (86400s = 24h), Path, Domain, Secure, HttpOnly
 	ctx.SetCookie(
-		"session_id", 
-		token, 
-		3600*24, 
-		"/", 
-		"", 
+		"session_id",
+		token,
+		3*3600,
+		"/",
+		"",
 		false, // secure: only sent over https, should be tru in prod
-		true, // httponly: blocks JavaScript access to prevent XSS
+		true,  // httponly: blocks JavaScript access to prevent XSS
 	)
 
-	// success with user metadata 
+	// success with user metadata
 	ctx.JSON(http.StatusOK, response.APIResponse{
 		Success: true,
 		Data: gin.H{
@@ -126,6 +126,12 @@ func (c *Controller) Me(ctx *gin.Context) {
 		})
 		return
 	}
+
+	// Reset the 3hr idle timer on every successful session check
+	_ = c.usecase.RefreshSession(ctx.Request.Context(), token)
+
+	// Refresh the cookie expiry as well
+	ctx.SetCookie("session_id", token, 3*3600, "/", "", false /* TODO: change to true in prod*/, true)
 
 	ctx.JSON(http.StatusOK, response.APIResponse{
 		Success: true,

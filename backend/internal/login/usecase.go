@@ -12,6 +12,7 @@ type UseCase interface {
 	Login(ctx context.Context, req LoginRequest) (*User, string, error)
 	Me(ctx context.Context, token string) (*MeResponse, error)
 	Logout(ctx context.Context, token string) error
+	RefreshSession(ctx context.Context, token string) error
 }
 
 type useCase struct {
@@ -20,6 +21,10 @@ type useCase struct {
 
 func NewUseCase(repo Repository) UseCase {
 	return &useCase{repo: repo}
+}
+
+func (u *useCase) RefreshSession(ctx context.Context, token string) error {
+	return u.repo.RefreshSession(ctx, token)
 }
 
 func (u *useCase) Login(ctx context.Context, req LoginRequest) (*User, string, error) {
@@ -43,7 +48,7 @@ func (u *useCase) Login(ctx context.Context, req LoginRequest) (*User, string, e
 	// generate token
     token := security.GenerateRandomToken() 
 
-	expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(3 * time.Hour)
 
     // persiste session through repository
     if err := u.repo.SaveSession(ctx, token, user.ID, expiresAt); err != nil {

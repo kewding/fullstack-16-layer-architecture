@@ -104,6 +104,19 @@ func (r *postgresRepository) SaveSession(ctx context.Context, token string, user
 	return nil
 }
 
+func (r *postgresRepository) RefreshSession(ctx context.Context, token string) error {
+	query := `
+		UPDATE sessions 
+		SET expires_at = NOW() + INTERVAL '3 hours'
+		WHERE token = $1 AND expires_at > NOW()`
+
+	_, err := r.db.ExecContext(ctx, query, token)
+	if err != nil {
+		return fmt.Errorf("failed to refresh session: %w", err)
+	}
+	return nil
+}
+
 func (r *postgresRepository) GetMe(ctx context.Context, token string) (*MeResponse, error) {
 	query := `
 		SELECT u.id, u.email, u.role_id, ui.first_name
