@@ -9,3 +9,4 @@ export const AdminSidebarSections = {
     { title: 'Settings & Privacy', url: '/admin/settings', icon: Settings },
   ],
 };
+
