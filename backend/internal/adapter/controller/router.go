@@ -57,7 +57,8 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 		userinfo := api.Group("/user")
 		{
-			userinfo.GET("/:id", deps.UserInfoController.GetUser)
+			userinfo.GET("/info/:id", deps.UserInfoController.GetUser)
+			userinfo.GET("/wallet/:id", deps.UserInfoController.GetWallet)
 		}
 	}
 

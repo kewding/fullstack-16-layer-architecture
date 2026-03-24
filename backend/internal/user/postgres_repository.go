@@ -41,3 +41,41 @@ func (r *postgresRepository) GetUserByID(ctx context.Context, userID string) (*G
 
 	return &res, nil
 }
+
+func (r *postgresRepository) GetWallet(ctx context.Context, userID string) (*WalletResponse, error) {
+	query := `
+		SELECT 
+			w.balance,
+			t.amount,
+			t.created_at
+		FROM wallets w
+		LEFT JOIN LATERAL (
+			SELECT amount, created_at
+			FROM top_up_transactions
+			WHERE user_id = $1
+			ORDER BY created_at DESC
+			LIMIT 1
+		) t ON true
+		WHERE w.user_id = $1`
+
+	var res WalletResponse
+	var lastAmount *float64
+	var lastDate *string
+
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&res.Balance,
+		&lastAmount,
+		&lastDate,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrWalletNotFound
+		}
+		return nil, fmt.Errorf("failed to get wallet for user %s: %w", userID, err)
+	}
+
+	res.LastTopupAmount = lastAmount
+	res.LastTopupDate = lastDate
+
+	return &res, nil
+}
