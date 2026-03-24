@@ -4,8 +4,8 @@ export const UserSidebarSections = {
   navMain: [
     { title: 'Dashboard', url: '/user/dashboard', icon: LayoutGrid },
     { title: 'Transactions', url: '/user/transactions', icon: Users },
-    { title: 'Users', url: '/user/users', icon: BookText },
-    { title: 'Vendors', url: '/user/vendors', icon: FileText },
+    { title: 'Medical Information', url: '/user/medical_information', icon: BookText },
+    { title: 'Profile', url: '/user/profile', icon: FileText },
     { title: 'Settings & Privacy', url: '/user/settings', icon: Settings },
   ],
 };

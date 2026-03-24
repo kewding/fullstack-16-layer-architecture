@@ -1,7 +1,7 @@
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
-import { UserSidebar } from './pages/user-components/Sidebar';
-import { SiteHeader } from './pages/user-components/SiteHeader';
+import { UserSidebar } from './user-components/Sidebar';
+import { SiteHeader } from './user-components/SiteHeader';
 
 export function UserRootPage() {
   return (
