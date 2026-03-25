@@ -4,19 +4,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
+	"github.com/kewding/backend/internal/middleware"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/user"
+	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
+	vendorregister "github.com/kewding/backend/internal/vendor-register"
 )
 
 type Dependencies struct {
-	RegisterController    *register.Controller
-	LoginController       *login.Controller
-	HealthHandler         *HealthHandler
-	RfidTaggingController *rfidtagging.Controller
-	CreditTopupController *topup.Controller
-	UserInfoController    *user.Controller
+	RegisterController       *register.Controller
+	LoginController          *login.Controller
+	HealthHandler            *HealthHandler
+	RfidTaggingController    *rfidtagging.Controller
+	CreditTopupController    *topup.Controller
+	UserInfoController       *user.Controller
+	VendorInviteController   *vendorinvite.Controller
+	VendorRegisterController *vendorregister.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -24,10 +29,12 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 	r.GET("/health/db", deps.HealthHandler.Check)
 
-	// --- Route Mapping ---
+	// shared login repo for session middleware
+	loginRepo := login.NewPostgresRepository(postgresNode.Connection)
+
 	api := r.Group("/api")
 	{
-		// Registration Group
+		// --- Public Routes ---
 		reg := api.Group("/register")
 		{
 			reg.POST("/check-institutional-id", deps.RegisterController.CheckInstitutionalID)
@@ -35,7 +42,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			reg.POST("/", deps.RegisterController.Register)
 		}
 
-		// Auth Group for Login
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", deps.LoginController.Login)
@@ -43,22 +49,36 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			auth.POST("/logout", deps.LoginController.Logout)
 		}
 
-		//Tagging Group for rfid
-		tag := api.Group("/tag")
+		// Public vendor routes — unauthenticated vendor access
+		vendor := api.Group("/vendor")
 		{
-			tag.POST("/rfid-tagging", deps.RfidTaggingController.RfidTagging)
+			vendor.GET("/invite/validate", deps.VendorInviteController.ValidateToken)
+			vendor.POST("/invite/resend", deps.VendorInviteController.ResendInvite)
+			vendor.POST("/register", deps.VendorRegisterController.Register)
 		}
 
-		//Top-up Group
-		topup := api.Group("/credit")
+		// --- Authenticated Routes ---
+		// Admin only — role_id: 1
+		admin := api.Group("/admin")
+		admin.Use(middleware.AuthMiddleware(loginRepo, 1))
 		{
-			topup.POST("/top-up", deps.CreditTopupController.CreditTopup)
+			admin.POST("/vendor/invite", deps.VendorInviteController.SendInvite)
 		}
 
-		userinfo := api.Group("/user")
+		// Cashier only — role_id: 4
+		cashier := api.Group("/cashier")
+		cashier.Use(middleware.AuthMiddleware(loginRepo, 4))
 		{
-			userinfo.GET("/info/:id", deps.UserInfoController.GetUser)
-			userinfo.GET("/wallet/:id", deps.UserInfoController.GetWallet)
+			cashier.POST("/tag/rfid-tagging", deps.RfidTaggingController.RfidTagging)
+			cashier.POST("/credit/top-up", deps.CreditTopupController.CreditTopup)
+		}
+
+		// Customer only — role_id: 2
+		customer := api.Group("/customer")
+		customer.Use(middleware.AuthMiddleware(loginRepo, 2))
+		{
+			customer.GET("/user/info/:id", deps.UserInfoController.GetUser)
+			customer.GET("/user/wallet/:id", deps.UserInfoController.GetWallet)
 		}
 	}
 

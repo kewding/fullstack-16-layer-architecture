@@ -10,17 +10,21 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
+	ResendAPIKey string
+	ResendFromEmail string
 }
 
 func LoadEnv() *Config {
 	return &Config{
-		Port:       getEnv("APP_PORT", "8080"),
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "test"),
-		DBPassword: getEnv("DB_PASSWORD", "test"),
-		DBName:     getEnv("DB_NAME", "test"),
-		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
+		Port:            getEnv("APP_PORT", "8080"),
+		DBHost:          getEnv("DB_HOST", "localhost"),
+		DBPort:          getEnv("DB_PORT", "5432"),
+		DBUser:          getEnv("DB_USER", "test"),
+		DBPassword:      getEnv("DB_PASSWORD", "test"),
+		DBName:          getEnv("DB_NAME", "test"),
+		DBSSLMode:       getEnv("DB_SSLMODE", "disable"),
+		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail: getEnv("RESEND_FROM_EMAIL", ""),
 	}
 
 }

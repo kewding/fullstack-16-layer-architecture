@@ -18,7 +18,8 @@ export interface TopupData {
   timestamp: string;
 }
 
-const BASE_URL = '/api/credit';
+const BASE_URL = '/api/cashier/credit';
+// was: '/api/credit'
 
 export const topupService = {
   async submitTopup(data: TopupInput): Promise<APIResponse<TopupData>> {

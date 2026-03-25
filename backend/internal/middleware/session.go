@@ -8,7 +8,6 @@ import (
 	"github.com/kewding/backend/internal/response"
 )
 
-// AuthMiddleware verifies the session_id cookie and checks for required roles
 func AuthMiddleware(repo login.Repository, allowedRoles ...int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("session_id")
@@ -35,7 +34,10 @@ func AuthMiddleware(repo login.Repository, allowedRoles ...int) gin.HandlerFunc 
 			return
 		}
 
-		// RBAC: Check if the user's role_id matches the required IDs [3, 4]
+		// Reset the 3hr idle timer on every authenticated request
+		_ = repo.RefreshSession(c.Request.Context(), token)
+
+		// RBAC: Check if the user's role_id matches the required IDs
 		if len(allowedRoles) > 0 {
 			roleAllowed := false
 			for _, role := range allowedRoles {
@@ -48,13 +50,12 @@ func AuthMiddleware(repo login.Repository, allowedRoles ...int) gin.HandlerFunc 
 			if !roleAllowed {
 				c.AbortWithStatusJSON(http.StatusForbidden, response.APIResponse{
 					Success: false,
-					Error:   &response.APIError{Code: "forbidden", Message: "Insufficient permissions"},
+					Error: &response.APIError{Code: "forbidden", Message: "Insufficient permissions"},
 				})
 				return
 			}
 		}
 
-		// Inject user data into the context for downstream controllers
 		c.Set("user_id", user.ID)
 		c.Set("role_id", user.RoleID)
 		c.Next()
