@@ -16,6 +16,8 @@ import (
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/user"
 	"github.com/kewding/backend/internal/validation"
+	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
+	vendorregister "github.com/kewding/backend/internal/vendor-register"
 )
 
 func main() {
@@ -68,14 +70,27 @@ func main() {
 	userUseCase := user.NewUseCase(userRepo)
 	userController := user.NewController(userUseCase)
 
+	// --- Vendor Status ---
+	vendorInviteRepo := vendorinvite.NewPostgresRepository(dbNode.Connection)
+	vendorInviteEmailSender := vendorinvite.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
+	vendorInviteUseCase := vendorinvite.NewUseCase(vendorInviteRepo, vendorInviteEmailSender)
+	vendorInviteController := vendorinvite.NewController(vendorInviteUseCase)
+
+	// --- Vendor Registration ---
+	vendorRegisterRepo := vendorregister.NewPostgresRepository(dbNode.Connection)
+	vendorRegisterUseCase := vendorregister.NewUseCase(vendorRegisterRepo)
+	vendorRegisterController := vendorregister.NewController(vendorRegisterUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-		RegisterController:    registerController,
-		LoginController:       loginController,
-		HealthHandler:         healthHandler,
-		RfidTaggingController: rfidTaggingController,
-		CreditTopupController: topupController,
-		UserInfoController:    userController,
+		RegisterController:       registerController,
+		LoginController:          loginController,
+		HealthHandler:            healthHandler,
+		RfidTaggingController:    rfidTaggingController,
+		CreditTopupController:    topupController,
+		UserInfoController:       userController,
+		VendorInviteController:   vendorInviteController,
+		VendorRegisterController: vendorRegisterController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

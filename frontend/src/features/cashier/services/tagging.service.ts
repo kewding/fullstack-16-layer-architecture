@@ -11,7 +11,8 @@ export interface APIResponse<T = any> {
   error?: APIError;
 }
 
-const BASE_URL = '/api/tag';
+const BASE_URL = '/api/cashier/tag';
+// was: '/api/tag'
 
 export interface TaggingData {
   userId: string; // whatever your backend returns in `data`
