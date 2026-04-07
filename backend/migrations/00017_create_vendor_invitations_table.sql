@@ -18,6 +18,7 @@ CREATE TABLE vendor_invitations (
 
 CREATE INDEX idx_vendor_invitations_token ON vendor_invitations(token);
 CREATE INDEX idx_vendor_invitations_email ON vendor_invitations(email);
+
 -- +goose StatementEnd
 
 -- +goose Down

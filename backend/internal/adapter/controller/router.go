@@ -11,6 +11,7 @@ import (
 	"github.com/kewding/backend/internal/user"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
+	"github.com/kewding/backend/internal/vendors"
 )
 
 type Dependencies struct {
@@ -22,6 +23,7 @@ type Dependencies struct {
 	UserInfoController       *user.Controller
 	VendorInviteController   *vendorinvite.Controller
 	VendorRegisterController *vendorregister.Controller
+	VendorController         *vendors.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -63,6 +65,8 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		admin.Use(middleware.AuthMiddleware(loginRepo, 1))
 		{
 			admin.POST("/vendor/invite", deps.VendorInviteController.SendInvite)
+			admin.GET("/vendors/review", deps.VendorController.ListVendorsReview)
+			admin.GET("/vendors/balance", deps.VendorController.ListVendorsBalance)
 		}
 
 		// Cashier only — role_id: 4
@@ -80,6 +84,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			customer.GET("/user/info/:id", deps.UserInfoController.GetUser)
 			customer.GET("/user/wallet/:id", deps.UserInfoController.GetWallet)
 		}
+
 	}
 
 	return r

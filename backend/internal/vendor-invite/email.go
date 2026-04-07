@@ -12,8 +12,8 @@ type EmailSender interface {
 }
 
 type resendEmailSender struct {
-	apiKey  string
-	baseURL string
+	apiKey    string
+	baseURL   string
 	fromEmail string
 }
 

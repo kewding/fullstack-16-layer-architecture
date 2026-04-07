@@ -18,6 +18,7 @@ import (
 	"github.com/kewding/backend/internal/validation"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
+	"github.com/kewding/backend/internal/vendors"
 )
 
 func main() {
@@ -81,6 +82,11 @@ func main() {
 	vendorRegisterUseCase := vendorregister.NewUseCase(vendorRegisterRepo)
 	vendorRegisterController := vendorregister.NewController(vendorRegisterUseCase)
 
+	// --- Vendor ---
+	vendorRepo := vendors.NewPostgresRepository(dbNode.Connection)
+	vendorUseCase := vendors.NewUseCase(vendorRepo)
+	vendorController := vendors.NewController(vendorUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:       registerController,
@@ -91,6 +97,7 @@ func main() {
 		UserInfoController:       userController,
 		VendorInviteController:   vendorInviteController,
 		VendorRegisterController: vendorRegisterController,
+		VendorController:         vendorController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
