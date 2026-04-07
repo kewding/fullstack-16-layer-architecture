@@ -1,6 +1,7 @@
 export interface VendorReviewRow {
   id: string;
   email: string;
+  owner_name: string;
   stall_name: string | null;
   status: 'invited' | 'for_review' | 'in_business';
   invited_by_name: string;

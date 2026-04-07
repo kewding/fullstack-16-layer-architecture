@@ -17,13 +17,14 @@ type ListVendorsParams struct {
 }
 
 type VendorReviewRow struct {
-	ID             string  `json:"id"`
-	Email          string  `json:"email"`
-	StallName      *string `json:"stall_name"`
-	Status         string  `json:"status"`
-	InvitedByName  string  `json:"invited_by_name"`
-	InvitedAt      string  `json:"invited_at"`
-	RegisteredAt   *string `json:"registered_at"`
+	ID            string  `json:"id"`
+	Email         string  `json:"email"`
+	OwnerName     string  `json:"owner_name"` 
+	StallName     *string `json:"stall_name"`
+	Status        string  `json:"status"`
+	InvitedByName string  `json:"invited_by_name"`
+	InvitedAt     string  `json:"invited_at"`
+	RegisteredAt  *string `json:"registered_at"`
 }
 
 type VendorBalanceRow struct {

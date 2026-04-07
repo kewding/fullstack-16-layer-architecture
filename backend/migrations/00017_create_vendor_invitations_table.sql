@@ -8,8 +8,10 @@ CREATE TABLE vendor_invitations (
     token TEXT NOT NULL UNIQUE,
 
     email TEXT NOT NULL,
+    owner_name TEXT NOT NULL, 
 
     status invitation_status NOT NULL DEFAULT 'pending',
+
     invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     
     expires_at TIMESTAMPTZ NOT NULL,

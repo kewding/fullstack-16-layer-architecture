@@ -6,18 +6,17 @@ CREATE TYPE concession_fee_type AS ENUM ('percentage', 'fixed');
 CREATE TABLE vendors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- populated at invite time
     email TEXT NOT NULL UNIQUE,
 
-    -- populated after registration completes
+    owner_name TEXT NOT NULL,
+
     user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 
     status vendor_status NOT NULL DEFAULT 'invited',
 
-    -- concession fee — set by admin per vendor
     concession_fee_type concession_fee_type,
     concession_fee_value DECIMAL(12, 2),
-
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

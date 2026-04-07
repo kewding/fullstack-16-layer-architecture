@@ -73,7 +73,13 @@ func main() {
 
 	// --- Vendor Status ---
 	vendorInviteRepo := vendorinvite.NewPostgresRepository(dbNode.Connection)
-	vendorInviteEmailSender := vendorinvite.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
+	vendorInviteEmailSender := vendorinvite.NewGmailEmailSender(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUsername,
+		cfg.SMTPPassword,
+		cfg.SMTPFromEmail,
+	)
 	vendorInviteUseCase := vendorinvite.NewUseCase(vendorInviteRepo, vendorInviteEmailSender)
 	vendorInviteController := vendorinvite.NewController(vendorInviteUseCase)
 

@@ -1,39 +1,42 @@
 package vendorinvite
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
+
+	gomail "gopkg.in/gomail.v2"
 )
 
-type EmailSender interface {
-	SendInviteEmail(toEmail string, token string) error
-}
-
-type resendEmailSender struct {
-	apiKey    string
-	baseURL   string
+type gmailEmailSender struct {
+	host      string
+	port      int
+	username  string
+	password  string
 	fromEmail string
 }
 
-func NewResendEmailSender(apiKey string, fromEmail string) EmailSender {
-	return &resendEmailSender{
-		apiKey:    apiKey,
-		baseURL:   "https://api.resend.com/emails",
+type EmailSender interface {
+	SendInviteEmail(toEmail string, ownerName string, token string) error
+}
+
+func NewGmailEmailSender(host string, port int, username, password, fromEmail string) EmailSender {
+	return &gmailEmailSender{
+		host:      host,
+		port:      port,
+		username:  username,
+		password:  password,
 		fromEmail: fromEmail,
 	}
 }
 
-func (s *resendEmailSender) SendInviteEmail(toEmail string, token string) error {
-	registrationURL := fmt.Sprintf("https://yourdomain.com/vendor/register?token=%s", token)
+func (s *gmailEmailSender) SendInviteEmail(toEmail string, ownerName string, token string) error {
+	registrationURL := fmt.Sprintf("http://localhost:5173/vendor-register?token=%s", token)
 
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px;">
   <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px;">
-    <h2 style="color: #111;">You're invited to join as a Vendor</h2>
+    <h2 style="color: #111;">Hello, %s!</h2>
     <p style="color: #555; line-height: 1.6;">
       You have been personally invited by our team to register as a vendor on our platform.
       Click the button below to complete your registration. This link is valid for <strong>72 hours</strong>.
@@ -54,36 +57,18 @@ func (s *resendEmailSender) SendInviteEmail(toEmail string, token string) error 
     </p>
   </div>
 </body>
-</html>`, registrationURL)
+</html>`, ownerName, registrationURL)
 
-	payload := map[string]any{
-		"from":    s.fromEmail,
-		"to":      []string{toEmail},
-		"subject": "You're invited to register as a Vendor",
-		"html":    htmlBody,
-	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", "You're invited to register as a Vendor")
+	m.SetBody("text/html", htmlBody)
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal email payload: %w", err)
-	}
+	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
 
-	req, err := http.NewRequest("POST", s.baseURL, bytes.NewBuffer(body))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
+	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("resend API error: status %d", resp.StatusCode)
 	}
 
 	return nil

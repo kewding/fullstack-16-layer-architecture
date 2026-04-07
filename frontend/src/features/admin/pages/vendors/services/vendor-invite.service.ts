@@ -10,11 +10,11 @@ export interface APIResponse<T = any> {
 }
 
 export const vendorInviteService = {
-  async sendInvite(email: string): Promise<APIResponse> {
+  async sendInvite(email: string, ownerName: string): Promise<APIResponse> {
     const res = await fetch('/api/admin/vendor/invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, owner_name: ownerName }),
     });
     return res.json();
   },

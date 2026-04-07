@@ -59,23 +59,25 @@ func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListV
 
 	// data query
 	args = append(args, params.Limit, offset)
+	// simplified — no need for ui_vendor join anymore
 	dataQuery := fmt.Sprintf(`
-		SELECT
-			v.id,
-			v.email,
-			s.stall_name,
-			v.status,
-			CONCAT(ui.first_name, ' ', ui.last_name) AS invited_by_name,
-			vi.created_at AS invited_at,
-			v.updated_at AS registered_at
-		FROM vendors v
-		LEFT JOIN stalls s ON s.user_id = v.user_id
-		LEFT JOIN vendor_invitations vi ON vi.email = v.email
-		LEFT JOIN users u_admin ON u_admin.id = vi.invited_by
-		LEFT JOIN users_info ui ON ui.user_id = u_admin.id
-		%s
-		ORDER BY v.created_at DESC
-		LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+    	SELECT
+        	v.id,
+        	v.email,
+        	v.owner_name,
+        	s.stall_name,
+        	v.status,
+        	CONCAT(ui_admin.first_name, ' ', ui_admin.last_name) AS invited_by_name,
+        	vi.created_at AS invited_at,
+        	v.updated_at AS registered_at
+    	FROM vendors v
+    	LEFT JOIN stalls s ON s.user_id = v.user_id
+    	LEFT JOIN vendor_invitations vi ON vi.email = v.email
+    	LEFT JOIN users u_admin ON u_admin.id = vi.invited_by
+    	LEFT JOIN users_info ui_admin ON ui_admin.user_id = u_admin.id
+    	%s
+    	ORDER BY v.created_at DESC
+    	LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
 
 	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
 	if err != nil {
@@ -90,14 +92,15 @@ func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListV
 		var invitedByName sql.NullString
 
 		err := rows.Scan(
-			&v.ID,
-			&v.Email,
-			&v.StallName,
-			&v.Status,
-			&invitedByName,
-			&v.InvitedAt,
-			&registeredAt,
-		)
+    		&v.ID,
+    		&v.Email,
+    		&v.OwnerName,
+    		&v.StallName,
+    		&v.Status,
+    		&invitedByName,
+    		&v.InvitedAt,
+    		&registeredAt,
+)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan vendor review row: %w", err)
 		}
