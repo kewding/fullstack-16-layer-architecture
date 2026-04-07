@@ -18,6 +18,7 @@ import (
 	"github.com/kewding/backend/internal/validation"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
+	"github.com/kewding/backend/internal/vendors"
 )
 
 func main() {
@@ -72,7 +73,13 @@ func main() {
 
 	// --- Vendor Status ---
 	vendorInviteRepo := vendorinvite.NewPostgresRepository(dbNode.Connection)
-	vendorInviteEmailSender := vendorinvite.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
+	vendorInviteEmailSender := vendorinvite.NewGmailEmailSender(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUsername,
+		cfg.SMTPPassword,
+		cfg.SMTPFromEmail,
+	)
 	vendorInviteUseCase := vendorinvite.NewUseCase(vendorInviteRepo, vendorInviteEmailSender)
 	vendorInviteController := vendorinvite.NewController(vendorInviteUseCase)
 
@@ -80,6 +87,11 @@ func main() {
 	vendorRegisterRepo := vendorregister.NewPostgresRepository(dbNode.Connection)
 	vendorRegisterUseCase := vendorregister.NewUseCase(vendorRegisterRepo)
 	vendorRegisterController := vendorregister.NewController(vendorRegisterUseCase)
+
+	// --- Vendor ---
+	vendorRepo := vendors.NewPostgresRepository(dbNode.Connection)
+	vendorUseCase := vendors.NewUseCase(vendorRepo)
+	vendorController := vendors.NewController(vendorUseCase)
 
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
@@ -91,6 +103,7 @@ func main() {
 		UserInfoController:       userController,
 		VendorInviteController:   vendorInviteController,
 		VendorRegisterController: vendorRegisterController,
+		VendorController:         vendorController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

@@ -8,8 +8,10 @@ CREATE TABLE vendor_invitations (
     token TEXT NOT NULL UNIQUE,
 
     email TEXT NOT NULL,
+    owner_name TEXT NOT NULL, 
 
     status invitation_status NOT NULL DEFAULT 'pending',
+
     invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     
     expires_at TIMESTAMPTZ NOT NULL,
@@ -18,6 +20,7 @@ CREATE TABLE vendor_invitations (
 
 CREATE INDEX idx_vendor_invitations_token ON vendor_invitations(token);
 CREATE INDEX idx_vendor_invitations_email ON vendor_invitations(email);
+
 -- +goose StatementEnd
 
 -- +goose Down

@@ -34,16 +34,15 @@ func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteReq
 
 	token := security.GenerateRandomToken()
 
-	if err := uc.repo.CreateInvite(ctx, token, req.Email, req.InvitedBy); err != nil {
+	if err := uc.repo.CreateInvite(ctx, token, req.Email, req.OwnerName, req.InvitedBy); err != nil {
 		return fmt.Errorf("failed to store invite: %w", err)
 	}
 
-	// Insert vendor row with invited status at invite time
-	if err := uc.repo.CreateVendorInvitedRecord(ctx, req.Email); err != nil {
+	if err := uc.repo.CreateVendorInvitedRecord(ctx, req.Email, req.OwnerName); err != nil {
 		return fmt.Errorf("failed to create vendor record: %w", err)
 	}
 
-	if err := uc.emailSender.SendInviteEmail(req.Email, token); err != nil {
+	if err := uc.emailSender.SendInviteEmail(req.Email, req.OwnerName, token); err != nil {
 		return fmt.Errorf("failed to send invite email: %w", err)
 	}
 

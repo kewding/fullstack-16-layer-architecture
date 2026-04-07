@@ -6,7 +6,8 @@ import (
 
 type SendInviteRequest struct {
 	Email     string `json:"email" validate:"required,email,max=255"`
-	InvitedBy string `json:"-"` // set from session, not user input
+	OwnerName string `json:"owner_name" validate:"required,min=2,max=255"`
+	InvitedBy string `json:"-"` 
 }
 
 type InviteTokenResponse struct {

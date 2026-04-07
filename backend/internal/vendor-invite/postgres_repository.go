@@ -18,13 +18,13 @@ func NewPostgresRepository(db *sql.DB) Repository {
 	return &postgresRepository{db: db}
 }
 
-func (r *postgresRepository) CreateInvite(ctx context.Context, token string, email string, invitedBy string) error {
+func (r *postgresRepository) CreateInvite(ctx context.Context, token string, email string, ownerName string, invitedBy string) error {
 	query := `
-		INSERT INTO vendor_invitations (token, email, invited_by, expires_at)
-		VALUES ($1, $2, $3, $4)`
+		INSERT INTO vendor_invitations (token, email, owner_name, invited_by, expires_at)
+		VALUES ($1, $2, $3, $4, $5)`
 
 	expiresAt := time.Now().Add(72 * time.Hour)
-	_, err := r.db.ExecContext(ctx, query, token, email, invitedBy, expiresAt)
+	_, err := r.db.ExecContext(ctx, query, token, email, ownerName, invitedBy, expiresAt)
 	if err != nil {
 		return fmt.Errorf("failed to create invite: %w", err)
 	}
@@ -137,16 +137,15 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, token string) e
 	return nil
 }
 
-func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, email string) error {
+func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, email string, ownerName string) error {
 	query := `
-		INSERT INTO vendors (email, status)
-		VALUES ($1, 'invited')
+		INSERT INTO vendors (email, owner_name, status)
+		VALUES ($1, $2, 'invited')
 		ON CONFLICT (email) DO NOTHING`
 
-	_, err := r.db.ExecContext(ctx, query, email)
+	_, err := r.db.ExecContext(ctx, query, email, ownerName)
 	if err != nil {
-		return fmt.Errorf("failed to create vendor invited record for %s: %w", email, err)
+		return fmt.Errorf("failed to create vendor invited record: %w", err)
 	}
-
 	return nil
 }

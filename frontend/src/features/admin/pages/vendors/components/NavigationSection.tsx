@@ -7,14 +7,21 @@ type TabType = 'review' | 'balance';
 interface NavigationSectionProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  search: string;
+  onSearchChange: (val: string) => void;
 }
 
-export function NavigationSection({ activeTab, onTabChange }: NavigationSectionProps) {
+export function NavigationSection({
+  activeTab,
+  onTabChange,
+  search,
+  onSearchChange,
+}: NavigationSectionProps) {
   return (
     <div className="grid w-full gap-4 grid-rows-4 grid-cols-2 lg:grid-rows-1 lg:grid-flow-col justify-between">
       <AdminActionsTabFilter activeTab={activeTab} onTabChange={onTabChange} />
       <div className="grid w-full gap-2 grid-rows-4 grid-cols-1 lg:grid-rows-1 lg:grid-flow-col justify-between">
-        <SearchFilter />
+        <SearchFilter value={search} onChange={onSearchChange} />
         <VendorInviteButton />
       </div>
     </div>
