@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/kewding/backend/internal/adapter/controller"
 	"github.com/kewding/backend/internal/config"
 	"github.com/kewding/backend/internal/infra/db"
@@ -22,8 +23,18 @@ import (
 )
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables")
+	}
+
 	validation.Init()
 	cfg := config.LoadEnv()
+
+	// temporary debug — remove after fixing
+	log.Printf("SMTP_FROM_EMAIL: '%s'", cfg.SMTPFromEmail)
+	log.Printf("SMTP_USERNAME: '%s'", cfg.SMTPUsername)
+	log.Printf("SMTP_HOST: '%s'", cfg.SMTPHost)
 
 	dbNode, err := db.Connect(*cfg)
 	if err != nil {

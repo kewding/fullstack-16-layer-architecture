@@ -2,6 +2,7 @@ package vendorinvite
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,7 @@ func (c *Controller) SendInvite(ctx *gin.Context) {
 	req.InvitedBy = invitedBy.(string)
 
 	if err := c.uc.SendInvite(ctx.Request.Context(), req); err != nil {
+		 log.Printf("SendInvite error: %v", err)
 		switch {
 		case errors.Is(err, ErrEmailAlreadyUsed):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
