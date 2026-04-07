@@ -3,12 +3,8 @@ import type { VendorReviewRow } from '../services/vendor.service';
 
 export const VENDORS_STATUS_TABLE_COLUMNS: ColumnDef<VendorReviewRow>[] = [
   {
-    accessorKey: 'stall_name',
-    header: 'Stall Name',
-    cell: ({ row }) =>
-      row.original.stall_name ?? (
-        <span className="text-muted-foreground italic text-xs">Not registered</span>
-      ),
+    accessorKey: 'owner_name',
+    header: 'Owner Name',
   },
   {
     accessorKey: 'email',

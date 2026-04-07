@@ -24,6 +24,7 @@ func NewUseCase(repo Repository, emailSender EmailSender) UseCase {
 }
 
 func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteRequest) error {
+	// Step 1: Check for existing pending invite
 	hasPending, err := uc.repo.HasPendingInvite(ctx, req.Email)
 	if err != nil {
 		return fmt.Errorf("failed to check pending invite: %w", err)
@@ -32,23 +33,26 @@ func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteReq
 		return ErrEmailAlreadyUsed
 	}
 
+	// Step 2: Generate token
 	token := security.GenerateRandomToken()
 
-	if err := uc.repo.CreateInvite(ctx, token, req.Email, req.OwnerName, req.InvitedBy); err != nil {
-		return fmt.Errorf("failed to store invite: %w", err)
-	}
-
-	if err := uc.repo.CreateVendorInvitedRecord(ctx, req.Email, req.OwnerName); err != nil {
-		return fmt.Errorf("failed to create vendor record: %w", err)
-	}
-
+	// Step 3: Send email FIRST — before touching the DB
 	if err := uc.emailSender.SendInviteEmail(req.Email, req.OwnerName, token); err != nil {
 		return fmt.Errorf("failed to send invite email: %w", err)
 	}
 
+	// Step 4: Only save to DB if email succeeded
+	if err := uc.repo.CreateInvite(ctx, token, req.Email, req.OwnerName, req.InvitedBy); err != nil {
+		return fmt.Errorf("failed to store invite: %w", err)
+	}
+
+	// Step 5: Create vendor invited record
+	if err := uc.repo.CreateVendorInvitedRecord(ctx, req.Email, req.OwnerName); err != nil {
+		return fmt.Errorf("failed to create vendor record: %w", err)
+	}
+
 	return nil
 }
-
 func (uc *vendorInviteUseCase) ValidateToken(ctx context.Context, token string) (*ValidateTokenResponse, error) {
 	invite, err := uc.repo.GetInviteByToken(ctx, token)
 	if err != nil {
