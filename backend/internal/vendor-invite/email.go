@@ -12,24 +12,26 @@ type gmailEmailSender struct {
 	username  string
 	password  string
 	fromEmail string
+	appURL    string
 }
 
 type EmailSender interface {
 	SendInviteEmail(toEmail string, ownerName string, token string) error
 }
 
-func NewGmailEmailSender(host string, port int, username, password, fromEmail string) EmailSender {
+func NewGmailEmailSender(host string, port int, username, password, fromEmail string, appURL string) EmailSender {
 	return &gmailEmailSender{
 		host:      host,
 		port:      port,
 		username:  username,
 		password:  password,
 		fromEmail: fromEmail,
+		appURL:    appURL,
 	}
 }
 
 func (s *gmailEmailSender) SendInviteEmail(toEmail string, ownerName string, token string) error {
-	registrationURL := fmt.Sprintf("http://localhost:5173/vendor-register?token=%s", token)
+	registrationURL := fmt.Sprintf("%s/vendor-register?token=%s", s.appURL, token)
 
 	htmlBody := fmt.Sprintf(`
 <!DOCTYPE html>

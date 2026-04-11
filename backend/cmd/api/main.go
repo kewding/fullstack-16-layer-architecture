@@ -90,6 +90,7 @@ func main() {
 		cfg.SMTPUsername,
 		cfg.SMTPPassword,
 		cfg.SMTPFromEmail,
+		cfg.AppURL,
 	)
 	vendorInviteUseCase := vendorinvite.NewUseCase(vendorInviteRepo, vendorInviteEmailSender)
 	vendorInviteController := vendorinvite.NewController(vendorInviteUseCase)
