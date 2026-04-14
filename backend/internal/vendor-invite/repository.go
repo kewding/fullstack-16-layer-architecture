@@ -14,4 +14,7 @@ type Repository interface {
 	
 	MarkInviteUsed(ctx context.Context, token string) error
 	HasPendingInvite(ctx context.Context, email string) (bool, error)
+
+	GetVendorByID(ctx context.Context, vendorID string) (*InviteTokenResponse, error) 
+	RevokeVendor(ctx context.Context, vendorID string) error  
 }

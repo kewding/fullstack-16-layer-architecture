@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { VendorsTable } from './components/VendorsTable';
-import { VENDORS_STATUS_TABLE_COLUMNS } from './constants/vendorsStatusTableColumns';
-import { VENDORS_BALANCE_TABLE_COLUMNS } from './constants/vendorsBalanceTableColumns';
-import { NavigationSection } from './components/NavigationSection';
 import { Button } from '@/components/ui/button';
+import React, { useCallback, useEffect, useState } from 'react';
+import { NavigationSection } from './components/NavigationSection';
+import { VendorsTable } from './components/VendorsTable';
+import { VENDORS_BALANCE_TABLE_COLUMNS } from './constants/vendorsBalanceTableColumns';
+import { VENDORS_STATUS_TABLE_COLUMNS } from './constants/vendorsStatusTableColumns';
 import {
   vendorService,
-  type VendorReviewRow,
   type VendorBalanceRow,
+  type VendorReviewRow,
   type VendorStatusFilter,
 } from './services/vendor.service';
 
@@ -93,7 +93,7 @@ export const AdminVendorsPage: React.FC = () => {
 
         {activeTab === 'review' ? (
           <VendorsTable
-            columns={VENDORS_STATUS_TABLE_COLUMNS}
+            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData)}
             data={reviewData}
             isLoading={isLoading}
             page={page}

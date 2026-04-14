@@ -13,6 +13,7 @@ type SendInviteRequest struct {
 type InviteTokenResponse struct {
 	Email     string    `json:"email"`
 	ExpiresAt time.Time `json:"expires_at"`
+	OwnerName string    `json:"owner_name"`
 }
 
 type ValidateTokenResponse struct {

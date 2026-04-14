@@ -50,7 +50,7 @@ func (c *Controller) SendInvite(ctx *gin.Context) {
 	req.InvitedBy = invitedBy.(string)
 
 	if err := c.uc.SendInvite(ctx.Request.Context(), req); err != nil {
-		 log.Printf("SendInvite error: %v", err)
+		log.Printf("SendInvite error: %v", err)
 		switch {
 		case errors.Is(err, ErrEmailAlreadyUsed):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
@@ -138,6 +138,54 @@ func (c *Controller) ResendInvite(ctx *gin.Context) {
 			Success: false,
 			Error:   &response.APIError{Code: "internal_error", Message: "Failed to resend invitation"},
 		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
+}
+
+// DELETE /api/admin/vendor/:id/revoke
+func (c *Controller) RevokeVendor(ctx *gin.Context) {
+	vendorID := ctx.Param("id")
+	if vendorID == "" {
+		ctx.JSON(http.StatusBadRequest, response.APIResponse{
+			Success: false,
+			Error: &response.APIError{
+				Code:    "missing_vendor_id",
+				Message: "Vendor ID is required",
+			},
+		})
+		return
+	}
+
+	if err := c.uc.RevokeVendor(ctx.Request.Context(), vendorID); err != nil {
+		log.Printf("RevokeVendor error: %v", err)
+		switch {
+		case errors.Is(err, ErrInviteNotFound):
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "vendor_not_found",
+					Message: "Vendor not found",
+				},
+			})
+		case errors.Is(err, ErrCannotRevoke):
+			ctx.JSON(http.StatusConflict, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "cannot_revoke",
+					Message: "Only invited or for_review vendors can be revoked",
+				},
+			})
+		default:
+			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "internal_error",
+					Message: "An etong error unexpected error occurred",
+				},
+			})
+		}
 		return
 	}
 

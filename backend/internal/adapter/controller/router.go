@@ -67,6 +67,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			admin.POST("/vendor/invite", deps.VendorInviteController.SendInvite)
 			admin.GET("/vendors/review", deps.VendorController.ListVendorsReview)
 			admin.GET("/vendors/balance", deps.VendorController.ListVendorsBalance)
+			admin.DELETE("/vendor/:id/revoke", deps.VendorInviteController.RevokeVendor)
 		}
 
 		// Cashier only — role_id: 4
