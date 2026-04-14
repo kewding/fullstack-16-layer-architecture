@@ -53,10 +53,7 @@ export const vendorService = {
     return json.data!;
   },
 
-  async listBalance(
-    page: number,
-    search: string,
-  ): Promise<PaginatedResponse<VendorBalanceRow>> {
+  async listBalance(page: number, search: string): Promise<PaginatedResponse<VendorBalanceRow>> {
     const params = new URLSearchParams({
       page: String(page),
       ...(search && { search }),
@@ -65,5 +62,12 @@ export const vendorService = {
     const json: APIResponse<PaginatedResponse<VendorBalanceRow>> = await res.json();
     if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch vendors');
     return json.data!;
+  },
+
+  async revokeVendor(vendorID: string): Promise<APIResponse> {
+    const res = await fetch(`/api/admin/vendor/${vendorID}/revoke`, {
+      method: 'DELETE',
+    });
+    return res.json();
   },
 };

@@ -149,3 +149,54 @@ func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, emai
 	}
 	return nil
 }
+
+func (r *postgresRepository) GetVendorByID(ctx context.Context, vendorID string) (*InviteTokenResponse, error) {
+	query := `
+		SELECT vi.email, vi.expires_at, vi.owner_name, v.status
+		FROM vendor_invitations vi
+		JOIN vendors v ON v.email = vi.email
+		WHERE v.id = $1
+		LIMIT 1`
+
+	var res InviteTokenResponse
+	var status string
+	err := r.db.QueryRowContext(ctx, query, vendorID).Scan(
+		&res.Email,
+		&res.ExpiresAt,
+		&res.OwnerName,
+		&status,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrInviteNotFound
+		}
+		return nil, fmt.Errorf("failed to get vendor: %w", err)
+	}
+
+	if status != "invited" && status != "for_review" {
+		return nil, ErrCannotRevoke
+	}
+
+	return &res, nil
+}
+
+func (r *postgresRepository) RevokeVendor(ctx context.Context, vendorID string) error {
+	// delete from vendor_invitations using the email from vendors
+	query := `
+		DELETE FROM vendor_invitations
+		WHERE email = (SELECT email FROM vendors WHERE id = $1)`
+
+	_, err := r.db.ExecContext(ctx, query, vendorID)
+	if err != nil {
+		return fmt.Errorf("failed to delete vendor invitations: %w", err)
+	}
+
+	// then delete from vendors
+	query = `DELETE FROM vendors WHERE id = $1`
+	_, err = r.db.ExecContext(ctx, query, vendorID)
+	if err != nil {
+		return fmt.Errorf("failed to delete vendor: %w", err)
+	}
+
+	return nil
+}

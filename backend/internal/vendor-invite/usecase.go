@@ -12,6 +12,7 @@ type UseCase interface {
 	ValidateToken(ctx context.Context, token string) (*ValidateTokenResponse, error)
 	ResendInvite(ctx context.Context, email string, invitedBy string) error
 	GetExpiredInvite(ctx context.Context, token string) (*InviteTokenResponse, error)
+	RevokeVendor(ctx context.Context, vendorID string) error
 }
 
 type vendorInviteUseCase struct {
@@ -53,6 +54,7 @@ func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteReq
 
 	return nil
 }
+
 func (uc *vendorInviteUseCase) ValidateToken(ctx context.Context, token string) (*ValidateTokenResponse, error) {
 	invite, err := uc.repo.GetInviteByToken(ctx, token)
 	if err != nil {
@@ -80,4 +82,24 @@ func (uc *vendorInviteUseCase) ResendInvite(ctx context.Context, email string, i
 
 func (uc *vendorInviteUseCase) GetExpiredInvite(ctx context.Context, token string) (*InviteTokenResponse, error) {
 	return uc.repo.GetExpiredInvite(ctx, token)
+}
+
+func (uc *vendorInviteUseCase) RevokeVendor(ctx context.Context, vendorID string) error {
+	// Step 1: Get vendor details for the revocation email
+	vendor, err := uc.repo.GetVendorByID(ctx, vendorID)
+	if err != nil {
+		return err // ErrInviteNotFound or ErrCannotRevoke bubble up
+	}
+
+	// Step 2: Send revocation email first
+	if err := uc.emailSender.SendRevocationEmail(vendor.Email, vendor.OwnerName); err != nil {
+		return fmt.Errorf("failed to send revocation email: %w", err)
+	}
+
+	// Step 3: Hard delete from DB only after email succeeds
+	if err := uc.repo.RevokeVendor(ctx, vendorID); err != nil {
+		return fmt.Errorf("failed to revoke vendor: %w", err)
+	}
+
+	return nil
 }
