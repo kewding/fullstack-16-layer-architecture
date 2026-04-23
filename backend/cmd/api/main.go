@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -20,6 +21,7 @@ import (
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
+	"github.com/kewding/backend/internal/infra/cleanup"
 )
 
 func main() {
@@ -55,6 +57,13 @@ func main() {
 	healthHandler := &controller.HealthHandler{
 		HealthService: healthService,
 	}
+
+	// --- Background Cleanup Job ---
+    ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cleaner := cleanup.NewExpiredInvitesCleaner(dbNode.Connection)
+	go cleaner.Run(ctx)
 
 	// --- Registration Module Wiring ---
 	registerRepo := register.NewPostgresRepository(dbNode.Connection)

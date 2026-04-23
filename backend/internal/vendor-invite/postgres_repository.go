@@ -101,6 +101,7 @@ func (r *postgresRepository) HasPendingInvite(ctx context.Context, email string)
 			WHERE email = $1
 			AND status = 'pending'
 			AND expires_at > NOW()
+			AND deleted_at IS NULL
 		)`
 
 	var exists bool
@@ -139,9 +140,14 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, token string) e
 
 func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, email string, ownerName string) error {
 	query := `
-		INSERT INTO vendors (email, owner_name, status)
-		VALUES ($1, $2, 'invited')
-		ON CONFLICT (email) DO NOTHING`
+    INSERT INTO vendors (email, owner_name, status)
+    VALUES ($1, $2, 'invited')
+    ON CONFLICT (email) DO UPDATE
+    SET owner_name = EXCLUDED.owner_name,
+        status = 'invited',
+        deleted_at = NULL,
+        updated_at = NOW()
+    WHERE vendors.deleted_at IS NOT NULL`
 
 	_, err := r.db.ExecContext(ctx, query, email, ownerName)
 	if err != nil {
@@ -156,6 +162,8 @@ func (r *postgresRepository) GetVendorByID(ctx context.Context, vendorID string)
 		FROM vendor_invitations vi
 		JOIN vendors v ON v.email = vi.email
 		WHERE v.id = $1
+		AND v.deleted_at IS NULL
+      	AND vi.deleted_at IS NULL
 		LIMIT 1`
 
 	var res InviteTokenResponse
@@ -181,22 +189,74 @@ func (r *postgresRepository) GetVendorByID(ctx context.Context, vendorID string)
 }
 
 func (r *postgresRepository) RevokeVendor(ctx context.Context, vendorID string) error {
-	// delete from vendor_invitations using the email from vendors
-	query := `
-		DELETE FROM vendor_invitations
-		WHERE email = (SELECT email FROM vendors WHERE id = $1)`
-
-	_, err := r.db.ExecContext(ctx, query, vendorID)
+	// Start a transaction
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete vendor invitations: %w", err)
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Retrieve the vendor's email and associated user_id (nullable) for the audit trail and cleanup
+	var email string
+	var userID sql.NullString
+	query := `SELECT email, user_id FROM vendors WHERE id = $1`
+	err = tx.QueryRowContext(ctx, query, vendorID).Scan(&email, &userID)
+	if err != nil {
+		return fmt.Errorf("failed to find vendor data: %w", err)
 	}
 
-	// then delete from vendors
-	query = `DELETE FROM vendors WHERE id = $1`
-	_, err = r.db.ExecContext(ctx, query, vendorID)
+	// 2. Soft delete the vendor invitations
+	queryInvitations := `
+		UPDATE vendor_invitations 
+		SET deleted_at = NOW() 
+		WHERE email = $1 AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, queryInvitations, email)
 	if err != nil {
-		return fmt.Errorf("failed to delete vendor: %w", err)
+		return fmt.Errorf("failed to soft delete vendor invitations: %w", err)
 	}
 
-	return nil
+	// 3. Soft delete the vendor record
+	queryVendor := `
+		UPDATE vendors 
+		SET deleted_at = NOW() 
+		WHERE id = $1 AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, queryVendor, vendorID)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete vendor: %w", err)
+	}
+
+	// 4. Hard delete the user associated with this email
+	// This clears the UNIQUE constraint on the email column, allowing for re-registration
+	if userID.Valid {
+		queryUser := `DELETE FROM users WHERE id = $1`
+		_, err = tx.ExecContext(ctx, queryUser, userID.String)
+		if err != nil {
+			return fmt.Errorf("failed to purge user and connected records: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// checks if email already exists in users table
+func (r *postgresRepository) IsEmailRegistered(ctx context.Context, email string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL)`
+
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check registered email: %w", err)
+	}
+	return exists, nil
+}
+
+// checks if email has any invite record regardless of status
+func (r *postgresRepository) HasAnyInviteRecord(ctx context.Context, email string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM vendor_invitations WHERE email = $1)`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check invite record: %w", err)
+	}
+	return exists, nil
 }

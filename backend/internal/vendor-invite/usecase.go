@@ -25,7 +25,16 @@ func NewUseCase(repo Repository, emailSender EmailSender) UseCase {
 }
 
 func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteRequest) error {
-	// Step 1: Check for existing pending invite
+	// Step 1: Block if email is already a registered user
+	registered, err := uc.repo.IsEmailRegistered(ctx, req.Email)
+	if err != nil {
+		return fmt.Errorf("failed to check email: %w", err)
+	}
+	if registered {
+		return ErrEmailAlreadyRegistered
+	}
+
+	// Step 2: Block only if there is an active non-expired pending invite
 	hasPending, err := uc.repo.HasPendingInvite(ctx, req.Email)
 	if err != nil {
 		return fmt.Errorf("failed to check pending invite: %w", err)
@@ -34,20 +43,19 @@ func (uc *vendorInviteUseCase) SendInvite(ctx context.Context, req SendInviteReq
 		return ErrEmailAlreadyUsed
 	}
 
-	// Step 2: Generate token
+	// Step 3: Generate token
 	token := security.GenerateRandomToken()
 
-	// Step 3: Send email FIRST — before touching the DB
+	// Step 4: Send email first
 	if err := uc.emailSender.SendInviteEmail(req.Email, req.OwnerName, token); err != nil {
 		return fmt.Errorf("failed to send invite email: %w", err)
 	}
 
-	// Step 4: Only save to DB if email succeeded
+	// Step 5: Save to DB only after email succeeds
 	if err := uc.repo.CreateInvite(ctx, token, req.Email, req.OwnerName, req.InvitedBy); err != nil {
 		return fmt.Errorf("failed to store invite: %w", err)
 	}
 
-	// Step 5: Create vendor invited record
 	if err := uc.repo.CreateVendorInvitedRecord(ctx, req.Email, req.OwnerName); err != nil {
 		return fmt.Errorf("failed to create vendor record: %w", err)
 	}
@@ -68,10 +76,6 @@ func (uc *vendorInviteUseCase) ValidateToken(ctx context.Context, token string) 
 }
 
 func (uc *vendorInviteUseCase) ResendInvite(ctx context.Context, email string, invitedBy string) error {
-	// Invalidate old invite
-	if err := uc.repo.InvalidateExistingInvite(ctx, email); err != nil {
-		return fmt.Errorf("failed to invalidate old invite: %w", err)
-	}
 
 	// Generate new token and send
 	return uc.SendInvite(ctx, SendInviteRequest{
@@ -96,7 +100,7 @@ func (uc *vendorInviteUseCase) RevokeVendor(ctx context.Context, vendorID string
 		return fmt.Errorf("failed to send revocation email: %w", err)
 	}
 
-	// Step 3: Hard delete from DB only after email succeeds
+	// Step 3: Deletion from DB only after email succeeds
 	if err := uc.repo.RevokeVendor(ctx, vendorID); err != nil {
 		return fmt.Errorf("failed to revoke vendor: %w", err)
 	}
