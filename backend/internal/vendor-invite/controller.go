@@ -169,6 +169,14 @@ func (c *Controller) RevokeVendor(ctx *gin.Context) {
 					Message: "Vendor not found",
 				},
 			})
+		case errors.Is(err, ErrEmailAlreadyRegistered):
+			ctx.JSON(http.StatusConflict, response.APIResponse{
+				Success: false,
+				Error: &response.APIError{
+					Code:    "email_already_registered",
+					Message: "This email already belongs to a registered user",
+				},
+			})
 		case errors.Is(err, ErrCannotRevoke):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
 				Success: false,

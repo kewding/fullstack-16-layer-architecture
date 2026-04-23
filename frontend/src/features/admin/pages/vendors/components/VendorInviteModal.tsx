@@ -26,6 +26,7 @@ export function VendorInviteModal({ onClose }: VendorInviteModalProps) {
     } else {
       const errorMessages: Record<string, string> = {
         pending_invite_exists: 'A pending invitation already exists for this email.',
+        email_already_registered: 'This email already belongs to a registered user.',
         validation_error: 'Please enter a valid email address.',
       };
       setError(errorMessages[res.error?.code ?? ''] ?? 'Something went wrong. Please try again.');

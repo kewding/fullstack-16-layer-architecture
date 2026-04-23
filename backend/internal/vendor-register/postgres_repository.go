@@ -54,7 +54,8 @@ func (r *postgresRepository) GetInviteEmailByToken(ctx context.Context, token st
 		FROM vendor_invitations
 		WHERE token = $1
 		  AND status = 'pending'
-		  AND expires_at > NOW()`
+		  AND expires_at > NOW()
+		  AND deleted_at IS NULL`
 
 	var email string
 	err := r.db.QueryRowContext(ctx, query, token).Scan(&email)

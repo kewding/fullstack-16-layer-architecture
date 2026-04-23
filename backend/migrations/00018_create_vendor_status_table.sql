@@ -18,11 +18,14 @@ CREATE TABLE vendors (
     concession_fee_value DECIMAL(12, 2),
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_vendors_email ON vendors(email);
 CREATE INDEX idx_vendors_status ON vendors(status);
+CREATE INDEX idx_active_vendors ON vendors(id) WHERE deleted_at IS NULL;
 
 CREATE TRIGGER update_vendors_changetimestamp
 BEFORE UPDATE ON vendors
