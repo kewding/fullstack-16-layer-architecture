@@ -57,3 +57,5 @@ coverage/
 # Misc
 # ===============================
 *.local
+
+service-account.json

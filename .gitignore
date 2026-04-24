@@ -83,3 +83,5 @@ ehthumbs.db
 *.tsbuildinfo
 .eslintcache
 .stylelintcache
+
+service-account.json
