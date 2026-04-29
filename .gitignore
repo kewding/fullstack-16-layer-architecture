@@ -31,7 +31,7 @@ bin/
 *.dylib
 *.test
 *.out
-vendor/
+# vendor/
 
 # Environment variables & secrets
 .env
