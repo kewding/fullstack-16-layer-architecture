@@ -65,3 +65,6 @@ Thumbs.db
 # Misc
 # ===============================
 *.local
+
+
+service-account.json

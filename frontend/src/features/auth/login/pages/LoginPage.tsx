@@ -48,6 +48,7 @@ export const LoginPage: React.FC = () => {
     const rolePaths: Record<number, string> = {
       1: '/admin/dashboard',
       2: '/user/dashboard',
+      3: '/vendor/dashboard',
       4: '/cashier/rfid-tagging',
     };
     return <Navigate to={rolePaths[user?.roleId ?? 0] || '/'} replace />;
@@ -69,6 +70,7 @@ export const LoginPage: React.FC = () => {
       const rolePaths: Record<number, string> = {
         1: '/admin',
         2: '/user/dashboard',
+        3: '/vendor/dashboard',
         4: '/cashier',
       };
 

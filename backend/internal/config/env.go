@@ -19,6 +19,9 @@ type Config struct {
 	SMTPPassword    string
 	SMTPFromEmail   string
 	AppURL        string
+	CloudinaryCloud   string
+	CloudinaryKey     string
+	CloudinarySecret  string
 }
 
 func LoadEnv() *Config {
@@ -37,6 +40,9 @@ func LoadEnv() *Config {
 		SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
 		SMTPFromEmail: getEnv("SMTP_FROM_EMAIL", ""),
 		AppURL:        getEnv("APP_URL", "http://localhost:3000"),
+		CloudinaryCloud:  getEnv("CLOUDINARY_CLOUD_NAME", ""),
+		CloudinaryKey:    getEnv("CLOUDINARY_API_KEY", ""),
+		CloudinarySecret: getEnv("CLOUDINARY_API_SECRET", ""),
 		
 	}
 }
