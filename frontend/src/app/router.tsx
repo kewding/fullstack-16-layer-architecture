@@ -7,6 +7,7 @@ import { authRoutes } from '@/features/auth/routes';
 import { cashierRoutes } from '@/features/cashier/routes';
 import { userRoutes } from '@/features/user/routes';
 import { unauthorizedRoutes } from '@/pages/errors/routes';
+import { vendorRoutes } from '@/features/vendor/routes';
 
 const allRoutes = [
   {
@@ -33,6 +34,10 @@ const allRoutes = [
       {
         element: <RequireAuth allowedRoles={[2]} />,
         children: [...userRoutes],
+      },
+      {
+        element: <RequireAuth allowedRoles={[3]} />, // ← add vendor
+        children: [...vendorRoutes],
       },
       {
         element: <RequireAuth allowedRoles={[4]} />,

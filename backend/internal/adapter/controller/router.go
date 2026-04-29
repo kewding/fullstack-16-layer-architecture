@@ -4,11 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
+	medicalinfo "github.com/kewding/backend/internal/medical-info"
 	"github.com/kewding/backend/internal/middleware"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/user"
+	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
@@ -24,6 +26,8 @@ type Dependencies struct {
 	VendorInviteController   *vendorinvite.Controller
 	VendorRegisterController *vendorregister.Controller
 	VendorController         *vendors.Controller
+	VendorInfoController     *vendorinfo.Controller
+	MedicalInfoController    *medicalinfo.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -84,6 +88,20 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		{
 			customer.GET("/user/info/:id", deps.UserInfoController.GetUser)
 			customer.GET("/user/wallet/:id", deps.UserInfoController.GetWallet)
+			customer.GET("/medical-info", deps.MedicalInfoController.GetMedicalInfo)
+			customer.PUT("/medical-info", deps.MedicalInfoController.UpsertMedicalInfo)
+		}
+
+		// Vendor only — role_id: 3
+		vendorAuth := api.Group("/vendor-auth")
+		vendorAuth.Use(middleware.AuthMiddleware(loginRepo, 3))
+		{
+			// vendor authenticated endpoints go here as you build them
+			vendorAuth.GET("/personal-info", deps.VendorInfoController.GetPersonalInfo)
+			vendorAuth.PUT("/personal-info", deps.VendorInfoController.UpdatePersonalInfo)
+			vendorAuth.GET("/business-info", deps.VendorInfoController.GetBusinessInfo)
+			vendorAuth.PUT("/business-info", deps.VendorInfoController.UpsertBusinessInfo)
+			vendorAuth.POST("/documents/:type", deps.VendorInfoController.UploadDocument)
 		}
 
 	}

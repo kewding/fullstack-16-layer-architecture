@@ -9,19 +9,22 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kewding/backend/internal/adapter/controller"
 	"github.com/kewding/backend/internal/config"
+	"github.com/kewding/backend/internal/infra/cleanup"
+	"github.com/kewding/backend/internal/infra/cloudinary"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/infra/health"
 	"github.com/kewding/backend/internal/login"
+	medicalinfo "github.com/kewding/backend/internal/medical-info"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/user"
 	"github.com/kewding/backend/internal/validation"
+	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
-	"github.com/kewding/backend/internal/infra/cleanup"
 )
 
 func main() {
@@ -59,7 +62,7 @@ func main() {
 	}
 
 	// --- Background Cleanup Job ---
-    ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	cleaner := cleanup.NewExpiredInvitesCleaner(dbNode.Connection)
@@ -114,6 +117,25 @@ func main() {
 	vendorUseCase := vendors.NewUseCase(vendorRepo)
 	vendorController := vendors.NewController(vendorUseCase)
 
+	// --- Vendor Info ---
+	cloudUploader, err := cloudinary.NewUploader(
+		cfg.CloudinaryCloud,
+		cfg.CloudinaryKey,
+		cfg.CloudinarySecret,
+	)
+	if err != nil {
+		log.Fatalf("Failed to initialize Cloudinary uploader: %v", err)
+	}
+
+	vendorInfoRepo := vendorinfo.NewPostgresRepository(dbNode.Connection)
+	vendorInfoUseCase := vendorinfo.NewUseCase(vendorInfoRepo, cloudUploader)
+	vendorInfoController := vendorinfo.NewController(vendorInfoUseCase)
+
+	// --- Medical Info ---
+	medicalInfoRepo := medicalinfo.NewPostgresRepository(dbNode.Connection)
+	medicalInfoUseCase := medicalinfo.NewUseCase(medicalInfoRepo)
+	medicalInfoController := medicalinfo.NewController(medicalInfoUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:       registerController,
@@ -125,6 +147,8 @@ func main() {
 		VendorInviteController:   vendorInviteController,
 		VendorRegisterController: vendorRegisterController,
 		VendorController:         vendorController,
+		VendorInfoController:     vendorInfoController,
+		MedicalInfoController:    medicalInfoController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
