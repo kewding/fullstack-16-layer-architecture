@@ -80,6 +80,28 @@ func (r *postgresRepository) UpdatePersonalInfo(ctx context.Context, userID stri
 		return fmt.Errorf("failed to update stall name: %w", err)
 	}
 
+	_, err = tx.ExecContext(ctx, `
+    UPDATE vendors
+    SET owner_name = $1, updated_at = NOW()
+    WHERE user_id = $2`,
+		req.FirstName+" "+req.MiddleName+" "+req.LastName,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update vendor owner name: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, `
+    UPDATE vendor_invitations
+    SET owner_name = $1
+    WHERE email = (SELECT email FROM vendors WHERE user_id = $2)`,
+		req.FirstName+" "+req.MiddleName+" "+req.LastName,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update invitation owner name: %w", err)
+	}
+
 	return tx.Commit()
 }
 

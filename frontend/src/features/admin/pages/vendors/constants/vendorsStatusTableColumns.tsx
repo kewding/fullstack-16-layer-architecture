@@ -4,20 +4,25 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import type { VendorReviewRow } from '../services/vendor.service';
 import { vendorService } from '../services/vendor.service';
+import { VendorDetailModal } from '../components/VendorDetailModal';
 
 function ActionButtons({
   id,
   status,
   onRevoked,
+  onApproved,
 }: {
   id: string;
   status: string;
   onRevoked: () => void;
+  onApproved: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const canRevoke = status === 'invited' || status === 'for_review';
+  const canView = status === 'for_review' || status === 'in_business';
 
   const handleRevoke = async () => {
     setLoading(true);
@@ -37,41 +42,61 @@ function ActionButtons({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm">
-        View
-      </Button>
+    <>
+      <div className="flex items-center gap-2">
+        {canView && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowModal(true)}
+          >
+            View
+          </Button>
+        )}
 
-      {canRevoke && (
-        <>
-          {!confirmOpen ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
-              onClick={() => setConfirmOpen(true)}
-            >
-              Remove
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Sure?</span>
-              <Button size="sm" variant="destructive" disabled={loading} onClick={handleRevoke}>
-                {loading ? '...' : 'Yes'}
+        {canRevoke && (
+          <>
+            {!confirmOpen ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                onClick={() => setConfirmOpen(true)}
+              >
+                Remove
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setConfirmOpen(false)}>
-                No
-              </Button>
-            </div>
-          )}
-        </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Sure?</span>
+                <Button size="sm" variant="destructive" disabled={loading} onClick={handleRevoke}>
+                  {loading ? '...' : 'Yes'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setConfirmOpen(false)}>
+                  No
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {showModal && (
+        <VendorDetailModal
+          vendorID={id}
+          onClose={() => setShowModal(false)}
+          onApproved={() => {
+            onApproved();
+            setShowModal(false);
+          }}
+        />
       )}
-    </div>
+    </>
   );
 }
 
 export const VENDORS_STATUS_TABLE_COLUMNS = (
   onRevoked: () => void,
+  onApproved: () => void,
 ): ColumnDef<VendorReviewRow>[] => [
   {
     accessorKey: 'owner_name',
@@ -121,7 +146,12 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     id: 'actions',
     header: 'Actions',
     cell: ({ row }) => (
-      <ActionButtons id={row.original.id} status={row.original.status} onRevoked={onRevoked} />
+      <ActionButtons
+        id={row.original.id}
+        status={row.original.status}
+        onRevoked={onRevoked}
+        onApproved={onApproved}
+      />
     ),
   },
 ];

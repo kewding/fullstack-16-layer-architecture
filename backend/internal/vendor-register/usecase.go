@@ -12,11 +12,12 @@ type UseCase interface {
 }
 
 type vendorRegisterUseCase struct {
-	repo Repository
+	repo      Repository
+	notifRepo NotificationRepository
 }
 
-func NewUseCase(repo Repository) UseCase {
-	return &vendorRegisterUseCase{repo: repo}
+func NewUseCase(repo Repository, notifRepo NotificationRepository) UseCase {
+	return &vendorRegisterUseCase{repo: repo, notifRepo: notifRepo}
 }
 
 func (uc *vendorRegisterUseCase) Register(ctx context.Context, req VendorRegisterRequest) (err error) {
@@ -88,6 +89,18 @@ func (uc *vendorRegisterUseCase) Register(ctx context.Context, req VendorRegiste
 	if err = uc.repo.MarkInviteUsed(ctx, tx, req.Token); err != nil {
 		return fmt.Errorf("failed to mark invite as used: %w", err)
 	}
+
+	// Step 11: Fire notification after successful commit (fire-and-forget)
+	// runs in goroutine so it never blocks or rolls back the registration
+	go func() {
+		if err := uc.notifRepo.CreateNotification(
+			context.Background(),
+			"vendor_registered",
+			fmt.Sprintf("New vendor registration submitted for review: %s", email),
+		); err != nil {
+			fmt.Printf("failed to create registration notification: %v\n", err)
+		}
+	}()
 
 	return nil
 }

@@ -1,5 +1,4 @@
 import { useAuth } from '@/app/providers/AuthProvider';
-import { ViteLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -85,10 +84,10 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-neutral-900 flex">
+    <div className="w-screen h-screen bg-[#415B5A] flex">
       <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-between overflow-y-auto">
+        <div></div>
         <header className="flex flex-col gap-1 items-center">
-          <img src={ViteLogo} alt="Vite Logo" className="w-7 h-7" />
           <h1 className="font-bold text-white text-center">Login Page</h1>
           {showAccessWarning && (
             <p className="text-red-500 text-sm mt-2 text-center px-4">
@@ -109,15 +108,15 @@ export const LoginPage: React.FC = () => {
 
             {/* email field*/}
             <div className="flex flex-col w-full gap-1.5">
-              <label htmlFor="email" className="text-sm">
+              <label htmlFor="email" className="text-sm font-normal">
                 Email
               </label>
               <input
                 id="email"
                 type="email"
                 {...register('email')}
-                className={`h-12 bg-neutral-900 border rounded p-3 focus:outline-none ${
-                  errors.email ? 'border-red-500' : 'border-neutral-500 focus:border-white'
+                className={`h-12 bg-transparent border border-[#CD9A34] rounded p-3 focus:outline-none ${
+                  errors.email ? 'border-red-500' : 'border-[#CD9A34] focus:border-white'
                 }`}
               />
               {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
@@ -125,15 +124,15 @@ export const LoginPage: React.FC = () => {
 
             {/* password field */}
             <div className="flex flex-col w-full gap-1.5">
-              <label htmlFor="password" className="text-sm">
+              <label htmlFor="password" className="text-sm font-normal">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 {...register('password')}
-                className={`h-12 bg-neutral-900 border rounded p-3 focus:outline-none ${
-                  errors.password ? 'border-red-500' : 'border-neutral-500 focus:border-white'
+                className={`h-12 bg-transparent border border-[#CD9A34] rounded p-3 focus:outline-none ${
+                  errors.password ? 'border-red-500' : 'border-[#CD9A34] focus:border-white'
                 }`}
               />
               {errors.password && (
@@ -144,44 +143,46 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`bg-green-500 rounded-full text-black font-bold h-13 transition-opacity ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-400'
+              className={`bg-[#CD9A34] rounded-full text-[#ffffff] font-bold h-13 transition-opacity ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#F4AF26]'
               }`}
             >
               {isSubmitting ? 'Checking...' : 'Continue'}
             </button>
           </form>
 
-          <p className="font-normal">or</p>
+          {/* not used */}
+          {/* <p className="font-normal">or</p>
 
+          
           <div className="flex flex-col gap-2 w-full">
-            <button className="border border-neutral-500 rounded-full h-13 hover:bg-white/5 transition-colors">
+            <button className="border border-[#CD9A34] rounded-full h-13 hover:bg-white/5 transition-colors">
               Google
             </button>
-            <button className="border border-neutral-500 rounded-full h-13 hover:bg-white/5 transition-colors">
+            <button className="border border-[#CD9A34] rounded-full h-13 hover:bg-white/5 transition-colors">
               Facebook
             </button>
-          </div>
+          </div> */}
         </section>
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-neutral-300">Don't have account?</p>
+            <p className="text-neutral-300 text-sm">Don't have account?</p>
             <Link to="/register" className="w-full">
-              <button className="w-full bg-neutral-900 border border-neutral-500 rounded-full font-bold h-13 hover:bg-white/5 transition-colors">
-                Register
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-white border-none">
+                Sign Up
               </button>
             </Link>
           </div>
         </section>
 
-        <footer className="w-full max-w-[330px] text-xs text-center text-neutral-400">
+        <footer className="w-full max-w-[330px] text-xs text-center text-neutral-200">
           This site is protected by your MOM and our self imposed{' '}
-          <a href="#" className="underline">
+          <a href="#" className="text-[#CD9A34]">
             EULA
           </a>{' '}
           and{' '}
-          <a href="#" className="underline">
+          <a href="#" className="text-[#CD9A34]">
             Terms of Service
           </a>{' '}
           apply

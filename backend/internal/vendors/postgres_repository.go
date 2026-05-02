@@ -2,6 +2,7 @@ package vendors
 
 import (
 	"context"
+	"errors"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -223,4 +224,134 @@ func (r *postgresRepository) ListVendorsBalance(ctx context.Context, params List
 	}
 
 	return vendors, total, nil
+}
+
+func (r *postgresRepository) GetVendorDetail(ctx context.Context, vendorID string) (*VendorDetailResponse, error) {
+	query := `
+		SELECT
+			v.id, v.email, v.status,
+			COALESCE(ui.first_name, ''),
+			COALESCE(ui.middle_name, ''),
+			COALESCE(ui.last_name, ''),
+			COALESCE(ui.birth_date::TEXT, ''),
+			COALESCE(ui.contact_no, ''),
+			COALESCE(s.stall_name, ''),
+			COALESCE(vb.dti_sec_number, ''),
+			COALESCE(vb.tin, ''),
+			vb.proof_of_business_address_url,
+			vb.barangay_clearance_url,
+			vb.mayors_permit_url,
+			COALESCE(vb.is_dti_verified, false),
+			COALESCE(vb.is_tin_verified, false),
+			COALESCE(vb.is_documents_verified, false)
+		FROM vendors v
+		LEFT JOIN users_info ui ON ui.user_id = v.user_id
+		LEFT JOIN stalls s ON s.user_id = v.user_id
+		LEFT JOIN vendor_business_info vb ON vb.user_id = v.user_id
+		WHERE v.id = $1
+		  AND v.deleted_at IS NULL
+		LIMIT 1`
+
+	var res VendorDetailResponse
+	err := r.db.QueryRowContext(ctx, query, vendorID).Scan(
+		&res.ID, &res.Email, &res.Status,
+		&res.FirstName, &res.MiddleName, &res.LastName,
+		&res.BirthDate, &res.ContactNumber, &res.StallName,
+		&res.DtiSecNumber, &res.Tin,
+		&res.ProofOfBusinessAddressURL,
+		&res.BarangayClearanceURL,
+		&res.MayorsPermitURL,
+		&res.IsDtiVerified, &res.IsTinVerified, &res.IsDocumentsVerified,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrVendorNotFound
+		}
+		return nil, fmt.Errorf("failed to get vendor detail: %w", err)
+	}
+
+	return &res, nil
+}
+
+func (r *postgresRepository) ApproveVendor(ctx context.Context, vendorID string) (string, error) {
+	// check current status
+	var status, email string
+	err := r.db.QueryRowContext(ctx,
+		`SELECT status, email FROM vendors WHERE id = $1 AND deleted_at IS NULL`,
+		vendorID,
+	).Scan(&status, &email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrVendorNotFound
+		}
+		return "", fmt.Errorf("failed to check vendor status: %w", err)
+	}
+
+	if status != "for_review" {
+		return "", ErrNotForReview
+	}
+
+	_, err = r.db.ExecContext(ctx,
+		`UPDATE vendors SET status = 'in_business', updated_at = NOW() WHERE id = $1`,
+		vendorID,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to approve vendor: %w", err)
+	}
+
+	return email, nil
+}
+
+func (r *postgresRepository) CreateNotification(ctx context.Context, notifType string, message string) error {
+	_, err := r.db.ExecContext(ctx,
+		`INSERT INTO admin_notifications (type, message) VALUES ($1::notification_type, $2)`,
+		notifType, message,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create notification: %w", err)
+	}
+	return nil
+}
+
+func (r *postgresRepository) GetNotifications(ctx context.Context) ([]Notification, error) {
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT id, type, message, is_read, created_at
+		 FROM admin_notifications
+		 ORDER BY created_at DESC
+		 LIMIT 50`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get notifications: %w", err)
+	}
+	defer rows.Close()
+
+	var notifications []Notification
+	for rows.Next() {
+		var n Notification
+		if err := rows.Scan(&n.ID, &n.Type, &n.Message, &n.IsRead, &n.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan notification: %w", err)
+		}
+		notifications = append(notifications, n)
+	}
+
+	if notifications == nil {
+		notifications = []Notification{}
+	}
+
+	return notifications, nil
+}
+
+func (r *postgresRepository) MarkNotificationsRead(ctx context.Context) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE admin_notifications SET is_read = true WHERE is_read = false`,
+	)
+	return err
+}
+
+func (r *postgresRepository) GetUnreadCount(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM admin_notifications WHERE is_read = false`,
+	).Scan(&count)
+	return count, err
 }

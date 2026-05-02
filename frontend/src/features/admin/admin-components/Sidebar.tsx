@@ -10,13 +10,49 @@ import {
 } from '@/components/ui/sidebar';
 import { loginService } from '@/features/auth/login/services/login.service';
 import { LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AdminSidebarSections } from '../admin-constants/sidebar-sections';
+
+function useNotificationCount() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // initial fetch
+    fetch('/api/admin/notifications/unread-count')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setUnreadCount(json.data.count);
+      })
+      .catch(() => {});
+
+    // WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(
+      `${protocol}//${window.location.host}/api/admin/notifications/ws`,
+    );
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (typeof data.unread_count === 'number') {
+          setUnreadCount(data.unread_count);
+        }
+      } catch {}
+    };
+
+    ws.onerror = () => ws.close();
+
+    return () => ws.close();
+  }, []);
+
+  return unreadCount;
+}
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const { logout } = useAuth();
-  // const navigate = useNavigate();
+  const unreadCount = useNotificationCount();
 
   const handleLogout = async () => {
     await loginService.logout();
@@ -28,14 +64,11 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
     <Sidebar collapsible="icon" {...props} className="pr-0">
       <SidebarContent className="py-20">
         <SidebarGroup>
-          {/* <SidebarGroupLabel>Application</SidebarGroupLabel> */}
           <SidebarMenu className="flex flex-col gap-1">
-            {/* sidebar sections */}
             {AdminSidebarSections.navMain.map((item) => {
-              // since icons are not saved as jsx
               const Icon = item.icon;
-              // checks whether url of active path
               const isActive = location.pathname === item.url;
+              const isNotifications = item.url === '/admin/notifications';
 
               return (
                 <SidebarMenuItem key={item.title}>
@@ -47,8 +80,22 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                     }`}
                   >
                     <NavLink to={item.url}>
-                      <Icon />
+                      <div className="relative shrink-0">
+                        <Icon />
+                        {/* unread badge — only on notifications item */}
+                        {isNotifications && unreadCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
                       <span className="font-normal">{item.title}</span>
+                      {/* inline count when sidebar is expanded */}
+                      {isNotifications && unreadCount > 0 && (
+                        <span className="ml-auto text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

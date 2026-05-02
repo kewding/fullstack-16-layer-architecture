@@ -18,6 +18,7 @@ type gmailEmailSender struct {
 type EmailSender interface {
 	SendInviteEmail(toEmail string, ownerName string, token string) error
 	SendRevocationEmail(toEmail string, ownerName string) error
+	SendApprovalEmail(toEmail string, ownerName string, stallName string) error
 }
 
 func NewGmailEmailSender(host string, port int, username, password, fromEmail string, appURL string) EmailSender {
@@ -113,6 +114,54 @@ func (s *gmailEmailSender) SendRevocationEmail(toEmail string, ownerName string)
 
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send revocation email: %w", err)
+	}
+
+	return nil
+}
+
+func (s *gmailEmailSender) SendApprovalEmail(toEmail string, ownerName string, stallName string) error {
+	htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px;">
+  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px;">
+    <h2 style="color: #111;">Congratulations, %s! 🎉</h2>
+    <p style="color: #555; line-height: 1.6;">
+      Your vendor application for <strong>%s</strong> has been reviewed and approved.
+      You are now officially an active vendor on our platform.
+    </p>
+    <h3 style="color: #111;">Next Steps:</h3>
+    <ol style="color: #555; line-height: 2;">
+      <li>Log in to your vendor account</li>
+      <li>Set up your product listings</li>
+      <li>Start accepting orders from students</li>
+    </ol>
+    <a href="%s/login" style="
+      display: inline-block;
+      margin-top: 24px;
+      padding: 14px 28px;
+      background-color: #22c55e;
+      color: black;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 999px;
+    ">Go to Dashboard</a>
+    <p style="margin-top: 32px; color: #999; font-size: 12px;">
+      Welcome to the platform. We look forward to working with you.
+    </p>
+  </div>
+</body>
+</html>`, ownerName, stallName, s.appURL)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", "Your Vendor Application Has Been Approved!")
+	m.SetBody("text/html", htmlBody)
+
+	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send approval email: %w", err)
 	}
 
 	return nil
