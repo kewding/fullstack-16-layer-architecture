@@ -70,4 +70,64 @@ export const vendorService = {
     });
     return res.json();
   },
+
+  async getVendorDetail(vendorID: string): Promise<VendorDetailResponse> {
+    const res = await fetch(`/api/admin/vendor/${vendorID}`);
+    const json: APIResponse<VendorDetailResponse> = await res.json();
+    if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch vendor detail');
+    return json.data!;
+  },
+
+  async approveVendor(vendorID: string): Promise<APIResponse> {
+    const res = await fetch(`/api/admin/vendor/${vendorID}/approve`, {
+      method: 'PATCH',
+    });
+    return res.json();
+  },
+
+  async getNotifications(): Promise<Notification[]> {
+    const res = await fetch('/api/admin/notifications');
+    const json: APIResponse<Notification[]> = await res.json();
+    if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch notifications');
+    return json.data!;
+  },
+
+  async getUnreadCount(): Promise<number> {
+    const res = await fetch('/api/admin/notifications/unread-count');
+    const json: APIResponse<{ count: number }> = await res.json();
+    if (!json.success) return 0;
+    return json.data!.count;
+  },
+
+  async markNotificationsRead(): Promise<void> {
+    await fetch('/api/admin/notifications/mark-read', { method: 'PATCH' });
+  },
 };
+
+export interface VendorDetailResponse {
+  id: string;
+  email: string;
+  status: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  birth_date: string;
+  contact_number: string;
+  stall_name: string;
+  dti_sec_number: string;
+  tin: string;
+  proof_of_business_address_url: string | null;
+  barangay_clearance_url: string | null;
+  mayors_permit_url: string | null;
+  is_dti_verified: boolean;
+  is_tin_verified: boolean;
+  is_documents_verified: boolean;
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}

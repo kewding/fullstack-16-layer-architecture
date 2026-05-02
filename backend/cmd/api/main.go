@@ -107,15 +107,18 @@ func main() {
 	vendorInviteUseCase := vendorinvite.NewUseCase(vendorInviteRepo, vendorInviteEmailSender)
 	vendorInviteController := vendorinvite.NewController(vendorInviteUseCase)
 
-	// --- Vendor Registration ---
-	vendorRegisterRepo := vendorregister.NewPostgresRepository(dbNode.Connection)
-	vendorRegisterUseCase := vendorregister.NewUseCase(vendorRegisterRepo)
-	vendorRegisterController := vendorregister.NewController(vendorRegisterUseCase)
-
 	// --- Vendor ---
 	vendorRepo := vendors.NewPostgresRepository(dbNode.Connection)
 	vendorUseCase := vendors.NewUseCase(vendorRepo)
-	vendorController := vendors.NewController(vendorUseCase)
+	vendorController := vendors.NewController(vendorUseCase, vendorInviteEmailSender)
+
+	// --- Vendor Registration ---
+	vendorRegisterRepo := vendorregister.NewPostgresRepository(dbNode.Connection)
+	vendorRegisterUseCase := vendorregister.NewUseCase(
+		vendorRegisterRepo,
+		vendorRepo,
+	)
+	vendorRegisterController := vendorregister.NewController(vendorRegisterUseCase)
 
 	// --- Vendor Info ---
 	cloudUploader, err := cloudinary.NewUploader(

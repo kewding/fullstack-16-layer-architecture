@@ -1,4 +1,4 @@
-import { BookText, FileText, LayoutGrid, Settings, Users } from 'lucide-react';
+import { Bell, BookText, FileText, LayoutGrid, Settings, Users } from 'lucide-react';
 
 export const AdminSidebarSections = {
   navMain: [
@@ -6,6 +6,7 @@ export const AdminSidebarSections = {
     { title: 'Transactions', url: '/admin/transactions', icon: Users },
     { title: 'Users', url: '/admin/users', icon: BookText },
     { title: 'Vendors', url: '/admin/vendors', icon: FileText },
+    { title: 'Notifications', url: '/admin/notifications', icon: Bell },
     { title: 'Settings & Privacy', url: '/admin/settings', icon: Settings },
   ],
 };

@@ -67,6 +67,16 @@ func (r *postgresRepository) InstitutionalIDTaken(ctx context.Context, instID st
 	return exists, nil
 }
 
+func (r *postgresRepository) AdminIDExists(ctx context.Context, adminID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM admins_institutional_id WHERE admin_id = $1)`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, adminID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check admin ID: %w", err)
+	}
+	return exists, nil
+}
+
 // EmailExists checks for email uniqueness across existing users
 func (r *postgresRepository) EmailExists(ctx context.Context, email string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`

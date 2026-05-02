@@ -24,13 +24,30 @@ func NewUseCase(repo Repository) UseCase {
 // Step 1: Check Institutional ID
 // if institutional ID is valid, check for availability ***
 func (u *useCase) CheckInstitutionalID(ctx context.Context, institutionalID string) error {
-	// 1. Check if it exists in master list
+	// Check admin ID table first
+	isAdmin, err := u.repo.AdminIDExists(ctx, institutionalID)
+	if err != nil {
+		return fmt.Errorf("failed to check admin ID: %w", err)
+	}
+	if isAdmin {
+		// admin IDs are never "taken" in users_inst_id
+		// each admin ID can only be used once — check if already registered
+		taken, err := u.repo.InstitutionalIDTaken(ctx, institutionalID)
+		if err != nil {
+			return fmt.Errorf("failed to check availability: %w", err)
+		}
+		if taken {
+			return ErrInstitutionalIDAlreadyTaken
+		}
+		return nil // valid admin ID
+	}
+
+	// Fall through to customer ID check
 	found, err := u.repo.InstitutionalIDExists(ctx, institutionalID)
 	if err != nil || !found {
 		return ErrInstitutionalIDNotFound
 	}
 
-	// 2. Check if it is already taken (Requirement #3)
 	taken, err := u.repo.InstitutionalIDTaken(ctx, institutionalID)
 	if err != nil {
 		return fmt.Errorf("failed to check availability: %w", err)
@@ -38,6 +55,7 @@ func (u *useCase) CheckInstitutionalID(ctx context.Context, institutionalID stri
 	if taken {
 		return ErrInstitutionalIDAlreadyTaken
 	}
+
 	return nil
 }
 
@@ -55,17 +73,15 @@ func (u *useCase) CheckEmail(ctx context.Context, email string) error {
 
 // Step 3-4: Register User
 func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error) {
-	// Start transaction
 	tx, err := u.repo.BeginTx(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: cannot start transaction: %v", ErrRegistrationFailed, err)
 	}
 
-	// Ensure proper rollback/commit
 	defer func() {
 		if p := recover(); p != nil {
 			tx.Rollback(ctx)
-			panic(p) // propagate panic after rollback
+			panic(p)
 		} else if err != nil {
 			tx.Rollback(ctx)
 		} else {
@@ -73,40 +89,43 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 		}
 	}()
 
-	// Requirement #1: Only customers allowed for this flow
-	const roleSlug = "customer" // CUSTOMER DAPAT TO
-	// Requirement #2: RFID is always null/empty during initial registration
+	// Determine role based on which ID table the institutional ID belongs to
+	isAdmin, err := u.repo.AdminIDExists(ctx, req.InstitutionalID)
+	if err != nil {
+		return fmt.Errorf("%w: failed to determine role: %v", ErrRegistrationFailed, err)
+	}
+
+	roleSlug := "customer"
+	if isAdmin {
+		roleSlug = "admin"
+	}
+
 	const rfidTag = ""
 
-	// Hash password
 	hashedPassword, err := security.HashPassword(req.Password)
 	if err != nil {
 		return fmt.Errorf("%w: failed to hash password: %v", ErrRegistrationFailed, err)
 	}
 
-	// Insert into users
 	userID, err := u.repo.CreateUser(ctx, tx, req, hashedPassword, roleSlug)
 	if err != nil {
 		return fmt.Errorf("%w: failed to create user: %v", ErrRegistrationFailed, err)
 	}
 
-	// Insert into users_info
 	if err := u.repo.CreateUserInfo(ctx, tx, userID, req); err != nil {
 		return fmt.Errorf("%w: failed to create user info: %v", ErrRegistrationFailed, err)
 	}
 
-	// Insert into users_inst_link (resolve PK internally in repo)
 	_, err = u.repo.CreateUserInstLink(ctx, tx, userID, req.InstitutionalID)
 	if err != nil {
 		return fmt.Errorf("%w: failed to link user to institutional ID: %v", ErrRegistrationFailed, err)
 	}
 
-	// Insert into users_rfid_link (nullable rfid_tag)
 	if err := u.repo.CreateUserRFIDLink(ctx, tx, userID, rfidTag); err != nil {
 		return fmt.Errorf("%w: failed to create RFID link: %v", ErrRegistrationFailed, err)
 	}
 
-	// Create wallet with no balance
+	// Only create wallet for customer and vendor roles
 	walletRoles := map[string]bool{
 		"customer": true,
 		"vendor":   true,
@@ -116,7 +135,6 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 			return fmt.Errorf("%w: failed to create wallet: %v", ErrRegistrationFailed, err)
 		}
 	}
-	//changes
 
 	return nil
 }

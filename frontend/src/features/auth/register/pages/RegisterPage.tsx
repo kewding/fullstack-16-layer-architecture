@@ -1,5 +1,4 @@
 // dependencies
-import { ReactLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
@@ -143,7 +142,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     //adapts to device screen
-    <div className="w-screen h-screen bg-neutral-900 flex ">
+    <div className="w-screen h-screen bg-background flex ">
       {/* gives max space according to screen, padding (p-3) is for mobile ux*/}
 
       {/* content */}
@@ -151,8 +150,9 @@ export const RegisterPage: React.FC = () => {
       {/* jjust disable comment for checking borders */}
       {/* <main className="flex flex-col h-full w-full p-10 gap-8 items-center justify-stretch overflow-y-auto border-4 border-green-700"> */}
       <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-between overflow-y-auto">
+        <div></div>
+
         <header className="flex flex-col gap-1 items-center">
-          <img src={ReactLogo} alt="Vite Logo" className="w-7 h-7" />
           <h1 className="font-bold text-white text-center">Register Page</h1>
         </header>
 
@@ -174,7 +174,7 @@ export const RegisterPage: React.FC = () => {
                 className={`rounded-full h-12 font-bold transition-colors
                 ${
                   isStepValid
-                    ? 'bg-green-500 text-black cursor-pointer'
+                    ? 'bg-[#cd9a34] text-black cursor-pointer'
                     : 'bg-neutral-700 text-white cursor-not-allowed'
                 }`}
                 onClick={handleContinue}
@@ -205,9 +205,9 @@ export const RegisterPage: React.FC = () => {
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-neutral-300">Already have an account?</p>
+            <p className="text-neutral-300 text-sm">Already have an account?</p>
             <Link to="/login" className="w-full">
-              <button className="w-full bg-neutral-900 rounded-full font-bold h-13 focus:ring-0">
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-white border-none">
                 Login
               </button>
             </Link>

@@ -53,7 +53,6 @@ export const AdminVendorsPage: React.FC = () => {
     }
   }, [activeTab, page, search, statusFilter]);
 
-  // reset page when tab, search, or filter changes
   useEffect(() => {
     setPage(1);
   }, [activeTab, search, statusFilter]);
@@ -74,7 +73,6 @@ export const AdminVendorsPage: React.FC = () => {
           onSearchChange={setSearch}
         />
 
-        {/* Status filter — review tab only */}
         {activeTab === 'review' && (
           <div className="flex gap-2 flex-wrap">
             {STATUS_FILTERS.map((f) => (
@@ -93,7 +91,7 @@ export const AdminVendorsPage: React.FC = () => {
 
         {activeTab === 'review' ? (
           <VendorsTable
-            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData)}
+            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData)}
             data={reviewData}
             isLoading={isLoading}
             page={page}

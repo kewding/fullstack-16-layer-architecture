@@ -7,6 +7,7 @@ import (
 type Repository interface {
 	InstitutionalIDExists(ctx context.Context, institutionalID string) (bool, error)
 	InstitutionalIDTaken(ctx context.Context, instID string) (bool, error)
+	AdminIDExists(ctx context.Context, adminID string) (bool, error)
 	
 	EmailExists(ctx context.Context, email string) (bool, error)
 

@@ -45,3 +45,35 @@ type PaginatedResponse[T any] struct {
 	Limit      int `json:"limit"`
 	TotalPages int `json:"total_pages"`
 }
+
+type VendorDetailResponse struct {
+	ID     string `json:"id"`
+	Email  string `json:"email"`
+	Status string `json:"status"`
+
+	// personal info
+	FirstName     string `json:"first_name"`
+	MiddleName    string `json:"middle_name"`
+	LastName      string `json:"last_name"`
+	BirthDate     string `json:"birth_date"`
+	ContactNumber string `json:"contact_number"`
+	StallName     string `json:"stall_name"`
+
+	// business info
+	DtiSecNumber              string  `json:"dti_sec_number"`
+	Tin                       string  `json:"tin"`
+	ProofOfBusinessAddressURL *string `json:"proof_of_business_address_url"`
+	BarangayClearanceURL      *string `json:"barangay_clearance_url"`
+	MayorsPermitURL           *string `json:"mayors_permit_url"`
+	IsDtiVerified             bool    `json:"is_dti_verified"`
+	IsTinVerified             bool    `json:"is_tin_verified"`
+	IsDocumentsVerified       bool    `json:"is_documents_verified"`
+}
+
+type Notification struct {
+	ID        string `json:"id"`
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	IsRead    bool   `json:"is_read"`
+	CreatedAt string `json:"created_at"`
+}

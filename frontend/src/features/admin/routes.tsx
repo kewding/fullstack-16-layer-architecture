@@ -1,5 +1,6 @@
 import { AdminRootPage } from './AdminRoot';
 import { AdminDashboardPage } from './pages/dashboard';
+import { AdminNotificationsPage } from './pages/notifications';
 import { AdminProfilePage } from './pages/profile-page/pages/AdminProfilePage';
 import { AdminTransactionsPage } from './pages/transactions';
 import { UserRecordPage } from './pages/user-records/pages/UserRecordPage';
@@ -15,6 +16,7 @@ export const adminRoutes = [
       { path: 'vendors', element: <AdminVendorsPage /> },
       { path: 'user_record', element: <UserRecordPage /> },
       { path: 'transactions', element: <AdminTransactionsPage /> },
+      {path: 'notifications', element: <AdminNotificationsPage/>}
     ],
   },
 ];
