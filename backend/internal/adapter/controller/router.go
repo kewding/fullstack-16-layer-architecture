@@ -80,6 +80,8 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			admin.GET("/notifications/unread-count", deps.VendorController.GetUnreadCount)
 			admin.PATCH("/notifications/mark-read", deps.VendorController.MarkNotificationsRead)
 			admin.GET("/notifications/ws", deps.VendorController.NotificationsWebSocket)
+
+			admin.PATCH("/vendor/:id/remove-business", deps.VendorController.RemoveFromBusiness)
 		}
 
 		// Cashier only — role_id: 4

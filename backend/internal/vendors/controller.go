@@ -226,3 +226,49 @@ func (c *Controller) ApproveVendor(ctx *gin.Context) {
 		Data:    gin.H{"email": email},
 	})
 }
+
+func (c *Controller) RemoveFromBusiness(ctx *gin.Context) {
+	vendorID := ctx.Param("id")
+
+	data, err := c.uc.RemoveFromBusiness(ctx.Request.Context(), vendorID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrVendorNotFound):
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "vendor_not_found", Message: "Vendor not found"},
+			})
+		case errors.Is(err, ErrNotInBusiness):
+			ctx.JSON(http.StatusConflict, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "not_in_business", Message: "Vendor is not in in_business status"},
+			})
+		default:
+			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
+			})
+		}
+		return
+	}
+
+	// send removal email fire-and-forget
+	go func() {
+		_ = c.emailSender.SendRemovalEmail(
+			data.Email,
+			data.OwnerName,
+			data.StallName,
+			data.Balance,
+			data.TotalSales,
+		)
+	}()
+
+	// create admin notification
+	_ = c.uc.CreateNotification(
+		ctx.Request.Context(),
+		"vendor_revoked",
+		fmt.Sprintf("Vendor %s (%s) has been removed from business and reverted to for_review.", data.StallName, data.Email),
+	)
+
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
+}

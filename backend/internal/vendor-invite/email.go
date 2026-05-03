@@ -19,6 +19,7 @@ type EmailSender interface {
 	SendInviteEmail(toEmail string, ownerName string, token string) error
 	SendRevocationEmail(toEmail string, ownerName string) error
 	SendApprovalEmail(toEmail string, ownerName string, stallName string) error
+	SendRemovalEmail(toEmail string, ownerName string, stallName string, balance float64, totalSales float64) error
 }
 
 func NewGmailEmailSender(host string, port int, username, password, fromEmail string, appURL string) EmailSender {
@@ -162,6 +163,69 @@ func (s *gmailEmailSender) SendApprovalEmail(toEmail string, ownerName string, s
 	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send approval email: %w", err)
+	}
+
+	return nil
+}
+
+func (s *gmailEmailSender) SendRemovalEmail(toEmail string, ownerName string, stallName string, balance float64, totalSales float64) error {
+	formatPeso := func(val float64) string {
+		return fmt.Sprintf("₱%.2f", val)
+	}
+
+	htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px;">
+  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px;">
+    <h2 style="color: #111;">Important Notice, %s</h2>
+    <p style="color: #555; line-height: 1.6;">
+      We regret to inform you that your business <strong>%s</strong> has been removed
+      from active business status on our platform. Your account has been reverted to
+      <strong>For Review</strong> status pending further assessment.
+    </p>
+
+    <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 24px 0;">
+      <h3 style="color: #111; margin-top: 0;">Account Summary</h3>
+      <table style="width: 100%%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #555;">Current Wallet Balance</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #111;">%s</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #555; border-top: 1px solid #eee;">Total Sales</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #111; border-top: 1px solid #eee;">%s</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #555; line-height: 1.6;">
+      If you believe this was done in error or would like to appeal this decision,
+      please contact our support team as soon as possible. Your data and account
+      information remain intact during the review period.
+    </p>
+
+    <p style="margin-top: 32px; color: #999; font-size: 12px;">
+      This is an automated notice from the platform administration.
+    </p>
+  </div>
+</body>
+</html>`,
+		ownerName,
+		stallName,
+		formatPeso(balance),
+		formatPeso(totalSales),
+	)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", "Notice: Your Business Status Has Been Updated")
+	m.SetBody("text/html", htmlBody)
+
+	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send removal email: %w", err)
 	}
 
 	return nil

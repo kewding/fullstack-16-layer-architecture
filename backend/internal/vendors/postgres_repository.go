@@ -355,3 +355,55 @@ func (r *postgresRepository) GetUnreadCount(ctx context.Context) (int, error) {
 	).Scan(&count)
 	return count, err
 }
+
+func (r *postgresRepository) RemoveFromBusiness(ctx context.Context, vendorID string) (*RemoveFromBusinessData, error) {
+	// check current status and fetch financial data in one query
+	query := `
+		SELECT
+			v.status,
+			v.email,
+			v.owner_name,
+			COALESCE(s.stall_name, ''),
+			COALESCE(w.balance, 0),
+			COALESCE(SUM(t.amount), 0) AS total_sales
+		FROM vendors v
+		LEFT JOIN stalls s ON s.user_id = v.user_id
+		LEFT JOIN wallets w ON w.user_id = v.user_id
+		LEFT JOIN top_up_transactions t ON t.user_id = v.user_id
+		WHERE v.id = $1
+		  AND v.deleted_at IS NULL
+		GROUP BY v.status, v.email, v.owner_name, s.stall_name, w.balance`
+
+	var status string
+	var data RemoveFromBusinessData
+
+	err := r.db.QueryRowContext(ctx, query, vendorID).Scan(
+		&status,
+		&data.Email,
+		&data.OwnerName,
+		&data.StallName,
+		&data.Balance,
+		&data.TotalSales,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrVendorNotFound
+		}
+		return nil, fmt.Errorf("failed to get vendor data: %w", err)
+	}
+
+	if status != "in_business" {
+		return nil, ErrNotInBusiness
+	}
+
+	// revert to for_review
+	_, err = r.db.ExecContext(ctx,
+		`UPDATE vendors SET status = 'for_review', updated_at = NOW() WHERE id = $1`,
+		vendorID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to revert vendor status: %w", err)
+	}
+
+	return &data, nil
+}

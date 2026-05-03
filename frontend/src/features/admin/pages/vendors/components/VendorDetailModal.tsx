@@ -8,6 +8,7 @@ interface VendorDetailModalProps {
   vendorID: string;
   onClose: () => void;
   onApproved: () => void;
+  onRemoved: () => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -42,10 +43,17 @@ function DocumentRow({ label, url }: { label: string; url: string | null }) {
   );
 }
 
-export function VendorDetailModal({ vendorID, onClose, onApproved }: VendorDetailModalProps) {
+export function VendorDetailModal({
+  vendorID,
+  onClose,
+  onApproved,
+  onRemoved,
+}: VendorDetailModalProps) {
   const [vendor, setVendor] = useState<VendorDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,6 +85,25 @@ export function VendorDetailModal({ vendorID, onClose, onApproved }: VendorDetai
       setError('A network error occurred');
     } finally {
       setApproving(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!vendor) return;
+    setRemoving(true);
+    try {
+      const res = await vendorService.removeFromBusiness(vendorID);
+      if (res.success) {
+        onRemoved();
+        onClose();
+      } else {
+        setError(res.error?.message ?? 'Failed to remove vendor from business');
+      }
+    } catch {
+      setError('A network error occurred');
+    } finally {
+      setRemoving(false);
+      setConfirmRemove(false);
     }
   };
 
@@ -176,20 +203,58 @@ export function VendorDetailModal({ vendorID, onClose, onApproved }: VendorDetai
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          {vendor?.status === 'for_review' && (
-            <Button
-              onClick={handleApprove}
-              disabled={approving}
-              className="bg-green-500 text-black hover:bg-green-400 font-semibold"
-            >
-              {approving ? 'Approving...' : 'Accept Vendor'}
-            </Button>
-          )}
-          {vendor?.status === 'in_business' && (
-            <Badge variant="default" className="text-sm px-4 py-2">
-              Already In Business
-            </Badge>
-          )}
+
+          <div className="flex items-center gap-2">
+            {/* Accept button — only for for_review */}
+            {vendor?.status === 'for_review' && (
+              <Button
+                onClick={handleApprove}
+                disabled={approving}
+                className="bg-green-500 text-black hover:bg-green-400 font-semibold"
+              >
+                {approving ? 'Approving...' : 'Accept Vendor'}
+              </Button>
+            )}
+
+            {/* Remove from Business — only for in_business */}
+            {vendor?.status === 'in_business' && (
+              <>
+                {!confirmRemove ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setConfirmRemove(true)}
+                    className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                  >
+                    Remove from Business
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      This will revert vendor to For Review. Sure?
+                    </span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={removing}
+                      onClick={handleRemove}
+                    >
+                      {removing ? '...' : 'Yes, Remove'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setConfirmRemove(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Status badge for invited */}
+            {vendor?.status === 'invited' && (
+              <Badge variant="outline" className="text-sm px-4 py-2">
+                Invited — Not Yet Registered
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
     </div>
