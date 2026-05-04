@@ -71,6 +71,7 @@ export const AdminVendorsPage: React.FC = () => {
           onTabChange={setActiveTab}
           search={search}
           onSearchChange={setSearch}
+          onInvited={fetchData}
         />
 
         {activeTab === 'review' && (

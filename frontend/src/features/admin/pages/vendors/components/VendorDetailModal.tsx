@@ -200,9 +200,9 @@ export function VendorDetailModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-neutral-800 sticky bottom-0 bg-neutral-900">
-          <Button variant="outline" onClick={onClose}>
+          {/* <Button variant="outline" onClick={onClose}>
             Close
-          </Button>
+          </Button> */}
 
           <div className="flex items-center gap-2">
             {/* Accept button — only for for_review */}

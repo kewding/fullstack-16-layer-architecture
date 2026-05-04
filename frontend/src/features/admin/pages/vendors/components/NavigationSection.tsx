@@ -9,6 +9,7 @@ interface NavigationSectionProps {
   onTabChange: (tab: TabType) => void;
   search: string;
   onSearchChange: (val: string) => void;
+  onInvited: () => void;
 }
 
 export function NavigationSection({
@@ -16,13 +17,14 @@ export function NavigationSection({
   onTabChange,
   search,
   onSearchChange,
+  onInvited,
 }: NavigationSectionProps) {
   return (
     <div className="grid w-full gap-4 grid-rows-4 grid-cols-2 lg:grid-rows-1 lg:grid-flow-col justify-between">
       <AdminActionsTabFilter activeTab={activeTab} onTabChange={onTabChange} />
       <div className="grid w-full gap-2 grid-rows-4 grid-cols-1 lg:grid-rows-1 lg:grid-flow-col justify-between">
         <SearchFilter value={search} onChange={onSearchChange} />
-        <VendorInviteButton />
+         <VendorInviteButton onInvited={onInvited} />
       </div>
     </div>
   );
