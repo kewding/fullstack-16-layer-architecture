@@ -4,10 +4,11 @@ export const AdminSidebarSections = {
   navMain: [
     { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutGrid },
     { title: 'Transactions', url: '/admin/transactions', icon: Users },
-    { title: 'Users', url: '/admin/users', icon: BookText },
+    { title: 'Users', url: '/admin/user_record', icon: BookText },
     { title: 'Vendors', url: '/admin/vendors', icon: FileText },
     { title: 'Notifications', url: '/admin/notifications', icon: Bell },
-    { title: 'Settings & Privacy', url: '/admin/settings', icon: Settings },
+    { title: 'Profile', url: '/admin/profile', icon: Settings },
+
   ],
 };
 

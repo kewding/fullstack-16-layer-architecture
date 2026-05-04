@@ -2,20 +2,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+import { VendorDetailModal } from '../components/VendorDetailModal';
 import type { VendorReviewRow } from '../services/vendor.service';
 import { vendorService } from '../services/vendor.service';
-import { VendorDetailModal } from '../components/VendorDetailModal';
 
 function ActionButtons({
   id,
   status,
   onRevoked,
   onApproved,
+  onRemoved,
 }: {
   id: string;
   status: string;
   onRevoked: () => void;
   onApproved: () => void;
+  onRemoved: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -45,11 +47,7 @@ function ActionButtons({
     <>
       <div className="flex items-center gap-2">
         {canView && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowModal(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
             View
           </Button>
         )}
@@ -88,6 +86,10 @@ function ActionButtons({
             onApproved();
             setShowModal(false);
           }}
+          onRemoved={() => {
+            onRemoved();
+            setShowModal(false);
+          }}
         />
       )}
     </>
@@ -97,6 +99,7 @@ function ActionButtons({
 export const VENDORS_STATUS_TABLE_COLUMNS = (
   onRevoked: () => void,
   onApproved: () => void,
+  onRemoved: () => void,
 ): ColumnDef<VendorReviewRow>[] => [
   {
     accessorKey: 'owner_name',
@@ -151,6 +154,7 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
         status={row.original.status}
         onRevoked={onRevoked}
         onApproved={onApproved}
+        onRemoved={onRemoved}
       />
     ),
   },

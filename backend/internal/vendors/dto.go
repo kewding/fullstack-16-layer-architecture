@@ -77,3 +77,11 @@ type Notification struct {
 	IsRead    bool   `json:"is_read"`
 	CreatedAt string `json:"created_at"`
 }
+
+type RemoveFromBusinessData struct {
+	Email        string
+	OwnerName    string
+	StallName    string
+	Balance      float64
+	TotalSales   float64
+}

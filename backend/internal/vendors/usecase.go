@@ -8,11 +8,12 @@ import (
 type UseCase interface {
 	ListVendorsReview(ctx context.Context, params ListVendorsParams) (*PaginatedResponse[VendorReviewRow], error)
 	ListVendorsBalance(ctx context.Context, params ListVendorsParams) (*PaginatedResponse[VendorBalanceRow], error)
-	
+
 	GetVendorDetail(ctx context.Context, vendorID string) (*VendorDetailResponse, error)
-	
+
 	ApproveVendor(ctx context.Context, vendorID string) (string, error)
-	
+	RemoveFromBusiness(ctx context.Context, vendorID string) (*RemoveFromBusinessData, error)
+
 	GetNotifications(ctx context.Context) ([]Notification, error)
 	MarkNotificationsRead(ctx context.Context) error
 	GetUnreadCount(ctx context.Context) (int, error)
@@ -93,4 +94,8 @@ func (uc *vendorUseCase) GetUnreadCount(ctx context.Context) (int, error) {
 
 func (uc *vendorUseCase) CreateNotification(ctx context.Context, notifType string, message string) error {
 	return uc.repo.CreateNotification(ctx, notifType, message)
+}
+
+func (uc *vendorUseCase) RemoveFromBusiness(ctx context.Context, vendorID string) (*RemoveFromBusinessData, error) {
+	return uc.repo.RemoveFromBusiness(ctx, vendorID)
 }

@@ -1,7 +1,7 @@
 import { AdminRootPage } from './AdminRoot';
 import { AdminDashboardPage } from './pages/dashboard';
 import { AdminNotificationsPage } from './pages/notifications';
-import { AdminProfilePage } from './pages/profile-page/pages/AdminProfilePage';
+import { AdminProfilePage } from './pages/profile-page';
 import { AdminTransactionsPage } from './pages/transactions';
 import { UserRecordPage } from './pages/user-records/pages/UserRecordPage';
 import { AdminVendorsPage } from './pages/vendors';

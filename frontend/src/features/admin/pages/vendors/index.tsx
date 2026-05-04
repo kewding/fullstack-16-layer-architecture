@@ -71,6 +71,7 @@ export const AdminVendorsPage: React.FC = () => {
           onTabChange={setActiveTab}
           search={search}
           onSearchChange={setSearch}
+          onInvited={fetchData}
         />
 
         {activeTab === 'review' && (
@@ -91,7 +92,7 @@ export const AdminVendorsPage: React.FC = () => {
 
         {activeTab === 'review' ? (
           <VendorsTable
-            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData)}
+            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData, fetchData)}
             data={reviewData}
             isLoading={isLoading}
             page={page}

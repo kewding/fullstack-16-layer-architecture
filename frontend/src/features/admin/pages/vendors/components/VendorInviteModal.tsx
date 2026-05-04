@@ -5,9 +5,10 @@ import { vendorInviteService } from '../services/vendor-invite.service';
 
 interface VendorInviteModalProps {
   onClose: () => void;
+  onInvited: () => void;
 }
 
-export function VendorInviteModal({ onClose }: VendorInviteModalProps) {
+export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps) {
   const [email, setEmail] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -113,7 +114,10 @@ export function VendorInviteModal({ onClose }: VendorInviteModalProps) {
               The link will expire in 72 hours.
             </p>
             <Button
-              onClick={onClose}
+              onClick={() => {
+                onInvited();
+                onClose();
+              }}
               className="w-full bg-white text-black font-semibold rounded-xl hover:bg-neutral-200"
             >
               Done

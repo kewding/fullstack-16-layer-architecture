@@ -9,9 +9,12 @@ type Repository interface {
 	GetVendorDetail(ctx context.Context, vendorID string) (*VendorDetailResponse, error)
 
 	ApproveVendor(ctx context.Context, vendorID string) (string, error)
+	RemoveFromBusiness(ctx context.Context, vendorID string) (*RemoveFromBusinessData, error)
 	
 	CreateNotification(ctx context.Context, notifType string, message string) error
 	GetNotifications(ctx context.Context) ([]Notification, error)
 	MarkNotificationsRead(ctx context.Context) error
 	GetUnreadCount(ctx context.Context) (int, error)
+
+	
 }

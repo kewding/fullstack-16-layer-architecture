@@ -102,6 +102,13 @@ export const vendorService = {
   async markNotificationsRead(): Promise<void> {
     await fetch('/api/admin/notifications/mark-read', { method: 'PATCH' });
   },
+
+  async removeFromBusiness(vendorID: string): Promise<APIResponse> {
+    const res = await fetch(`/api/admin/vendor/${vendorID}/remove-business`, {
+      method: 'PATCH',
+    });
+    return res.json();
+  },
 };
 
 export interface VendorDetailResponse {

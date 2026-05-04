@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type postgresRepository struct {
@@ -78,4 +79,53 @@ func (r *postgresRepository) GetWallet(ctx context.Context, userID string) (*Wal
 	res.LastTopupDate = lastDate
 
 	return &res, nil
+}
+
+func (r *postgresRepository) GetAdminInfo(ctx context.Context, userID string) (*AdminInfoResponse, error) {
+	query := `
+		SELECT ui.first_name, ui.middle_name, ui.last_name,
+		       ui.birth_date, ui.contact_no
+		FROM users_info ui
+		WHERE ui.user_id = $1
+		LIMIT 1`
+
+	var res AdminInfoResponse
+	var birthDate time.Time
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&res.FirstName,
+		&res.MiddleName,
+		&res.LastName,
+		&birthDate,
+		&res.ContactNumber,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to get admin info: %w", err)
+	}
+
+	res.BirthDate = birthDate.Format("2006-01-02")
+	return &res, nil
+}
+
+func (r *postgresRepository) UpdateAdminInfo(ctx context.Context, userID string, req UpdateAdminInfoRequest) error {
+	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
+	if err != nil {
+		return fmt.Errorf("invalid birth date format: %w", err)
+	}
+
+	_, err = r.db.ExecContext(ctx, `
+		UPDATE users_info
+		SET first_name = $1, middle_name = $2, last_name = $3,
+		    birth_date = $4, contact_no = $5
+		WHERE user_id = $6`,
+		req.FirstName, req.MiddleName, req.LastName,
+		birthDate, req.ContactNumber, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update admin info: %w", err)
+	}
+
+	return nil
 }
