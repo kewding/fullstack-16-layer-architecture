@@ -1,5 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
+
+CREATE TYPE customer_role AS ENUM ('student', 'teacher', 'faculty');
+
 CREATE TABLE users_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -9,6 +12,8 @@ CREATE TABLE users_info (
 
     birth_date DATE NOT NULL,
     contact_no TEXT NOT NULL,
+
+    customer_role customer_role,
     
     -- fk
     user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,

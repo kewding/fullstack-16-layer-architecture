@@ -142,7 +142,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     //adapts to device screen
-    <div className="w-screen h-screen bg-background flex ">
+    <div className="w-screen h-screen bg-[#E9F4F1] flex ">
       {/* gives max space according to screen, padding (p-3) is for mobile ux*/}
 
       {/* content */}
@@ -153,14 +153,14 @@ export const RegisterPage: React.FC = () => {
         <div></div>
 
         <header className="flex flex-col gap-1 items-center">
-          <h1 className="font-bold text-white text-center">Register Page</h1>
+          <h1 className="font-bold text-[#415B5A] text-center">Register Page</h1>
         </header>
 
         {/* login section */}
 
         {/* just disable comment for checking borders */}
         {/* <section className="w-full max-w-[340px] flex flex-col gap-4 items-center font-medium text-white border-4 border-red-700"> */}
-        <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-white">
+        <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-[#415B5A]">
           {/* register form */}
           <form className="flex flex-col w-full gap-4">
             {/* Render current step section */}
@@ -170,12 +170,13 @@ export const RegisterPage: React.FC = () => {
             <div className="flex flex-col gap-3">
               {/* continue or submmit button */}
               <button
+
                 type="button"
                 className={`rounded-full h-12 font-bold transition-colors
                 ${
                   isStepValid
-                    ? 'bg-[#cd9a34] text-black cursor-pointer'
-                    : 'bg-neutral-700 text-white cursor-not-allowed'
+                    ? 'bg-[#3f6f64] text-white cursor-pointer hover:bg-[#27463f]'
+                    : 'bg-[neutral-700] text-white cursor-not-allowed'
                 }`}
                 onClick={handleContinue}
                 disabled={!isStepValid || isSubmitting}
@@ -205,9 +206,9 @@ export const RegisterPage: React.FC = () => {
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-neutral-300 text-sm">Already have an account?</p>
+            <p className="text-[#415B5A] text-sm hover:underline">Already have an account?</p>
             <Link to="/login" className="w-full">
-              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-white border-none">
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34]">
                 Login
               </button>
             </Link>
@@ -215,7 +216,7 @@ export const RegisterPage: React.FC = () => {
         </section>
 
         {/* eula things */}
-        <footer className="w-full max-w-[330px] text-xs text-center">
+        <footer className="w-full max-w-[330px] text-[#415B5A] text-xs text-center">
           This site is protected by your MOM and our self imposed
           <a href=""> EULA </a>
           and

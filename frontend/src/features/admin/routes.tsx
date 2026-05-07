@@ -3,7 +3,7 @@ import { AdminDashboardPage } from './pages/dashboard';
 import { AdminNotificationsPage } from './pages/notifications';
 import { AdminProfilePage } from './pages/profile-page';
 import { AdminTransactionsPage } from './pages/transactions';
-import { UserRecordPage } from './pages/user-records/pages/UserRecordPage';
+import UserRecordPage from './pages/user-records';
 import { AdminVendorsPage } from './pages/vendors';
 
 export const adminRoutes = [

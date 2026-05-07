@@ -29,8 +29,8 @@ export const RegisterPasswordSection: React.FC<SectionProps> = ({ form }) => {
             placeholder="Input Password"
             {...register('password')}
             className={`h-12 w-full p-3 rounded border focus:outline-none ${
-              errors.password ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-            } bg-neutral-900 text-white`}
+              errors.password ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            }  text-[#3F6F64]`}
           />
 
           <button
@@ -58,8 +58,8 @@ export const RegisterPasswordSection: React.FC<SectionProps> = ({ form }) => {
             placeholder="Confirm Password"
             {...register('confirmPassword')}
             className={`h-12 w-full p-3 rounded border focus:outline-none ${
-              errors.confirmPassword ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-            } bg-neutral-900 text-white`}
+              errors.confirmPassword ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            } bg-neutral-900 text-[#3F6F64]`}
           />
 
           <button

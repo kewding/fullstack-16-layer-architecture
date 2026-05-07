@@ -84,11 +84,11 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#415B5A] flex">
+    <div className="w-screen h-screen bg-[#E9F4F1] flex">
       <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-between overflow-y-auto">
         <div></div>
         <header className="flex flex-col gap-1 items-center">
-          <h1 className="font-bold text-white text-center">Login Page</h1>
+          <h1 className="font-bold text-[#415B5A] text-center">Login Page</h1>
           {showAccessWarning && (
             <p className="text-red-500 text-sm mt-2 text-center px-4">
               You need to have the necessary role to access <strong>{from}</strong>
@@ -108,15 +108,15 @@ export const LoginPage: React.FC = () => {
 
             {/* email field*/}
             <div className="flex flex-col w-full gap-1.5">
-              <label htmlFor="email" className="text-sm font-normal">
+              <label htmlFor="email" className="text-sm text-[#415B5A] font-normal">
                 Email
               </label>
               <input
                 id="email"
                 type="email"
                 {...register('email')}
-                className={`h-12 bg-transparent border border-[#CD9A34] rounded p-3 focus:outline-none ${
-                  errors.email ? 'border-red-500' : 'border-[#CD9A34] focus:border-white'
+                className={`h-12 bg-transparent text-[#3F6F64] border border-[#3F6F64] rounded p-3 focus:outline-none ${
+                  errors.email ? 'border-red-500' : 'border-[#3F6F64] focus:border-[#CD9A34]'
                 }`}
               />
               {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
@@ -124,15 +124,15 @@ export const LoginPage: React.FC = () => {
 
             {/* password field */}
             <div className="flex flex-col w-full gap-1.5">
-              <label htmlFor="password" className="text-sm font-normal">
+              <label htmlFor="password" className="text-sm text-[#415B5A] font-normal">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 {...register('password')}
-                className={`h-12 bg-transparent border border-[#CD9A34] rounded p-3 focus:outline-none ${
-                  errors.password ? 'border-red-500' : 'border-[#CD9A34] focus:border-white'
+                className={`h-12 bg-transparent text-[#3F6F64] border border-[#3F6F64] rounded p-3 focus:outline-none ${
+                  errors.password ? 'border-red-500' : 'border-[#3F6F64] focus:border-[#CD9A34]'
                 }`}
               />
               {errors.password && (
@@ -143,8 +143,8 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`bg-[#CD9A34] rounded-full text-[#ffffff] font-bold h-13 transition-opacity ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#F4AF26]'
+              className={`bg-[#3F6F64] rounded-full text-[#ffffff] font-bold h-13 transition-opacity ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#27463f]'
               }`}
             >
               {isSubmitting ? 'Checking...' : 'Continue'}
@@ -167,16 +167,16 @@ export const LoginPage: React.FC = () => {
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-neutral-300 text-sm">Don't have account?</p>
+            <p className="text-[#415B5A] text-sm hover:underline">Don't have account?</p>
             <Link to="/register" className="w-full">
-              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-white border-none">
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34]">
                 Sign Up
               </button>
             </Link>
           </div>
         </section>
 
-        <footer className="w-full max-w-[330px] text-xs text-center text-neutral-200">
+        <footer className="w-full max-w-[330px] text-[#415B5A] text-xs text-center">
           This site is protected by your MOM and our self imposed{' '}
           <a href="#" className="text-[#CD9A34]">
             EULA

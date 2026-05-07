@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	admintransactions "github.com/kewding/backend/internal/admin-transactions"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
@@ -17,17 +18,19 @@ import (
 )
 
 type Dependencies struct {
-	RegisterController       *register.Controller
-	LoginController          *login.Controller
-	HealthHandler            *HealthHandler
-	RfidTaggingController    *rfidtagging.Controller
-	CreditTopupController    *topup.Controller
-	UserInfoController       *user.Controller
-	VendorInviteController   *vendorinvite.Controller
-	VendorRegisterController *vendorregister.Controller
-	VendorController         *vendors.Controller
-	VendorInfoController     *vendorinfo.Controller
-	MedicalInfoController    *medicalinfo.Controller
+	RegisterController         *register.Controller
+	LoginController            *login.Controller
+	HealthHandler              *HealthHandler
+	RfidTaggingController      *rfidtagging.Controller
+	CreditTopupController      *topup.Controller
+	UserInfoController         *user.Controller
+	VendorInviteController     *vendorinvite.Controller
+	VendorRegisterController   *vendorregister.Controller
+	VendorController           *vendors.Controller
+	VendorInfoController       *vendorinfo.Controller
+	MedicalInfoController      *medicalinfo.Controller
+	AdminTransactionController *admintransactions.Controller
+	UserController             *user.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -85,6 +88,15 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			admin.GET("/profile", deps.UserInfoController.GetAdminInfo)
 			admin.PUT("/profile", deps.UserInfoController.UpdateAdminInfo)
+
+			admin.GET("/transactions/vendors", deps.AdminTransactionController.ListVendorTransactions)
+			admin.GET("/transactions/customers", deps.AdminTransactionController.ListCustomerTransactions)
+			admin.GET("/transactions/purchase/:id", deps.AdminTransactionController.GetPurchaseDetail)
+
+			admin.GET("/users/customers", deps.UserController.ListCustomers)
+			admin.GET("/users/customer/:id", deps.UserController.GetCustomerDetail)
+			admin.PATCH("/users/customer/:id/disable", deps.UserController.DisableCustomer)
+			admin.PATCH("/users/customer/:id/reactivate", deps.UserController.ReactivateCustomer)
 		}
 
 		// Cashier only — role_id: 4

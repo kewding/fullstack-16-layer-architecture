@@ -24,8 +24,8 @@ export const RegisterIDSection: React.FC<SectionProps> = ({ form }) => {
         placeholder="Enter your institutional ID"
         {...register('institutionalId')}
         className={`h-12 p-3 rounded border focus:outline-none ${
-          errors.institutionalId ? 'border-red-500' : ' focus:border-white'
-        } bg-inherit text-white`}
+          errors.institutionalId ? 'border-red-500' : 'focus:border-[#CD9A34]'
+        } bg-inherit text-[#3F6F64]`}
       />
       {errors.institutionalId && (
         // <p className="text-red-500 text-xs">{errors.institutionalID.message}</p>

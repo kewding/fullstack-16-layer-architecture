@@ -8,6 +8,11 @@ type UseCase interface {
 
 	GetAdminInfo(ctx context.Context, userID string) (*AdminInfoResponse, error)
 	UpdateAdminInfo(ctx context.Context, userID string, req UpdateAdminInfoRequest) error
+
+	ListCustomers(ctx context.Context, req ListCustomersRequest) (*ListCustomersResponse, error)
+	GetCustomerDetail(ctx context.Context, userID string) (*CustomerDetailResponse, error)
+	DisableCustomer(ctx context.Context, userID string) error
+	ReactivateCustomer(ctx context.Context, userID string) error
 }
 
 type userUseCase struct {
@@ -32,4 +37,20 @@ func (uc *userUseCase) GetAdminInfo(ctx context.Context, userID string) (*AdminI
 
 func (uc *userUseCase) UpdateAdminInfo(ctx context.Context, userID string, req UpdateAdminInfoRequest) error {
 	return uc.repo.UpdateAdminInfo(ctx, userID, req)
+}
+
+func (uc *userUseCase) ListCustomers(ctx context.Context, req ListCustomersRequest) (*ListCustomersResponse, error) {
+	return uc.repo.ListCustomers(ctx, req)
+}
+
+func (uc *userUseCase) GetCustomerDetail(ctx context.Context, userID string) (*CustomerDetailResponse, error) {
+	return uc.repo.GetCustomerDetail(ctx, userID)
+}
+
+func (uc *userUseCase) DisableCustomer(ctx context.Context, userID string) error {
+	return uc.repo.DisableCustomer(ctx, userID)
+}
+
+func (uc *userUseCase) ReactivateCustomer(ctx context.Context, userID string) error {
+	return uc.repo.ReactivateCustomer(ctx, userID)
 }

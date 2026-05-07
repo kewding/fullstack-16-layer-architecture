@@ -38,8 +38,8 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="First Name"
           {...register('firstName')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.firstName ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } bg-neutral-900 text-white`}
+            errors.firstName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+          } text-[#3F6F64]`}
         />
         {errors.firstName && (
           <span className="text-red-500 text-xs">{errors.firstName.message}</span>
@@ -57,7 +57,7 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
               type="checkbox"
               checked={isNA}
               onChange={handleCheckboxChange}
-              className="w-4 h-4 rounded border-neutral-500 bg-neutral-900 text-blue-600"
+              className="w-4 h-4 rounded border-neutral-500 bg-inherit text-gray-400"
             />
           </label>
         </div>
@@ -67,8 +67,8 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           readOnly={isNA}
           placeholder={isNA ? 'N/A' : 'Middle Name'}
           className={`h-12 p-3 rounded border focus:outline-none transition-all ${
-            errors.middleName ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } ${isNA ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' : 'bg-neutral-900 text-white'}`}
+            errors.middleName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+          } ${isNA ? 'text-neutral-500 cursor-not-allowed' : 'text-[#3F6F64]'}`}
         />
         {errors.middleName && (
           <span className="text-red-500 text-xs">{errors.middleName.message}</span>
@@ -86,8 +86,8 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="Last Name"
           {...register('lastName')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.lastName ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } bg-neutral-900 text-white`}
+            errors.lastName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+          } text-[#3F6F64]`}
         />
         {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName.message}</span>}
       </div>
@@ -102,8 +102,8 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           type="date"
           {...register('birthDate', { valueAsDate: true })}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.birthDate ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } bg-neutral-900 text-white`}
+            errors.birthDate ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+          } text-[#3F6F64]`}
         />
         {errors.birthDate && (
           <span className="text-red-500 text-xs">{errors.birthDate.message}</span>

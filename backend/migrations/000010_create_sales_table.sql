@@ -13,6 +13,8 @@ CREATE TABLE sales (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
 );
+
+CREATE INDEX idx_sales_created_at_desc ON sales (created_at DESC);
 -- +goose StatementEnd
 
 -- +goose Down

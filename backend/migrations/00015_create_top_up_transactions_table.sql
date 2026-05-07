@@ -9,6 +9,8 @@ CREATE TABLE top_up_transactions (
     amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE INDEX idx_top_ups_created_at_desc ON top_up_transactions (created_at DESC);
 -- +goose StatementEnd
 
 -- +goose Down

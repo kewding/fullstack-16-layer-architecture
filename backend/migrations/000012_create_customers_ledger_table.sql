@@ -1,5 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
+
+CREATE TYPE purchase_status AS ENUM ('completed', 'refunded', 'blocked');
+
 CREATE TABLE customers_ledger (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
@@ -12,6 +15,8 @@ CREATE TABLE customers_ledger (
     --
     reference_id UUID NOT NULL,
     reference_type transaction_type NOT NULL,
+
+    purchase_status purchase_status NOT NULL DEFAULT 'completed',
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now() 
 );

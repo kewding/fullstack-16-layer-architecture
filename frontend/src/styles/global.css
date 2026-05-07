@@ -45,7 +45,7 @@
   color-scheme: light dark;
   /* Updated color palette based on Login Page brand colors [1] */
   color: rgba(255, 255, 255, 0.87);
-  background-color: #415b5a;
+  background-color: #e9f4f1;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -60,6 +60,7 @@ a {
 }
 a:hover {
   color: #cd9a34;
+  text-decoration: underline;
 }
 
 body {
@@ -79,7 +80,7 @@ h1 {
 
 input {
   background-color: transparent;
-  border-color: #cd9a34;
+  border-color: #3f6f64;
   border-radius: rounded;
 }
 
@@ -91,32 +92,27 @@ button {
   font-weight: 500;
   font-family: inherit;
   /* Setting button to a darker shade of the brand green [5] */
-  background-color: #2d3f3e;
+  background-color: #3f6f64;
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #cd9a34;
+  border-color: #27463f;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
 @layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: #3f6f64 !important;
+    -webkit-box-shadow: 0 0 0 1000px #e9f4f1 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
   :root {
     /* Background set to the specific green from Login Page: #415B5A [1, 2] */
     --background: 178 17% 31%;

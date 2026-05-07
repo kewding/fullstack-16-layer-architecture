@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/kewding/backend/internal/adapter/controller"
+	admintransactions "github.com/kewding/backend/internal/admin-transactions"
 	"github.com/kewding/backend/internal/config"
 	"github.com/kewding/backend/internal/infra/cleanup"
 	"github.com/kewding/backend/internal/infra/cloudinary"
@@ -139,19 +140,26 @@ func main() {
 	medicalInfoUseCase := medicalinfo.NewUseCase(medicalInfoRepo)
 	medicalInfoController := medicalinfo.NewController(medicalInfoUseCase)
 
+	// --- Admin Transactions Table ---
+	adminTxRepo := admintransactions.NewPostgresRepository(dbNode.Connection)
+	adminTxUseCase := admintransactions.NewUseCase(adminTxRepo)
+	adminTxController := admintransactions.NewController(adminTxUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-		RegisterController:       registerController,
-		LoginController:          loginController,
-		HealthHandler:            healthHandler,
-		RfidTaggingController:    rfidTaggingController,
-		CreditTopupController:    topupController,
-		UserInfoController:       userController,
-		VendorInviteController:   vendorInviteController,
-		VendorRegisterController: vendorRegisterController,
-		VendorController:         vendorController,
-		VendorInfoController:     vendorInfoController,
-		MedicalInfoController:    medicalInfoController,
+		RegisterController:         registerController,
+		LoginController:            loginController,
+		HealthHandler:              healthHandler,
+		RfidTaggingController:      rfidTaggingController,
+		CreditTopupController:      topupController,
+		UserInfoController:         userController,
+		VendorInviteController:     vendorInviteController,
+		VendorRegisterController:   vendorRegisterController,
+		VendorController:           vendorController,
+		VendorInfoController:       vendorInfoController,
+		MedicalInfoController:      medicalInfoController,
+		AdminTransactionController: adminTxController,
+		UserController:             userController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
