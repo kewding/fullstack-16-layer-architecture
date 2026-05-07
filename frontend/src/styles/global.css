@@ -154,10 +154,7 @@ button:focus-visible {
     --primary: 178 17% 31%;
     --primary-foreground: 0 0% 98%;
   }
-  .custom-date-input::-webkit-calendar-picker-indicator {
-    /* Inverts the color (e.g., black to white) */
+  /* .custom-date-input::-webkit-calendar-picker-indicator {
     filter: invert(1);
-    /* You can use other filters for more specific color results */
-    /* filter: invert(1) brightness(0.5); */
-  }
+  } */
 }

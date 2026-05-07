@@ -77,6 +77,16 @@ func (r *postgresRepository) AdminIDExists(ctx context.Context, adminID string) 
 	return exists, nil
 }
 
+func (r *postgresRepository) CashierIDExists(ctx context.Context, cashierID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM cashier_institutional_id WHERE cashier_id = $1)`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, cashierID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check cashier ID: %w", err)
+	}
+	return exists, nil
+}
+
 // EmailExists checks for email uniqueness across existing users
 func (r *postgresRepository) EmailExists(ctx context.Context, email string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`

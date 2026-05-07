@@ -170,13 +170,12 @@ export const RegisterPage: React.FC = () => {
             <div className="flex flex-col gap-3">
               {/* continue or submmit button */}
               <button
-
                 type="button"
                 className={`rounded-full h-12 font-bold transition-colors
                 ${
                   isStepValid
                     ? 'bg-[#3f6f64] text-white cursor-pointer hover:bg-[#27463f]'
-                    : 'bg-[neutral-700] text-white cursor-not-allowed'
+                    : 'bg-neutral-700 text-white cursor-not-allowed'
                 }`}
                 onClick={handleContinue}
                 disabled={!isStepValid || isSubmitting}
@@ -206,9 +205,9 @@ export const RegisterPage: React.FC = () => {
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-[#415B5A] text-sm hover:underline">Already have an account?</p>
+            <p className="text-[#415B5A] text-sm">Already have an account?</p>
             <Link to="/login" className="w-full">
-              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34]">
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34] focus-visible:outline-none focus:outline-none">
                 Login
               </button>
             </Link>

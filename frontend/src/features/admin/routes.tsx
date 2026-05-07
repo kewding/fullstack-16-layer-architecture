@@ -16,7 +16,7 @@ export const adminRoutes = [
       { path: 'vendors', element: <AdminVendorsPage /> },
       { path: 'user_record', element: <UserRecordPage /> },
       { path: 'transactions', element: <AdminTransactionsPage /> },
-      {path: 'notifications', element: <AdminNotificationsPage/>}
+      { path: 'notifications', element: <AdminNotificationsPage /> },
     ],
   },
 ];

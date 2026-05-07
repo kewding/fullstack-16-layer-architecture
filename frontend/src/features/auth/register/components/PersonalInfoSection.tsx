@@ -1,4 +1,5 @@
-import React from 'react';
+import { Calendar } from 'lucide-react';
+import React, { useRef } from 'react';
 import { type UseFormReturn } from 'react-hook-form';
 import { type RegisterInput } from '../schemas/register.schema';
 
@@ -14,6 +15,7 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
     formState: { errors },
   } = form;
 
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const middleNameValue = watch('middleName');
   const isNA = middleNameValue === 'N/A';
 
@@ -24,6 +26,8 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
       setValue('middleName', '');
     }
   };
+
+  const { ref: hookFormRef, ...birthDateProps } = register('birthDate', { valueAsDate: true });
 
   return (
     <div className="flex flex-col w-full gap-4">
@@ -38,7 +42,7 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="First Name"
           {...register('firstName')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.firstName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            errors.firstName ? 'border-red-500' : 'border focus:border-[#CD9A34]'
           } text-[#3F6F64]`}
         />
         {errors.firstName && (
@@ -51,13 +55,13 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
         <div className="flex justify-between items-center">
           <label className="text-sm">Middle Name</label>
 
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer bg-transparent">
             <span className="text-[11px] text-neutral-500">I don't have one</span>
             <input
               type="checkbox"
               checked={isNA}
               onChange={handleCheckboxChange}
-              className="w-4 h-4 rounded border-neutral-500 bg-inherit text-gray-400"
+              className="w-4 h-4 rounded border bg-transparent text-gray-400"
             />
           </label>
         </div>
@@ -67,7 +71,7 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           readOnly={isNA}
           placeholder={isNA ? 'N/A' : 'Middle Name'}
           className={`h-12 p-3 rounded border focus:outline-none transition-all ${
-            errors.middleName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            errors.middleName ? 'border-red-500' : 'border focus:border-[#CD9A34]'
           } ${isNA ? 'text-neutral-500 cursor-not-allowed' : 'text-[#3F6F64]'}`}
         />
         {errors.middleName && (
@@ -86,7 +90,7 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="Last Name"
           {...register('lastName')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.lastName ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            errors.lastName ? 'border-red-500' : 'border focus:border-[#CD9A34]'
           } text-[#3F6F64]`}
         />
         {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName.message}</span>}
@@ -97,18 +101,62 @@ export const RegisterPersonalSection: React.FC<SectionProps> = ({ form }) => {
         <label htmlFor="birthDate" className="text-sm">
           Birth Date
         </label>
+
+        {/* INPUT GROUP CONTAINER */}
+        <div
+          className={`flex items-center h-12 w-full rounded border bg-transparent transition-colors ${
+            errors.birthDate ? 'border-red-500' : 'border-neutral-500 focus-within:border-[#CD9A34]'
+          }`}
+        >
+          <input
+            id="birthDate"
+            type="date"
+            {...birthDateProps}
+            // Merged Ref logic to support both Hook Form and manual picker trigger
+            ref={(e) => {
+              hookFormRef(e);
+              dateInputRef.current = e;
+            }}
+            // 1. flex-grow and h-full ensure it takes up the available space
+            // 2. [&::-webkit...]:hidden removes the native browser calendar icon
+            className="flex-grow h-full p-3 bg-transparent outline-none text-[#3F6F64] 
+               [&::-webkit-calendar-picker-indicator]:appearance-none 
+               [&::-webkit-calendar-picker-indicator]:hidden"
+          />
+
+          {/* Custom Calendar Icon button */}
+          <button
+            type="button"
+            onClick={() => dateInputRef.current?.showPicker()}
+            className="px-3 bg-transparent border-none text-[#3F6F64] hover:text-[#CD9A34] transition-colors focus:outline-none"
+            aria-label="Open calendar"
+          >
+            <Calendar size={18} />
+          </button>
+        </div>
+
+        {/* Error Message */}
+        {errors.birthDate && (
+          <span className="text-red-500 text-xs mt-1">{errors.birthDate.message}</span>
+        )}
+      </div>
+
+      {/* <div className="flex flex-col w-full gap-1.5">
+        <label htmlFor="birthDate" className="text-sm">
+          Birth Date
+        </label>
         <input
           id="birthDate"
           type="date"
           {...register('birthDate', { valueAsDate: true })}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.birthDate ? 'border-red-500' : 'border-neutral-500 focus:border-[#CD9A34]'
+            errors.birthDate ? 'border-red-500' : 'border focus:border-[#CD9A34]'
           } text-[#3F6F64]`}
         />
         {errors.birthDate && (
           <span className="text-red-500 text-xs">{errors.birthDate.message}</span>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

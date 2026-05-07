@@ -1,4 +1,3 @@
-import { ReactLogo } from '@/shared/assets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
@@ -116,17 +115,17 @@ export const VendorRegisterForm: React.FC<VendorRegisterFormProps> = ({ email, t
   };
 
   return (
-    <div className="w-screen h-screen bg-neutral-900 flex">
+    <div className="w-screen h-screen flex">
       <main className="flex flex-col h-full w-full pt-12 pb-6 gap-8 items-center justify-between overflow-y-auto">
-        <header className="flex flex-col gap-1 items-center">
-          <img src={ReactLogo} alt="Logo" className="w-7 h-7" />
-          <h1 className="font-bold text-white text-center">Vendor Registration</h1>
-          <p className="text-neutral-400 text-xs">
+        <header className="flex flex-col gap-2 items-center">
+          <div></div>
+          <h1 className="font-bold text-[#415B5A] text-center">Vendor Registration</h1>
+          <p className="text-[#CD9A34] text-xs text-center">
             Step {currentStepIndex + 1} of {VENDOR_REGISTER_STEPS.length}
           </p>
         </header>
 
-        <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-white">
+        <section className="w-full max-w-[330px] flex flex-col gap-5 items-center font-medium text-[#415B5A]">
           <form className="flex flex-col w-full gap-4">
             {StepComponent && <StepComponent form={form} email={email} />}
 
@@ -135,7 +134,7 @@ export const VendorRegisterForm: React.FC<VendorRegisterFormProps> = ({ email, t
                 type="button"
                 className={`rounded-full h-12 font-bold transition-colors ${
                   isStepValid
-                    ? 'bg-green-500 text-black cursor-pointer'
+                    ? 'bg-[#3f6f64] text-white cursor-pointer hover:bg-[#27463f]'
                     : 'bg-neutral-700 text-white cursor-not-allowed'
                 }`}
                 onClick={handleContinue}
@@ -162,15 +161,11 @@ export const VendorRegisterForm: React.FC<VendorRegisterFormProps> = ({ email, t
           </form>
         </section>
 
-        <footer className="w-full max-w-[330px] text-xs text-center text-neutral-400">
-          This site is protected by your MOM and our self imposed{' '}
-          <a href="#" className="underline">
-            EULA
-          </a>{' '}
-          and{' '}
-          <a href="#" className="underline">
-            Terms of Service
-          </a>{' '}
+        <footer className="w-full max-w-[330px] text-[#415B5A] text-xs text-center">
+          This site is protected by your MOM and our self imposed
+          <a href=""> EULA </a>
+          and
+          <a href=""> Terms of Service </a>
           apply
         </footer>
       </main>

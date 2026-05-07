@@ -1,14 +1,14 @@
-import { useState } from 'react';
 import { format } from 'date-fns';
-import RevenueDistributionModal from './components/RevenueDistributionModal';
+import { useState } from 'react';
+import type { FlexibleDateRange } from '../transactions/components/navigation-section/DatePicker';
+import DateRangePicker from '../transactions/components/navigation-section/DatePicker';
 import AllergenInterventionsTable from './components/AllergenInterventionsTable';
 import NQSTrendChart from './components/NqsTrendChart';
 import NutritionalTargetChart from './components/NutritionalGetChart';
+import RevenueDistributionModal from './components/RevenueDistributionModal';
 import StallSettlementTable from './components/StallSetllementTable';
-import { useDashboard } from './schema/UserDashboard';
-import type { FlexibleDateRange } from '../transactions/components/navigation-section/DatePicker';
-import DateRangePicker from '../transactions/components/navigation-section/DatePicker';
 import StatCards from './components/StatCards';
+import { useDashboard } from './schema/UserDashboard';
 
 // Default range: current month
 function defaultRange(): FlexibleDateRange {
@@ -19,17 +19,21 @@ function defaultRange(): FlexibleDateRange {
   };
 }
 
-export default function AdminDashboardPage() {
+export const AdminDashboardPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<FlexibleDateRange>(defaultRange);
   const [revenueModalOpen, setRevenueModalOpen] = useState(false);
 
   const {
-    statCards, nqsTrend, allergenInterventions,
-    nutritionalTarget, stallSettlement, loading,
+    statCards,
+    nqsTrend,
+    allergenInterventions,
+    nutritionalTarget,
+    stallSettlement,
+    loading,
   } = useDashboard(dateRange);
 
   const dateFrom = dateRange.start ? format(dateRange.start, 'yyyy-MM-dd') : undefined;
-  const dateTo   = dateRange.end   ? format(dateRange.end,   'yyyy-MM-dd') : undefined;
+  const dateTo = dateRange.end ? format(dateRange.end, 'yyyy-MM-dd') : undefined;
 
   return (
     <div className="space-y-6 p-6">
@@ -72,4 +76,4 @@ export default function AdminDashboardPage() {
       />
     </div>
   );
-}
+};

@@ -1,5 +1,6 @@
 import { useAuth } from '@/app/providers/AuthProvider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ export const LoginPage: React.FC = () => {
   const from = location.state?.from ?? '/';
   const [serverError, setServerError] = useState<string | null>(null);
   const [showAccessWarning, setShowAccessWarning] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // skip warning entirely if navigated here via logout
@@ -115,6 +117,7 @@ export const LoginPage: React.FC = () => {
                 id="email"
                 type="email"
                 {...register('email')}
+                placeholder="name@gmail.com"
                 className={`h-12 bg-transparent text-[#3F6F64] border border-[#3F6F64] rounded p-3 focus:outline-none ${
                   errors.email ? 'border-red-500' : 'border-[#3F6F64] focus:border-[#CD9A34]'
                 }`}
@@ -123,13 +126,13 @@ export const LoginPage: React.FC = () => {
             </div>
 
             {/* password field */}
-            <div className="flex flex-col w-full gap-1.5">
+            {/* <div className="flex flex-col w-full gap-1.5">
               <label htmlFor="password" className="text-sm text-[#415B5A] font-normal">
                 Password
               </label>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 {...register('password')}
                 className={`h-12 bg-transparent text-[#3F6F64] border border-[#3F6F64] rounded p-3 focus:outline-none ${
                   errors.password ? 'border-red-500' : 'border-[#3F6F64] focus:border-[#CD9A34]'
@@ -137,6 +140,50 @@ export const LoginPage: React.FC = () => {
               />
               {errors.password && (
                 <span className="text-red-500 text-xs">{errors.password.message}</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-[#3F6F64]"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div> */}
+
+            <div className="flex flex-col gap-1 w-full max-w-md">
+              <label className="text-sm font-medium text-[#415B5A]">Password</label>
+
+              {/* INPUT GROUP CONTAINER: Inherits the border and focus styles */}
+              <div
+                className={`flex items-center h-12 w-full rounded border bg-transparent transition-colors
+                  ${errors.password ? 'border-red-500' : 'border-neutral-500 focus-within:border-[#CD9A34]'} 
+                `}
+              >
+                <input
+                  id="password"
+                  // Utilizes the showPassword state defined in the source [1]
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  {...register('password')}
+                  className="flex-grow h-full p-3 bg-transparent outline-none text-[#3F6F64]"
+                />
+
+                {/* Eye button positioned inside the group flow */}
+                <button
+                  type="button"
+                  // Uses the setShowPassword setter from source [1]
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="px-3 bg-transparent border-none text-[#415B5A] hover:text-[#CD9A34] transition-colors focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {/* Eye and EyeOff icons are already imported in the source [1] */}
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
+
+              {/* Error handling using the formState from source [2] */}
+              {errors.password && (
+                <span className="text-red-500 text-xs mt-1">{errors.password.message}</span>
               )}
             </div>
 
@@ -167,9 +214,9 @@ export const LoginPage: React.FC = () => {
 
         <section className="w-full max-w-[330px] flex flex-col my-3 gap-4 items-center">
           <div className="flex flex-col gap-1 w-full items-center">
-            <p className="text-[#415B5A] text-sm hover:underline">Don't have account?</p>
+            <p className="text-[#415B5A] text-sm">Don't have account?</p>
             <Link to="/register" className="w-full">
-              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34]">
+              <button className="w-full bg-transparent rounded-full font-bold h-13 text-sm text-[#415B5A] border-none hover:text-[#CD9A34] focus-visible:outline-none focus:outline-none">
                 Sign Up
               </button>
             </Link>

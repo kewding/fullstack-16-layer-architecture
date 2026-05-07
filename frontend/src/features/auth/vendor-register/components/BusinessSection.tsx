@@ -7,17 +7,20 @@ interface SectionProps {
 }
 
 export const VendorBusinessSection: React.FC<SectionProps> = ({ form }) => {
-  const { register, formState: { errors } } = form;
+  const {
+    register,
+    formState: { errors },
+  } = form;
 
   return (
     <div className="flex flex-col w-full gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-white font-semibold text-base">Business Information</h2>
-        <p className="text-neutral-400 text-xs">Tell us about your business.</p>
+        <h2 className="font-semibold text-[#415B5A] text-base">Business Information</h2>
+        <p className="text-[#415B5A] text-xs">Tell us about your business.</p>
       </div>
 
       <div className="flex flex-col w-full gap-1.5">
-        <label htmlFor="businessName" className="text-sm">
+        <label htmlFor="businessName" className="text-sm text-[#415B5A] font-normal">
           Business Name
         </label>
         <input
@@ -25,9 +28,9 @@ export const VendorBusinessSection: React.FC<SectionProps> = ({ form }) => {
           type="text"
           placeholder="e.g. Juan's Canteen"
           {...register('businessName')}
-          className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.businessName ? 'border-red-500' : 'border-neutral-500 focus:border-white'
-          } bg-neutral-900 text-white`}
+          className={`h-12 bg-transparent text-[#3F6F64] border border-[#3F6F64] rounded p-3 focus:outline-none ${
+            errors.businessName ? 'border-red-500' : 'border-[#3F6F64] focus:border-[#CD9A34]'
+          }`}
         />
         {errors.businessName && (
           <span className="text-red-500 text-xs">{errors.businessName.message}</span>
