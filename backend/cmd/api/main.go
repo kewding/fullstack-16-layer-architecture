@@ -10,6 +10,7 @@ import (
 	"github.com/kewding/backend/internal/adapter/controller"
 	admintransactions "github.com/kewding/backend/internal/admin-transactions"
 	"github.com/kewding/backend/internal/config"
+	"github.com/kewding/backend/internal/dashboard"
 	"github.com/kewding/backend/internal/infra/cleanup"
 	"github.com/kewding/backend/internal/infra/cloudinary"
 	"github.com/kewding/backend/internal/infra/db"
@@ -145,6 +146,11 @@ func main() {
 	adminTxUseCase := admintransactions.NewUseCase(adminTxRepo)
 	adminTxController := admintransactions.NewController(adminTxUseCase)
 
+	// --- Admin Dashboard ---
+	dashboardRepo := dashboard.NewPostgresRepository(dbNode.Connection)
+	dashboardUseCase := dashboard.NewUseCase(dashboardRepo)
+	dashboardController := dashboard.NewController(dashboardUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:         registerController,
@@ -160,6 +166,7 @@ func main() {
 		MedicalInfoController:      medicalInfoController,
 		AdminTransactionController: adminTxController,
 		UserController:             userController,
+		DashboardController:        dashboardController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

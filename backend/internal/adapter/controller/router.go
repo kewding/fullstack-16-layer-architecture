@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	admintransactions "github.com/kewding/backend/internal/admin-transactions"
+	"github.com/kewding/backend/internal/dashboard"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
@@ -31,6 +32,7 @@ type Dependencies struct {
 	MedicalInfoController      *medicalinfo.Controller
 	AdminTransactionController *admintransactions.Controller
 	UserController             *user.Controller
+	DashboardController        *dashboard.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -97,6 +99,14 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			admin.GET("/users/customer/:id", deps.UserController.GetCustomerDetail)
 			admin.PATCH("/users/customer/:id/disable", deps.UserController.DisableCustomer)
 			admin.PATCH("/users/customer/:id/reactivate", deps.UserController.ReactivateCustomer)
+
+			admin.GET("/dashboard/stat-cards", deps.DashboardController.GetStatCards)
+			admin.GET("/dashboard/nqs-trend", deps.DashboardController.GetNQSTrend)
+			admin.GET("/dashboard/allergen-interventions", deps.DashboardController.GetAllergenInterventions)
+			admin.GET("/dashboard/nutritional-target", deps.DashboardController.GetNutritionalTarget)
+			admin.GET("/dashboard/revenue-distribution", deps.DashboardController.GetRevenueDistribution)
+			admin.GET("/dashboard/stall-settlement", deps.DashboardController.GetStallSettlement)
+			//
 		}
 
 		// Cashier only — role_id: 4

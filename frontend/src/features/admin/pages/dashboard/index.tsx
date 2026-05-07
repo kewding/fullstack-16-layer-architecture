@@ -1,15 +1,75 @@
-import React from 'react';
-import { KpiCardsSection } from './components/KpiCardsSection';
-import { RevenueSection } from './components/RevenueSection';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import RevenueDistributionModal from './components/RevenueDistributionModal';
+import AllergenInterventionsTable from './components/AllergenInterventionsTable';
+import NQSTrendChart from './components/NqsTrendChart';
+import NutritionalTargetChart from './components/NutritionalGetChart';
+import StallSettlementTable from './components/StallSetllementTable';
+import { useDashboard } from './schema/UserDashboard';
+import type { FlexibleDateRange } from '../transactions/components/navigation-section/DatePicker';
+import DateRangePicker from '../transactions/components/navigation-section/DatePicker';
+import StatCards from './components/StatCards';
 
-export const AdminDashboardPage: React.FC = () => {
+// Default range: current month
+function defaultRange(): FlexibleDateRange {
+  const now = new Date();
+  return {
+    start: new Date(now.getFullYear(), now.getMonth(), 1),
+    end: now,
+  };
+}
+
+export default function AdminDashboardPage() {
+  const [dateRange, setDateRange] = useState<FlexibleDateRange>(defaultRange);
+  const [revenueModalOpen, setRevenueModalOpen] = useState(false);
+
+  const {
+    statCards, nqsTrend, allergenInterventions,
+    nutritionalTarget, stallSettlement, loading,
+  } = useDashboard(dateRange);
+
+  const dateFrom = dateRange.start ? format(dateRange.start, 'yyyy-MM-dd') : undefined;
+  const dateTo   = dateRange.end   ? format(dateRange.end,   'yyyy-MM-dd') : undefined;
+
   return (
-    <div className="px-1 w-full">
-      <main className="flex flex-col w-full h-full gap-3">
-        <h1 className="text-2xl font-semibold">Overview</h1>
-        <KpiCardsSection />
-        <RevenueSection />
-      </main>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Nutrition, allergen, and financial overview
+          </p>
+        </div>
+        <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+      </div>
+
+      {/* Row 1 — Stat Cards */}
+      <StatCards
+        data={statCards}
+        loading={loading}
+        onViewRevenue={() => setRevenueModalOpen(true)}
+      />
+
+      {/* Row 2 — NQS Trend + Allergen Table */}
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <NQSTrendChart data={nqsTrend} loading={loading} />
+        <AllergenInterventionsTable data={allergenInterventions} loading={loading} />
+      </div>
+
+      {/* Row 3 — Nutritional Target + Stall Settlement */}
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <NutritionalTargetChart data={nutritionalTarget} loading={loading} />
+        <StallSettlementTable data={stallSettlement} loading={loading} />
+      </div>
+
+      {/* Revenue Distribution Modal */}
+      <RevenueDistributionModal
+        open={revenueModalOpen}
+        onClose={() => setRevenueModalOpen(false)}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      />
     </div>
   );
-};
+}
