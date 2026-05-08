@@ -17,7 +17,7 @@ export const contactSchema = z.object({
   contactNumber: z
     .string()
     .trim()
-    .regex(/^[0-9-]+$/, 'Please use only numbers and dashes (e.g., 0917-123-4567)')
+    .regex(/^09\d{9}$/, 'Contact number must be a valid PH number e.g. 09123456789')
     .transform((val) => val.replace(/-/g, ''))
     .pipe(z.string().length(11, 'The number must be exactly 11 digits.')),
 });
@@ -47,37 +47,37 @@ export const personalInfoSchema = z.object({
     }, 'You must be less than 60 years old to register.')
     // Access the first element [0] to return a string, not an array
     .transform((date) => date.toISOString().split('T')[0]),
-    
 });
 
 export type PersonalInfoInput = z.infer<typeof personalInfoSchema>;
 
-const passwordObject = z
-  .object({
-    password: z.string()
-  .min(8, 'Minimum 8 characters')
-  .max(64, 'Maximum 64 characters')
-  .regex(/[A-Z]/, 'Must contain an uppercase letter')
-  .regex(/[a-z]/, 'Must contain a lowercase letter')
-  .regex(/[0-9]/, 'Must contain a number'),
-    confirmPassword: z.string(), // Removed invalid .omit()
-  })
+const passwordObject = z.object({
+  password: z
+    .string()
+    .min(8, 'Minimum 8 characters')
+    .max(64, 'Maximum 64 characters')
+    .regex(/[A-Z]/, 'Must contain an uppercase letter')
+    .regex(/[a-z]/, 'Must contain a lowercase letter')
+    .regex(/[0-9]/, 'Must contain a number'),
+  confirmPassword: z.string(), // Removed invalid .omit()
+});
 
 export const passwordSchema = passwordObject.refine(
-  (data) => data.password === data.confirmPassword, 
-  { message: "Passwords don't match", path: ['confirmPassword'] }
+  (data) => data.password === data.confirmPassword,
+  { message: "Passwords don't match", path: ['confirmPassword'] },
 );
 
-export const registerSchema = z.object({
-  ...institutionalIDSchema.shape,
-  ...contactSchema.shape,
-  ...personalInfoSchema.shape,
-  ...passwordObject.shape, // Use passwordObject here, NOT passwordSchema
-})
-.refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+export const registerSchema = z
+  .object({
+    ...institutionalIDSchema.shape,
+    ...contactSchema.shape,
+    ...personalInfoSchema.shape,
+    ...passwordObject.shape, // Use passwordObject here, NOT passwordSchema
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export type RegisterInput = z.input<typeof registerSchema>;
 // export type RegisterOutput = z.output<typeof registerSchema>;

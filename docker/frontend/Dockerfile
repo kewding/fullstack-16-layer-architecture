@@ -18,13 +18,14 @@ WORKDIR /app
 
 # Install pnpm globally
 RUN corepack enable
-RUN corepack prepare pnpm@latest --activate
+RUN corepack prepare pnpm@9.15.4 --activate
 
 # Copy only package files first for better caching
 COPY package.json pnpm-lock.yaml ./
 # COPY frontend/package.json frontend/pnpm-lock.yaml ./
 
-
+# Allow esbuild
+# RUN pnpm approve-builds esbuild
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile 
 

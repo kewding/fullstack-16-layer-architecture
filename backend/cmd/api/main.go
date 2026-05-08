@@ -8,7 +8,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/kewding/backend/internal/adapter/controller"
+	admintransactions "github.com/kewding/backend/internal/admin-transactions"
 	"github.com/kewding/backend/internal/config"
+	"github.com/kewding/backend/internal/dashboard"
 	"github.com/kewding/backend/internal/infra/cleanup"
 	"github.com/kewding/backend/internal/infra/cloudinary"
 	"github.com/kewding/backend/internal/infra/db"
@@ -139,19 +141,32 @@ func main() {
 	medicalInfoUseCase := medicalinfo.NewUseCase(medicalInfoRepo)
 	medicalInfoController := medicalinfo.NewController(medicalInfoUseCase)
 
+	// --- Admin Transactions Table ---
+	adminTxRepo := admintransactions.NewPostgresRepository(dbNode.Connection)
+	adminTxUseCase := admintransactions.NewUseCase(adminTxRepo)
+	adminTxController := admintransactions.NewController(adminTxUseCase)
+
+	// --- Admin Dashboard ---
+	dashboardRepo := dashboard.NewPostgresRepository(dbNode.Connection)
+	dashboardUseCase := dashboard.NewUseCase(dashboardRepo)
+	dashboardController := dashboard.NewController(dashboardUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-		RegisterController:       registerController,
-		LoginController:          loginController,
-		HealthHandler:            healthHandler,
-		RfidTaggingController:    rfidTaggingController,
-		CreditTopupController:    topupController,
-		UserInfoController:       userController,
-		VendorInviteController:   vendorInviteController,
-		VendorRegisterController: vendorRegisterController,
-		VendorController:         vendorController,
-		VendorInfoController:     vendorInfoController,
-		MedicalInfoController:    medicalInfoController,
+		RegisterController:         registerController,
+		LoginController:            loginController,
+		HealthHandler:              healthHandler,
+		RfidTaggingController:      rfidTaggingController,
+		CreditTopupController:      topupController,
+		UserInfoController:         userController,
+		VendorInviteController:     vendorInviteController,
+		VendorRegisterController:   vendorRegisterController,
+		VendorController:           vendorController,
+		VendorInfoController:       vendorInfoController,
+		MedicalInfoController:      medicalInfoController,
+		AdminTransactionController: adminTxController,
+		UserController:             userController,
+		DashboardController:        dashboardController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

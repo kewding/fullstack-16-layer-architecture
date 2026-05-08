@@ -41,10 +41,10 @@ export function VendorRegisterPage() {
 
   if (status === 'loading') {
     return (
-      <div className="w-screen h-screen bg-neutral-900 flex items-center justify-center">
+      <div className="w-screen h-screen flex items-center justify-center bg-[#E9F4F1]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-6 h-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
-          <p className="text-neutral-400 text-sm">Validating invitation...</p>
+          <div className="w-8 h-8 rounded-full border-4 border-[#CD9A34] border-t-[#3F6F64] animate-spin" />
+          <p className="text-[#3F6F64] text-sm font-medium">Validating invitation...</p>
         </div>
       </div>
     );
@@ -52,10 +52,10 @@ export function VendorRegisterPage() {
 
   if (status === 'invalid') {
     return (
-      <div className="w-screen h-screen bg-neutral-900 flex items-center justify-center">
+      <div className="w-screen h-screen flex items-center justify-center  bg-[#E9F4F1]">
         <div className="text-center px-6 max-w-sm">
-          <p className="text-white text-xl font-semibold">Invalid invitation link</p>
-          <p className="text-neutral-400 text-sm mt-2">
+          <p className="text-[#3F6F64] text-xl font-bold">Invalid invitation link</p>
+          <p className="text-[#415B5A] text-sm">
             This link is invalid or does not exist. Please contact the administrator.
           </p>
         </div>
@@ -63,5 +63,9 @@ export function VendorRegisterPage() {
     );
   }
 
-  return <VendorRegisterForm email={inviteData!.email} token={inviteData!.token} />;
+  return (
+    <div className="w-screen h-screen flex items-center justify-center  bg-[#E9F4F1]">
+      <VendorRegisterForm email={inviteData!.email} token={inviteData!.token} />
+    </div>
+  );
 }

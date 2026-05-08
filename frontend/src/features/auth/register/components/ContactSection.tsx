@@ -25,8 +25,8 @@ export const RegisterContactSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="name@domain.com"
           {...register('email')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.email ? 'border-red-500' : ' focus:border-white'
-          } text-white`}
+            errors.email ? 'border-red-500' : 'focus:border-[#CD9A34]'
+          } text-[#3F6F64]`}
         />
         {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
       </div>
@@ -42,8 +42,8 @@ export const RegisterContactSection: React.FC<SectionProps> = ({ form }) => {
           placeholder="0912-345-6789"
           {...register('contactNumber')}
           className={`h-12 p-3 rounded border focus:outline-none ${
-            errors.contactNumber ? 'border-red-500' : ' focus:border-white'
-          }  text-white`}
+            errors.contactNumber ? 'border-red-500' : 'focus:border-[#CD9A34]'
+          }  text-[#3F6F64]`}
         />
         {errors.contactNumber && (
           <span className="text-red-500 text-xs">{errors.contactNumber.message}</span>

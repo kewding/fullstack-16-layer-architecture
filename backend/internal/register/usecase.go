@@ -24,7 +24,26 @@ func NewUseCase(repo Repository) UseCase {
 // Step 1: Check Institutional ID
 // if institutional ID is valid, check for availability ***
 func (u *useCase) CheckInstitutionalID(ctx context.Context, institutionalID string) error {
-	// Check admin ID table first
+
+	// Check cashier ID table first
+	isCashier, err := u.repo.CashierIDExists(ctx, institutionalID)
+	if err != nil {
+		return fmt.Errorf("failed to check cashier ID: %w", err)
+	}
+	if isCashier {
+		// cashier ID are never "taken" in users_inst_id nor admin_institutional_id
+		// the two cashier ID can only be used once - check if  already registered
+		taken, err := u.repo.InstitutionalIDTaken(ctx, institutionalID)
+		if err != nil {
+			return fmt.Errorf("failed to check availability: %w", err)
+		}
+		if taken {
+			return ErrInstitutionalIDAlreadyTaken
+		}
+		return nil // valid cashier ID
+	}
+
+	// Then check admin ID table second
 	isAdmin, err := u.repo.AdminIDExists(ctx, institutionalID)
 	if err != nil {
 		return fmt.Errorf("failed to check admin ID: %w", err)
@@ -90,12 +109,20 @@ func (u *useCase) Register(ctx context.Context, req RegisterRequest) (err error)
 	}()
 
 	// Determine role based on which ID table the institutional ID belongs to
+	isCashier, err := u.repo.CashierIDExists(ctx, req.InstitutionalID)
+	if err != nil {
+		return fmt.Errorf("%w: failed to determine role: %v", ErrRegistrationFailed, err)
+	}
+
 	isAdmin, err := u.repo.AdminIDExists(ctx, req.InstitutionalID)
 	if err != nil {
 		return fmt.Errorf("%w: failed to determine role: %v", ErrRegistrationFailed, err)
 	}
 
 	roleSlug := "customer"
+	if isCashier {
+		roleSlug = "cashier"
+	}
 	if isAdmin {
 		roleSlug = "admin"
 	}
