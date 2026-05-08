@@ -24,7 +24,8 @@ RUN corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml ./
 # COPY frontend/package.json frontend/pnpm-lock.yaml ./
 
-
+# Allow esbuild
+RUN pnpm approve-builds esbuild
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile 
 
