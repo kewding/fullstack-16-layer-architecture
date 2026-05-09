@@ -20,6 +20,13 @@ func NewPostgresRepository(db *sql.DB) Repository {
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func parseDateRange(req DateRangeRequest) (from, to time.Time, err error) {
+	if req.DateFrom == "" || req.DateTo == "" {
+		// Default to current month when no range provided
+		now := time.Now()
+		from = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		to = now
+		return
+	}
 	from, err = time.Parse("2006-01-02", req.DateFrom)
 	if err != nil {
 		return
@@ -28,22 +35,25 @@ func parseDateRange(req DateRangeRequest) (from, to time.Time, err error) {
 	if err != nil {
 		return
 	}
-	// include full end day
 	to = to.Add(24*time.Hour - time.Second)
 	return
 }
 
-// currentWeekMonFri returns the Monday 00:00 and Friday 23:59:59 of the
-// current ISO week in the server's local timezone.
 func currentWeekMonFri() (monday, friday time.Time) {
 	now := time.Now()
 	weekday := int(now.Weekday())
 	if weekday == 0 {
-		weekday = 7 // Sunday → 7
+		weekday = 7
 	}
 	monday = time.Date(now.Year(), now.Month(), now.Day()-(weekday-1), 0, 0, 0, 0, now.Location())
 	friday = monday.AddDate(0, 0, 4).Add(24*time.Hour - time.Second)
 	return
+}
+
+// scanNullFloat64 safely scans a potentially-NULL float64 column into float64 (returns 0 on NULL).
+func scanNullFloat64(v *float64) *sql.NullFloat64 {
+	nf := &sql.NullFloat64{}
+	return nf
 }
 
 // ── GetStatCards ──────────────────────────────────────────────────────────────
@@ -56,31 +66,33 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 
 	res := &StatCardsResponse{}
 
-	// 1. Allergen intervention count
-	err = r.db.QueryRowContext(ctx, `
+	// Allergen count — safe: COUNT returns 0 even on empty table
+	if err := r.db.QueryRowContext(ctx, `
 		SELECT COUNT(DISTINCT id)
 		FROM allergen_interventions
 		WHERE created_at BETWEEN $1 AND $2`,
 		from, to,
-	).Scan(&res.DailyAllergenCount)
-	if err != nil {
+	).Scan(&res.DailyAllergenCount); err != nil {
 		return nil, fmt.Errorf("GetStatCards allergen count: %w", err)
 	}
 
-	// 2. Total gross sales
-	err = r.db.QueryRowContext(ctx, `
+	// Gross sales — COALESCE handles empty sales table
+	var grossSales sql.NullFloat64
+	if err := r.db.QueryRowContext(ctx, `
 		SELECT COALESCE(SUM(total_amount), 0)
 		FROM sales
 		WHERE created_at BETWEEN $1 AND $2`,
 		from, to,
-	).Scan(&res.TotalGrossSales)
-	if err != nil {
+	).Scan(&grossSales); err != nil {
 		return nil, fmt.Errorf("GetStatCards gross sales: %w", err)
 	}
+	if grossSales.Valid {
+		res.TotalGrossSales = grossSales.Float64
+	}
 
-	// 3. Average NRF 9.3 across all transactions in range
-	//    For each sale, sum nutrients across all items (qty × per-unit value),
-	//    compute NRF9.3, then average over all sales.
+	// NRF 9.3 — per sale, then averaged.
+	// LEFT JOIN product_nutrition so sales of products without nutrition data
+	// still count (they just contribute 0 to every nutrient).
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			COALESCE(SUM(si.quantity * pn.protein_g),       0),
@@ -96,8 +108,8 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 			COALESCE(SUM(si.quantity * pn.sodium_mg),       0),
 			COALESCE(SUM(si.quantity * pn.saturated_fat_g), 0)
 		FROM sales s
-		JOIN sales_items si       ON si.sales_id   = s.id
-		JOIN product_nutrition pn ON pn.product_id = si.products_id
+		JOIN sales_items si            ON si.sales_id   = s.id
+		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
 		WHERE s.created_at BETWEEN $1 AND $2
 		GROUP BY s.id`,
 		from, to,
@@ -112,8 +124,8 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 	for rows.Next() {
 		var (
 			proteinG, fiberG, vitAMcg, vitCMg, vitEMg float64
-			magMg, potMg, ironMg, calciumMg            float64
-			sugarG, sodiumMg, satFatG                  float64
+			magMg, potMg, ironMg, calciumMg           float64
+			sugarG, sodiumMg, satFatG                 float64
 		)
 		if err := rows.Scan(
 			&proteinG, &fiberG, &vitAMcg, &vitCMg, &vitEMg,
@@ -132,6 +144,7 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 	if count > 0 {
 		res.DailyNQS = totalScore / float64(count)
 	}
+	// count == 0 → DailyNQS stays 0.0, which is a valid "no data" state
 
 	return res, nil
 }
@@ -141,25 +154,24 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 func (r *postgresRepository) GetNQSTrend(ctx context.Context) (*NQSTrendResponse, error) {
 	monday, friday := currentWeekMonFri()
 
-	// Pull per-sale nutrient totals for the whole week, with sale date
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
-			DATE(s.created_at)                                    AS sale_date,
-			COALESCE(SUM(si.quantity * pn.protein_g),       0)   AS protein_g,
-			COALESCE(SUM(si.quantity * pn.fiber_g),         0)   AS fiber_g,
-			COALESCE(SUM(si.quantity * pn.vitamin_a_mcg),   0)   AS vitamin_a_mcg,
-			COALESCE(SUM(si.quantity * pn.vitamin_c_mg),    0)   AS vitamin_c_mg,
-			COALESCE(SUM(si.quantity * pn.vitamin_e_mg),    0)   AS vitamin_e_mg,
-			COALESCE(SUM(si.quantity * pn.magnesium_mg),    0)   AS magnesium_mg,
-			COALESCE(SUM(si.quantity * pn.potassium_mg),    0)   AS potassium_mg,
-			COALESCE(SUM(si.quantity * pn.iron_mg),         0)   AS iron_mg,
-			COALESCE(SUM(si.quantity * pn.calcium_mg),      0)   AS calcium_mg,
-			COALESCE(SUM(si.quantity * pn.sugar_g),         0)   AS sugar_g,
-			COALESCE(SUM(si.quantity * pn.sodium_mg),       0)   AS sodium_mg,
-			COALESCE(SUM(si.quantity * pn.saturated_fat_g), 0)   AS saturated_fat_g
+			DATE(s.created_at)                                      AS sale_date,
+			COALESCE(SUM(si.quantity * pn.protein_g),       0),
+			COALESCE(SUM(si.quantity * pn.fiber_g),         0),
+			COALESCE(SUM(si.quantity * pn.vitamin_a_mcg),   0),
+			COALESCE(SUM(si.quantity * pn.vitamin_c_mg),    0),
+			COALESCE(SUM(si.quantity * pn.vitamin_e_mg),    0),
+			COALESCE(SUM(si.quantity * pn.magnesium_mg),    0),
+			COALESCE(SUM(si.quantity * pn.potassium_mg),    0),
+			COALESCE(SUM(si.quantity * pn.iron_mg),         0),
+			COALESCE(SUM(si.quantity * pn.calcium_mg),      0),
+			COALESCE(SUM(si.quantity * pn.sugar_g),         0),
+			COALESCE(SUM(si.quantity * pn.sodium_mg),       0),
+			COALESCE(SUM(si.quantity * pn.saturated_fat_g), 0)
 		FROM sales s
-		JOIN sales_items si       ON si.sales_id   = s.id
-		JOIN product_nutrition pn ON pn.product_id = si.products_id
+		JOIN sales_items si            ON si.sales_id   = s.id
+		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
 		WHERE s.created_at BETWEEN $1 AND $2
 		GROUP BY s.id, DATE(s.created_at)
 		ORDER BY sale_date`,
@@ -170,7 +182,6 @@ func (r *postgresRepository) GetNQSTrend(ctx context.Context) (*NQSTrendResponse
 	}
 	defer rows.Close()
 
-	// Accumulate per-day: sum of NRF scores and count of transactions
 	type dayAgg struct {
 		total float64
 		count int
@@ -181,8 +192,8 @@ func (r *postgresRepository) GetNQSTrend(ctx context.Context) (*NQSTrendResponse
 		var saleDate time.Time
 		var (
 			proteinG, fiberG, vitAMcg, vitCMg, vitEMg float64
-			magMg, potMg, ironMg, calciumMg            float64
-			sugarG, sodiumMg, satFatG                  float64
+			magMg, potMg, ironMg, calciumMg           float64
+			sugarG, sodiumMg, satFatG                 float64
 		)
 		if err := rows.Scan(
 			&saleDate,
@@ -204,7 +215,7 @@ func (r *postgresRepository) GetNQSTrend(ctx context.Context) (*NQSTrendResponse
 		return nil, fmt.Errorf("GetNQSTrend rows: %w", err)
 	}
 
-	// Build Mon–Fri points (0 score for days with no data)
+	// Always emit Mon–Fri points; days with no sales get score = 0
 	points := make([]NQSTrendPoint, 0, 5)
 	for i := 0; i < 5; i++ {
 		day := monday.AddDate(0, 0, i)
@@ -246,7 +257,8 @@ func (r *postgresRepository) GetAllergenInterventions(ctx context.Context, req D
 	}
 	defer rows.Close()
 
-	data := []AllergenInterventionRow{}
+	// Always return an initialised slice, never nil
+	data := make([]AllergenInterventionRow, 0)
 	for rows.Next() {
 		var row AllergenInterventionRow
 		var createdAt time.Time
@@ -273,10 +285,11 @@ func (r *postgresRepository) GetNutritionalTarget(ctx context.Context, req DateR
 
 	var (
 		proteinG, fiberG, vitAMcg, vitCMg, vitEMg float64
-		magMg, potMg, ironMg, calciumMg            float64
-		sugarG, sodiumMg, satFatG                  float64
+		magMg, potMg, ironMg, calciumMg           float64
+		sugarG, sodiumMg, satFatG                 float64
 	)
 
+	// LEFT JOIN so this works even with no product_nutrition rows at all
 	err = r.db.QueryRowContext(ctx, `
 		SELECT
 			COALESCE(SUM(si.quantity * pn.protein_g),       0),
@@ -292,8 +305,8 @@ func (r *postgresRepository) GetNutritionalTarget(ctx context.Context, req DateR
 			COALESCE(SUM(si.quantity * pn.sodium_mg),       0),
 			COALESCE(SUM(si.quantity * pn.saturated_fat_g), 0)
 		FROM sales s
-		JOIN sales_items si       ON si.sales_id   = s.id
-		JOIN product_nutrition pn ON pn.product_id = si.products_id
+		JOIN sales_items si            ON si.sales_id   = s.id
+		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
 		WHERE s.created_at BETWEEN $1 AND $2`,
 		from, to,
 	).Scan(
@@ -306,19 +319,17 @@ func (r *postgresRepository) GetNutritionalTarget(ctx context.Context, req DateR
 	}
 
 	nutrients := []NutrientBar{
-		// Encouraged
-		{Nutrient: "Protein",    PercentDV: proteinG / DVProteinG * 100,    IsLimited: false},
-		{Nutrient: "Fiber",      PercentDV: fiberG / DVFiberG * 100,        IsLimited: false},
-		{Nutrient: "Vitamin A",  PercentDV: vitAMcg / DVVitaminAMcg * 100,  IsLimited: false},
-		{Nutrient: "Vitamin C",  PercentDV: vitCMg / DVVitaminCMg * 100,    IsLimited: false},
-		{Nutrient: "Vitamin E",  PercentDV: vitEMg / DVVitaminEMg * 100,    IsLimited: false},
-		{Nutrient: "Magnesium",  PercentDV: magMg / DVMagnesiumMg * 100,    IsLimited: false},
-		{Nutrient: "Potassium",  PercentDV: potMg / DVPotassiumMg * 100,    IsLimited: false},
-		{Nutrient: "Iron",       PercentDV: ironMg / DVIronMg * 100,        IsLimited: false},
-		{Nutrient: "Calcium",    PercentDV: calciumMg / DVCalciumMg * 100,  IsLimited: false},
-		// Limited
-		{Nutrient: "Sugar",         PercentDV: sugarG / DVSugarG * 100,        IsLimited: true},
-		{Nutrient: "Sodium",        PercentDV: sodiumMg / DVSodiumMg * 100,     IsLimited: true},
+		{Nutrient: "Protein", PercentDV: proteinG / DVProteinG * 100, IsLimited: false},
+		{Nutrient: "Fiber", PercentDV: fiberG / DVFiberG * 100, IsLimited: false},
+		{Nutrient: "Vitamin A", PercentDV: vitAMcg / DVVitaminAMcg * 100, IsLimited: false},
+		{Nutrient: "Vitamin C", PercentDV: vitCMg / DVVitaminCMg * 100, IsLimited: false},
+		{Nutrient: "Vitamin E", PercentDV: vitEMg / DVVitaminEMg * 100, IsLimited: false},
+		{Nutrient: "Magnesium", PercentDV: magMg / DVMagnesiumMg * 100, IsLimited: false},
+		{Nutrient: "Potassium", PercentDV: potMg / DVPotassiumMg * 100, IsLimited: false},
+		{Nutrient: "Iron", PercentDV: ironMg / DVIronMg * 100, IsLimited: false},
+		{Nutrient: "Calcium", PercentDV: calciumMg / DVCalciumMg * 100, IsLimited: false},
+		{Nutrient: "Sugar", PercentDV: sugarG / DVSugarG * 100, IsLimited: true},
+		{Nutrient: "Sodium", PercentDV: sodiumMg / DVSodiumMg * 100, IsLimited: true},
 		{Nutrient: "Saturated Fat", PercentDV: satFatG / DVSaturatedFatG * 100, IsLimited: true},
 	}
 
@@ -333,15 +344,17 @@ func (r *postgresRepository) GetRevenueDistribution(ctx context.Context, req Dat
 		return nil, fmt.Errorf("GetRevenueDistribution parse date: %w", err)
 	}
 
+	// LEFT JOIN vendors — stalls without a vendor record still appear with 0 fee
+	// LEFT JOIN sales   — stalls with no sales in range still appear with 0 revenue
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			s.stall_name,
-			COALESCE(SUM(sa.total_amount), 0)                         AS gross_sales,
+			COALESCE(SUM(sa.total_amount), 0)   AS gross_sales,
 			v.concession_fee_type,
 			v.concession_fee_value
 		FROM stalls s
-		JOIN vendors v  ON v.user_id = s.user_id
-		LEFT JOIN sales sa ON sa.stall_id = s.id
+		LEFT JOIN vendors v  ON v.user_id = s.user_id AND v.deleted_at IS NULL
+		LEFT JOIN sales sa   ON sa.stall_id = s.id
 			AND sa.created_at BETWEEN $1 AND $2
 		WHERE s.deleted_at IS NULL
 		GROUP BY s.stall_name, v.concession_fee_type, v.concession_fee_value
@@ -353,15 +366,15 @@ func (r *postgresRepository) GetRevenueDistribution(ctx context.Context, req Dat
 	}
 	defer rows.Close()
 
-	var stalls []StallRevenueRow
+	stalls := make([]StallRevenueRow, 0)
 	var totalGross float64
 
 	for rows.Next() {
 		var (
-			stallName       string
-			grossSales      float64
-			feeType         sql.NullString
-			feeValue        sql.NullFloat64
+			stallName  string
+			grossSales float64
+			feeType    sql.NullString
+			feeValue   sql.NullFloat64
 		)
 		if err := rows.Scan(&stallName, &grossSales, &feeType, &feeValue); err != nil {
 			return nil, fmt.Errorf("GetRevenueDistribution scan: %w", err)
@@ -395,13 +408,15 @@ func (r *postgresRepository) GetRevenueDistribution(ctx context.Context, req Dat
 // ── GetStallSettlement ────────────────────────────────────────────────────────
 
 func (r *postgresRepository) GetStallSettlement(ctx context.Context) (*StallSettlementResponse, error) {
+	// Use NullFloat64 for both aggregates — SUM returns NULL on empty set
+	// even when COALESCE wraps an empty FILTER subexpression on some PG versions.
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			s.stall_name,
-			COALESCE(SUM(sa.total_amount), 0)                             AS total_revenue,
+			COALESCE(SUM(sa.total_amount), 0)                                AS total_revenue,
 			COALESCE(SUM(r.amount) FILTER (WHERE r.status = 'completed'), 0) AS remitted
 		FROM stalls s
-		LEFT JOIN sales      sa ON sa.stall_id  = s.id
+		LEFT JOIN sales       sa ON sa.stall_id = s.id
 		LEFT JOIN remittances r  ON r.user_id   = s.user_id
 		WHERE s.deleted_at IS NULL
 		GROUP BY s.stall_name
@@ -411,18 +426,35 @@ func (r *postgresRepository) GetStallSettlement(ctx context.Context) (*StallSett
 	}
 	defer rows.Close()
 
-	var stalls []StallSettlementRow
+	stalls := make([]StallSettlementRow, 0)
 	for rows.Next() {
-		var row StallSettlementRow
-		if err := rows.Scan(&row.StallName, &row.TotalRevenue, &row.RemittedAmount); err != nil {
+		var (
+			stallName      string
+			totalRevenue   sql.NullFloat64
+			remittedAmount sql.NullFloat64
+		)
+		if err := rows.Scan(&stallName, &totalRevenue, &remittedAmount); err != nil {
 			return nil, fmt.Errorf("GetStallSettlement scan: %w", err)
 		}
-		row.RemainingBalance = row.TotalRevenue - row.RemittedAmount
-		stalls = append(stalls, row)
+		rev := 0.0
+		rem := 0.0
+		if totalRevenue.Valid {
+			rev = totalRevenue.Float64
+		}
+		if remittedAmount.Valid {
+			rem = remittedAmount.Float64
+		}
+		stalls = append(stalls, StallSettlementRow{
+			StallName:        stallName,
+			TotalRevenue:     rev,
+			RemittedAmount:   rem,
+			RemainingBalance: rev - rem,
+		})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("GetStallSettlement rows: %w", err)
 	}
 
+	// Return empty slice, never nil — frontend always gets a valid JSON array
 	return &StallSettlementResponse{Stalls: stalls}, nil
 }

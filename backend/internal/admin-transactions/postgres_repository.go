@@ -172,7 +172,7 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 		SELECT sa.id::TEXT, sa.created_at AS date, 'purchase' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
 		       sa.total_amount AS amount,
-		       COALESCE(cl.status::TEXT, 'completed') AS status
+		       COALESCE(cl.purchase_status::TEXT, 'completed') AS status
 		FROM sales sa
 		JOIN users u ON u.id = sa.user_id
 		JOIN users_info ui ON ui.user_id = u.id

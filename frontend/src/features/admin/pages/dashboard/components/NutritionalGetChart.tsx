@@ -1,7 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer, Cell,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
 import type { NutritionalTargetData } from '../services/dashboard.service';
 
@@ -10,11 +17,9 @@ interface NutritionalTargetChartProps {
   loading: boolean;
 }
 
-// For diverging: encouraged bars go right (positive), limited bars go left (negative)
 function transformData(data: NutritionalTargetData) {
-  return data.nutrients.map((n) => ({
+  return (data.nutrients ?? []).map((n) => ({
     nutrient: n.nutrient,
-    // limited nutrients shown as negative so they diverge left
     value: n.is_limited ? -Math.abs(n.percent_dv) : Math.abs(n.percent_dv),
     isLimited: n.is_limited,
     rawPct: n.percent_dv,
@@ -36,6 +41,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function NutritionalTargetChart({ data, loading }: NutritionalTargetChartProps) {
   const chartData = data ? transformData(data) : [];
+  const hasData = chartData.some((d) => d.rawPct !== 0);
 
   return (
     <Card className="flex-1">
@@ -56,6 +62,10 @@ export default function NutritionalTargetChart({ data, loading }: NutritionalTar
       <CardContent>
         {loading && !data ? (
           <div className="h-72 animate-pulse rounded bg-gray-100" />
+        ) : !hasData ? (
+          <div className="flex h-72 items-center justify-center text-sm text-gray-400">
+            No nutritional data for the selected range.
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={290}>
             <BarChart
@@ -70,21 +80,12 @@ export default function NutritionalTargetChart({ data, loading }: NutritionalTar
                 tickFormatter={(v) => `${Math.abs(v)}%`}
                 domain={[-110, 110]}
               />
-              <YAxis
-                type="category"
-                dataKey="nutrient"
-                tick={{ fontSize: 11 }}
-                width={76}
-              />
+              <YAxis type="category" dataKey="nutrient" tick={{ fontSize: 11 }} width={76} />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine x={0} stroke="#d1d5db" />
               <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
                 {chartData.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={entry.isLimited ? '#f87171' : '#10b981'}
-                    opacity={0.85}
-                  />
+                  <Cell key={index} fill={entry.isLimited ? '#f87171' : '#10b981'} opacity={0.85} />
                 ))}
               </Bar>
             </BarChart>

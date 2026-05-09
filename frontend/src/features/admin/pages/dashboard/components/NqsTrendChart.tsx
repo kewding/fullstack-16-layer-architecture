@@ -1,13 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer, Legend,
-} from 'recharts';
 import { format, parseISO } from 'date-fns';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { NQSTrendData } from '../services/dashboard.service';
 
-// FDA recommended NRF 9.3 target — scores above 0 indicate net nutritional value;
-// a commonly cited "good diet" threshold is around 40–60.
 const NQS_TARGET = 45;
 
 interface NQSTrendChartProps {
@@ -16,10 +21,12 @@ interface NQSTrendChartProps {
 }
 
 export default function NQSTrendChart({ data, loading }: NQSTrendChartProps) {
-  const chartData = data?.points.map((p) => ({
+  const chartData = (data?.points ?? []).map((p) => ({
     day: format(parseISO(p.date), 'EEE'),
     score: parseFloat(p.score.toFixed(1)),
-  })) ?? [];
+  }));
+
+  const hasData = chartData.some((p) => p.score !== 0);
 
   return (
     <Card className="flex-1">
@@ -32,6 +39,10 @@ export default function NQSTrendChart({ data, loading }: NQSTrendChartProps) {
       <CardContent>
         {loading && !data ? (
           <div className="h-52 animate-pulse rounded bg-gray-100" />
+        ) : !hasData ? (
+          <div className="flex h-52 items-center justify-center text-sm text-gray-400">
+            No transaction data for this week yet.
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={210}>
             <LineChart data={chartData} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
@@ -43,12 +54,16 @@ export default function NQSTrendChart({ data, loading }: NQSTrendChartProps) {
                 contentStyle={{ fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              {/* Target reference line */}
               <ReferenceLine
                 y={NQS_TARGET}
                 stroke="#f59e0b"
                 strokeDasharray="5 5"
-                label={{ value: `Target ${NQS_TARGET}`, fontSize: 11, fill: '#f59e0b', position: 'right' }}
+                label={{
+                  value: `Target ${NQS_TARGET}`,
+                  fontSize: 11,
+                  fill: '#f59e0b',
+                  position: 'right',
+                }}
               />
               <Line
                 type="monotone"

@@ -1,6 +1,7 @@
 package admintransactions
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -47,6 +48,7 @@ func (c *Controller) ListCustomerTransactions(ctx *gin.Context) {
 	}
 	res, err := c.uc.ListCustomerTransactions(ctx.Request.Context(), params)
 	if err != nil {
+		log.Printf("ListCustomerTransactions error: %v", err)
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
 			Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
