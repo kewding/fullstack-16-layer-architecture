@@ -37,7 +37,7 @@ type CustomerRole string
 const (
 	CustomerRoleStudent CustomerRole = "student"
 	CustomerRoleTeacher CustomerRole = "teacher"
-	CustomerRoleFaculty CustomerRole = "faculty"
+	CustomerRoleStaff CustomerRole = "staff"
 )
 
 // CustomerRow is a single row returned by the list endpoints.
@@ -107,7 +107,7 @@ type UserProfileResponse struct {
 	LastName      string `json:"last_name"`
 	BirthDate     string `json:"birth_date"`
 	ContactNumber string `json:"contact_number"`
-	CustomerRole  string `json:"customer_role"` // "student" | "teacher" | "faculty" | ""
+	CustomerRole  string `json:"customer_role"` // "student" | "teacher" | "staff" | ""
 	Email         string `json:"email"`
 }
 
@@ -117,5 +117,5 @@ type UpdateUserProfileRequest struct {
 	LastName      string `json:"last_name"       validate:"required,max=100"`
 	BirthDate     string `json:"birth_date"      validate:"required"`
 	ContactNumber string `json:"contact_number"  validate:"required"`
-	CustomerRole  string `json:"customer_role"   validate:"required,oneof=student teacher faculty"`
+	CustomerRole  string `json:"customer_role"   validate:"required,oneof=student teacher staff"`
 }

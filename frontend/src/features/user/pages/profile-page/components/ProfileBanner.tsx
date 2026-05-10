@@ -1,7 +1,7 @@
 const ROLE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
   student: { bg: 'bg-[#3F6F64]/10', text: 'text-[#3F6F64]', border: 'border-[#3F6F64]/30', label: 'Student' },
   teacher: { bg: 'bg-[#CD9A34]/10', text: 'text-[#CD9A34]', border: 'border-[#CD9A34]/30', label: 'Teacher' },
-  faculty: { bg: 'bg-[#415B5A]/10', text: 'text-[#415B5A]', border: 'border-[#415B5A]/30', label: 'Faculty' },
+  staff: { bg: 'bg-[#415B5A]/10', text: 'text-[#415B5A]', border: 'border-[#415B5A]/30', label: 'Staff' },
 };
 
 interface ProfileBannerProps {

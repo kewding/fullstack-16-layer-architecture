@@ -4,7 +4,7 @@ export interface UserProfileData {
   last_name: string;
   birth_date: string;
   contact_number: string;
-  customer_role: 'student' | 'teacher' | 'faculty' | '';
+  customer_role: 'student' | 'teacher' | 'staff' | '';
   email: string;
 }
 
@@ -14,7 +14,7 @@ export interface UpdateUserProfilePayload {
   last_name: string;
   birth_date: string;
   contact_number: string;
-  customer_role: 'student' | 'teacher' | 'faculty';
+  customer_role: 'student' | 'teacher' | 'staff';
 }
 
 export interface APIResponse<T = unknown> {

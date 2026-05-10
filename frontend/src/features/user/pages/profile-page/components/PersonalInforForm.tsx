@@ -80,7 +80,7 @@ export function PersonalInfoForm({ onSaveSuccess }: PersonalInfoFormProps) {
           customer_role:
             data.customer_role === 'student' ||
             data.customer_role === 'teacher' ||
-            data.customer_role === 'faculty'
+            data.customer_role === 'staff'
               ? data.customer_role
               : undefined,
         });

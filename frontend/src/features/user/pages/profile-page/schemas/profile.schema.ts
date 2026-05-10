@@ -17,7 +17,7 @@ export const userProfileSchema = z.object({
     .min(1, 'Contact number is required')
     .regex(/^09\d{9}$/, 'Contact number must be a valid PH number e.g. 09123456789'),
 
-  customer_role: z.enum(['student', 'teacher', 'faculty'], {
+  customer_role: z.enum(['student', 'teacher', 'staff'], {
     error: 'Please select your role',
   }),
 });

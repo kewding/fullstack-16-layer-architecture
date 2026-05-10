@@ -4,7 +4,7 @@ import type { UserProfileInput } from '../schemas/profile.schema';
 const ROLES = [
   { value: 'student', activeClass: 'bg-[#3F6F64] border-[#3F6F64] text-white' },
   { value: 'teacher', activeClass: 'bg-[#CD9A34] border-[#CD9A34] text-white' },
-  { value: 'faculty', activeClass: 'bg-[#415B5A] border-[#415B5A] text-white' },
+  { value: 'staff', activeClass: 'bg-[#415B5A] border-[#415B5A] text-white' },
 ] as const;
 
 const IDLE_CLASS =

@@ -8,7 +8,7 @@ import type { CustomerRow } from '../services/customer.service';
 const ROLE_BADGE: Record<string, string> = {
   student: 'bg-blue-100 text-blue-700',
   teacher: 'bg-violet-100 text-violet-700',
-  faculty: 'bg-amber-100 text-amber-700',
+  staff: 'bg-amber-100 text-amber-700',
 };
 
 interface InactiveColumnActions {
