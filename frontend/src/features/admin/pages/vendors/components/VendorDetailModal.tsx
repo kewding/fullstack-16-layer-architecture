@@ -15,7 +15,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm text-white">{value || '—'}</span>
+      <span className="text-sm text-black">{value || '—'}</span>
     </div>
   );
 }
@@ -108,15 +108,19 @@ export function VendorDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="modal-overlay">
+      <div className="modal-container max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-800 sticky top-0 bg-neutral-900 z-10">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-800 sticky top-0 bg-[hsl(var(--modal-background))] z-10">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-lg font-semibold">Vendor Review</h2>
             {vendor && <p className="text-sm text-muted-foreground">{vendor.email}</p>}
           </div>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-white
+           hover:bg-white hover:text-[#415B5A] transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -133,9 +137,7 @@ export function VendorDetailModal({
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Personal Information */}
             <div className="flex flex-col gap-4">
-              <h3 className="text-base font-semibold border-b border-neutral-800 pb-2">
-                Personal Information
-              </h3>
+              <h3 className="modal-section-title">Personal Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <InfoRow label="First Name" value={vendor.first_name} />
                 <InfoRow label="Last Name" value={vendor.last_name} />
@@ -148,9 +150,7 @@ export function VendorDetailModal({
 
             {/* Business Information */}
             <div className="flex flex-col gap-4">
-              <h3 className="text-base font-semibold border-b border-neutral-800 pb-2">
-                Business Information
-              </h3>
+              <h3 className="modal-section-title">Business Information</h3>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function VendorDetailModal({
                       </Badge>
                     )}
                   </div>
-                  <span className="text-sm text-white">{vendor.dti_sec_number || '—'}</span>
+                  <span className="modal-value text-black">{vendor.dti_sec_number || '—'}</span>
                 </div>
 
                 <div className="flex flex-col gap-0.5">
@@ -173,7 +173,7 @@ export function VendorDetailModal({
                       </Badge>
                     )}
                   </div>
-                  <span className="text-sm text-white">{vendor.tin || '—'}</span>
+                  <span className="modal-value text-black">{vendor.tin || '—'}</span>
                 </div>
 
                 {/* Documents */}
@@ -199,7 +199,7 @@ export function VendorDetailModal({
         ) : null}
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-neutral-800 sticky bottom-0 bg-neutral-900">
+        <div className="flex items-center justify-between p-6 border-t border-neutral-800 sticky bottom-0">
           {/* <Button variant="outline" onClick={onClose}>
             Close
           </Button> */}
@@ -210,7 +210,7 @@ export function VendorDetailModal({
               <Button
                 onClick={handleApprove}
                 disabled={approving}
-                className="bg-green-500 text-black hover:bg-green-400 font-semibold"
+                className="gap-2 p-3 bg-[#3F6F64] text-white hover:bg-white hover:text-[#3F6F64] border border-[#3F6F64] transition-colors"
               >
                 {approving ? 'Approving...' : 'Accept Vendor'}
               </Button>
@@ -223,7 +223,7 @@ export function VendorDetailModal({
                   <Button
                     variant="outline"
                     onClick={() => setConfirmRemove(true)}
-                    className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                    className="border-red-600 text-red-400 hover:bg-red-500/10 hover:text-red-400 bg-transparent"
                   >
                     Remove from Business
                   </Button>

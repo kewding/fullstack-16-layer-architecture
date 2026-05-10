@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
 import { VendorDetailModal } from '../components/VendorDetailModal';
+import { capitalizeWords } from '../helper/capitalize';
 import type { VendorReviewRow } from '../services/vendor.service';
 import { vendorService } from '../services/vendor.service';
 
@@ -58,7 +59,7 @@ function ActionButtons({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                className="border-red-400/50 text-red-400 bg-red-100 hover:bg-red-500/10 hover:text-red-400"
                 onClick={() => setConfirmOpen(true)}
               >
                 Remove
@@ -105,17 +106,20 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     accessorKey: 'owner_name',
     header: 'Owner Name',
     cell: ({ row }) =>
-      row.original.owner_name ?? (
+      capitalizeWords(row.original.owner_name) ?? (
         <span className="text-muted-foreground italic text-xs">Pending</span>
       ),
   },
   {
     accessorKey: 'email',
     header: 'Email',
+    size: 150,
+    minSize: 130,
+    maxSize: 180,
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: () => <div className="text-center">Status</div>,
     cell: ({ row }) => {
       const status = row.original.status;
       const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -128,34 +132,44 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
         for_review: 'For Review',
         in_business: 'In Business',
       };
-      return <Badge variant={variantMap[status]}>{labelMap[status]}</Badge>;
+      return (
+        <div className="flex justify-center">
+          <Badge variant={variantMap[status]}>{labelMap[status]}</Badge>
+        </div>
+      );
     },
   },
   {
     accessorKey: 'invited_by_name',
     header: 'Invited By',
+    cell: ({ row }) => capitalizeWords(row.original.invited_by_name),
   },
   {
     accessorKey: 'invited_at',
-    header: 'Invite Date',
-    cell: ({ row }) =>
-      new Date(row.original.invited_at).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
+    header: () => <div className="text-center">Invite Date</div>,
+    cell: ({ row }) => (
+      <div className="text-center">
+        {new Date(row.original.invited_at).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })}
+      </div>
+    ),
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: () => <div className="text-center">Actions</div>,
     cell: ({ row }) => (
-      <ActionButtons
-        id={row.original.id}
-        status={row.original.status}
-        onRevoked={onRevoked}
-        onApproved={onApproved}
-        onRemoved={onRemoved}
-      />
+      <div className="flex justify-center">
+        <ActionButtons
+          id={row.original.id}
+          status={row.original.status}
+          onRevoked={onRevoked}
+          onApproved={onApproved}
+          onRemoved={onRemoved}
+        />
+      </div>
     ),
   },
 ];

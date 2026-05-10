@@ -1,10 +1,4 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  // getPaginationRowModel,
-  useReactTable,
-  type ColumnDef,
-} from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -36,31 +31,40 @@ export function VendorsTable<TData, TValue>({
   total,
   onPageChange,
 }: DataTableProps<TData, TValue>) {
+  const [columnSizing, setColumnSizing] = useState({});
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    // getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true, // server-side pagination
+    manualPagination: true,
     pageCount: totalPages,
+    columnResizeMode: 'onChange',
     state: {
       pagination: {
-        pageIndex: page - 1, // TanStack is 0-indexed, your page is 1-indexed
+        pageIndex: page - 1,
         pageSize: 10,
       },
+      columnSizing,
     },
+
+    onColumnSizingChange: setColumnSizing,
     onPaginationChange: () => {},
   });
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-md border">
-        <Table>
+      {/* White card wrapping the table */}
+      <div className="overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-card shadow-sm">
+        <Table className="w-full table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="border-b border-[hsl(var(--border))]">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="px-6 py-4 text-muted-foreground font-semibold "
+                    // style={{ width: header.getSize() }}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -72,18 +76,26 @@ export function VendorsTable<TData, TValue>({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="px-6 py-4 align-middle">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className="w-4 h-4 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+                    <div className="w-4 h-4 rounded-full border-2 border-[#3f6f64] border-t-transparent animate-spin" />
                     Loading...
                   </div>
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className="h-16 border-b border-[hsl(var(--border))] last:border-0 hover:bg-[hsl(var(--muted))/40] transition-colors"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className="px-6 py-4 "
+                      // style={{ width: cell.column.getSize() }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -93,7 +105,7 @@ export function VendorsTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-24 text-center text-muted-foreground "
                 >
                   No results.
                 </TableCell>

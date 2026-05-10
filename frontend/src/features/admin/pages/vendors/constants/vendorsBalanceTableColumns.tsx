@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { capitalizeWords } from '../helper/capitalize';
 import type { VendorBalanceRow } from '../services/vendor.service';
 
 export const VENDORS_BALANCE_TABLE_COLUMNS: ColumnDef<VendorBalanceRow>[] = [
@@ -6,7 +7,7 @@ export const VENDORS_BALANCE_TABLE_COLUMNS: ColumnDef<VendorBalanceRow>[] = [
     accessorKey: 'stall_name',
     header: 'Stall Name',
     cell: ({ row }) =>
-      row.original.stall_name ?? (
+      capitalizeWords(row.original.stall_name) ?? (
         <span className="text-muted-foreground italic text-xs">—</span>
       ),
   },

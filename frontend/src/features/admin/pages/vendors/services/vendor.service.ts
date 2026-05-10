@@ -1,3 +1,5 @@
+import { capitalizeNameFields } from '../helper/capitalize';
+
 export interface VendorReviewRow {
   id: string;
   email: string;
@@ -75,7 +77,7 @@ export const vendorService = {
     const res = await fetch(`/api/admin/vendor/${vendorID}`);
     const json: APIResponse<VendorDetailResponse> = await res.json();
     if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch vendor detail');
-    return json.data!;
+    return capitalizeNameFields(json.data!);
   },
 
   async approveVendor(vendorID: string): Promise<APIResponse> {
