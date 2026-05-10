@@ -99,3 +99,23 @@ type CustomerDetailResponse struct {
 	EmergencyContactNumber       *string  `json:"emergency_contact_number"`
 	EmergencyContactRelationship *string  `json:"emergency_contact_relationship"`
 }
+
+type UserProfileResponse struct {
+	FirstName     string `json:"first_name"`
+	MiddleName    string `json:"middle_name"`
+	LastName      string `json:"last_name"`
+	BirthDate     string `json:"birth_date"`
+	ContactNumber string `json:"contact_number"`
+	CustomerRole  string `json:"customer_role"` // "student" | "teacher" | "faculty" | ""
+	Email         string `json:"email"`
+}
+ 
+type UpdateUserProfileRequest struct {
+	FirstName     string `json:"first_name"     validate:"required,max=100"`
+	MiddleName    string `json:"middle_name"     validate:"required,max=100"`
+	LastName      string `json:"last_name"       validate:"required,max=100"`
+	BirthDate     string `json:"birth_date"      validate:"required"`
+	ContactNumber string `json:"contact_number"  validate:"required"`
+	CustomerRole  string `json:"customer_role"   validate:"required,oneof=student teacher faculty"`
+}
+ 

@@ -1,7 +1,9 @@
-import { UserDashboardPage } from './dashboard';
-import { MedicalInformationPage } from './pages/MedicalInformationPage';
+import { UserDashboardPage } from './pages/dashboard';
+import { MedicalInformationPage } from './pages/medical-info';
+import { UserNotificationsPage } from './pages/notification-page';
+import { UserProfilePage } from './pages/profile-page';
+import { UserTopUpPage } from './pages/top-up';
 import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
-import { UserProfilePage } from './pages/UserProfilePage';
 import { UserSettingPage } from './pages/UserSettingPage';
 import { UserRootPage } from './UserRoot';
 
@@ -11,6 +13,8 @@ export const userRoutes = [
     element: <UserRootPage />,
     children: [
       { path: 'medical_information', element: <MedicalInformationPage /> },
+      { path: 'top-up', element: <UserTopUpPage /> },
+      { path: 'notifications', element: <UserNotificationsPage /> },
       { path: 'transactions', element: <TransactionHistoryPage /> },
       { path: 'dashboard', element: <UserDashboardPage /> },
       { path: 'settings', element: <UserSettingPage /> },

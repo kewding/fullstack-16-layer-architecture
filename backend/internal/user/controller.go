@@ -283,3 +283,56 @@ func (c *Controller) ReactivateCustomer(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
+
+func (c *Controller) GetUserProfile(ctx *gin.Context) {
+	userID := ctx.GetString("user_id")
+ 
+	res, err := c.uc.GetUserProfile(ctx.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "not_found", Message: "Profile not found"},
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+			Success: false,
+			Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
+		})
+		return
+	}
+ 
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
+}
+ 
+func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
+	userID := ctx.GetString("user_id")
+ 
+	var req UpdateUserProfileRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.APIResponse{
+			Success: false,
+			Error:   &response.APIError{Code: "invalid_request_body", Message: "Failed to parse request body"},
+		})
+		return
+	}
+ 
+	if err := validation.Validator.Struct(req); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.APIResponse{
+			Success: false,
+			Error:   &response.APIError{Code: "validation_error", Message: err.Error()},
+		})
+		return
+	}
+ 
+	if err := c.uc.UpdateUserProfile(ctx.Request.Context(), userID, req); err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+			Success: false,
+			Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
+		})
+		return
+	}
+ 
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
+}

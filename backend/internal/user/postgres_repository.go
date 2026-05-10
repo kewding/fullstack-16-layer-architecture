@@ -463,3 +463,71 @@ func (r *postgresRepository) ReactivateCustomer(ctx context.Context, userID stri
 	}
 	return nil
 }
+
+func (r *postgresRepository) GetUserProfile(ctx context.Context, userID string) (*UserProfileResponse, error) {
+	query := `
+		SELECT
+			u.email,
+			ui.first_name,
+			ui.middle_name,
+			ui.last_name,
+			ui.birth_date,
+			ui.contact_no,
+			COALESCE(ui.customer_role::TEXT, '')
+		FROM users u
+		JOIN users_info ui ON ui.user_id = u.id
+		WHERE u.id = $1 AND u.deleted_at IS NULL
+		LIMIT 1`
+ 
+	var res UserProfileResponse
+	var birthDate time.Time
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&res.Email,
+		&res.FirstName,
+		&res.MiddleName,
+		&res.LastName,
+		&birthDate,
+		&res.ContactNumber,
+		&res.CustomerRole,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("GetUserProfile: %w", err)
+	}
+ 
+	res.BirthDate = birthDate.Format("2006-01-02")
+	return &res, nil
+}
+ 
+func (r *postgresRepository) UpdateUserProfile(ctx context.Context, userID string, req UpdateUserProfileRequest) error {
+	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
+	if err != nil {
+		return fmt.Errorf("invalid birth date format: %w", err)
+	}
+ 
+	_, err = r.db.ExecContext(ctx, `
+		UPDATE users_info
+		SET
+			first_name    = $1,
+			middle_name   = $2,
+			last_name     = $3,
+			birth_date    = $4,
+			contact_no    = $5,
+			customer_role = $6::customer_role
+		WHERE user_id = $7`,
+		req.FirstName,
+		req.MiddleName,
+		req.LastName,
+		birthDate,
+		req.ContactNumber,
+		req.CustomerRole,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("UpdateUserProfile: %w", err)
+	}
+	return nil
+}
+ 

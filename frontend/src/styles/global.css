@@ -1,4 +1,4 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -43,7 +43,6 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  /* Updated color palette based on Login Page brand colors [1] */
   color: rgba(255, 255, 255, 0.87);
   background-color: #e9f4f1;
 
@@ -69,7 +68,6 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  /* Ensuring the body always defaults to the brand background [1, 5] */
   background-color: hsl(var(--background));
 }
 
@@ -91,7 +89,6 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  /* Setting button to a darker shade of the brand green [5] */
   background-color: #3f6f64;
   cursor: pointer;
   transition: border-color 0.25s;
@@ -114,8 +111,7 @@ button:focus-visible {
     transition: background-color 5000s ease-in-out 0s;
   }
   :root {
-    /* Background set to the specific green from Login Page: #415B5A [1, 2] */
-    --background: 178 17% 31%;
+    --background: 227, 237, 236, 1;
     --foreground: 0 0% 98%;
 
     --card: 178 17% 31%;
@@ -124,7 +120,6 @@ button:focus-visible {
     --popover: 178 17% 31%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary set to a slightly lighter variant for contrast [2] */
     --primary: 178 17% 41%;
     --primary-foreground: 0 0% 98%;
 
@@ -145,16 +140,230 @@ button:focus-visible {
     --ring: 178 17% 31%;
 
     --radius: 0.5rem;
+
+    --sidebar-background: 178 17% 31%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 50 100% 75%;
   }
 
-  /* Maintaining a dark mode variant that stays within the brand palette [2] */
   .dark {
     --background: 178 20% 20%;
     --foreground: 0 0% 98%;
     --primary: 178 17% 31%;
     --primary-foreground: 0 0% 98%;
   }
-  /* .custom-date-input::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  } */
+} */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/Roboto-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+}
+
+:root {
+  font-family: 'Roboto', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #cd9a34;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #cd9a34;
+  text-decoration: none;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+input {
+  background-color: transparent;
+  border-color: #3f6f64;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+
+  background-color: #3f6f64;
+
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: #27463f;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: #3f6f64 !important;
+    -webkit-box-shadow: 0 0 0 1000px #e9f4f1 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  :root {
+    /* Main app background */
+    --background: 163 20% 91%; /* #E3EDEC */
+    --foreground: 178 17% 31%; /* #415B5A */
+
+    /* Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 178 17% 31%;
+
+    /* Popovers */
+    --popover: 0 0% 100%;
+    --popover-foreground: 178 17% 31%;
+
+    /* Primary brand */
+    --primary: 178 17% 31%; /* #415B5A */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 163 20% 91%; /* #E3EDEC */
+    --secondary-foreground: 178 17% 31%;
+
+    /* Muted */
+    --muted: 163 20% 91%;
+    --muted-foreground: 178 10% 40%;
+
+    /* Accent */
+    --accent: 163 20% 91%;
+    --accent-foreground: 178 17% 31%;
+
+    /* Destructive */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders/Input */
+    --border: 178 15% 80%;
+    --input: 178 15% 80%;
+    --ring: 178 17% 31%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 178 17% 31%; /* #415B5A */
+    --sidebar-foreground: 0 0% 100%;
+
+    --sidebar-primary: 45 63% 51%; /* #CD9A34 */
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 178 15% 36%;
+    --sidebar-accent-foreground: 0 0% 100%;
+
+    --sidebar-border: 178 15% 40%;
+    --sidebar-ring: 45 63% 51%;
+
+    --sidebar-foreground: 163 20% 91%; /* #E3EDEC (inactive text) */
+  --sidebar-accent-foreground: 178 17% 31%; /* ACTIVE text */
+  }
+
+  .dark {
+    --background: 178 20% 14%;
+    --foreground: 0 0% 98%;
+
+    --card: 178 20% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 178 20% 18%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 163 20% 91%;
+    --primary-foreground: 178 17% 20%;
+
+    --secondary: 178 20% 22%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 178 20% 22%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 178 20% 22%;
+    --accent-foreground: 0 0% 98%;
+
+    --border: 178 15% 25%;
+    --input: 178 15% 25%;
+    --ring: 163 20% 91%;
+
+    --sidebar-background: 178 20% 16%;
+    --sidebar-foreground: 0 0% 98%;
+
+    --sidebar-primary: 45 63% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+
+    --sidebar-accent: 178 20% 24%;
+    --sidebar-accent-foreground: 0 0% 98%;
+
+    --sidebar-border: 178 20% 28%;
+    --sidebar-ring: 45 63% 51%;
+  }
 }

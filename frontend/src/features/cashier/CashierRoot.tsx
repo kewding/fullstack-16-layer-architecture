@@ -9,7 +9,7 @@ export function CashierRootPage() {
     <div className="w-screen h-screen overflow-x-auto">
       <SidebarProvider className="flex min-w-0" style={{ "--sidebar-width": "12rem" } as React.CSSProperties}>
         <CashierSidebar variant="inset" className=''/>
-        <SidebarInset className='flex p-6 gap-1 bg-black'>
+        <SidebarInset className='flex p-6 gap-1 bg'>
           <SiteHeader />
           <section className='overflow-x-auto'>
             <Outlet />

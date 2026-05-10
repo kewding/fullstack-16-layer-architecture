@@ -125,6 +125,9 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			customer.GET("/user/wallet/:id", deps.UserInfoController.GetWallet)
 			customer.GET("/medical-info", deps.MedicalInfoController.GetMedicalInfo)
 			customer.PUT("/medical-info", deps.MedicalInfoController.UpsertMedicalInfo)
+
+			customer.GET("/user/profile", deps.UserController.GetUserProfile)
+			customer.PUT("/user/profile", deps.UserController.UpdateUserProfile)
 		}
 
 		// Vendor only — role_id: 3

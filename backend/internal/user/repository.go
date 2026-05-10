@@ -13,4 +13,7 @@ type Repository interface {
 	GetCustomerDetail(ctx context.Context, userID string) (*CustomerDetailResponse, error)
 	DisableCustomer(ctx context.Context, userID string) error
 	ReactivateCustomer(ctx context.Context, userID string) error
+
+	GetUserProfile(ctx context.Context, userID string) (*UserProfileResponse, error)
+	UpdateUserProfile(ctx context.Context, userID string, req UpdateUserProfileRequest) error
 }

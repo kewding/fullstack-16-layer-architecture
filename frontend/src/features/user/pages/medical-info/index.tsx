@@ -9,27 +9,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { medicalInfoService, type MedicalInfoData } from '@/features/user/services/medical-info.service';
+import {
+  medicalInfoService,
+  type MedicalInfoData,
+} from '@/features/user/pages/medical-info/services/medical-info.service';
 import { X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const COMMON_ALLERGENS = [
-  'Peanuts', 'Tree nuts', 'Milk', 'Eggs', 'Wheat', 'Soy',
-  'Fish', 'Shellfish', 'Sesame', 'Gluten',
+  'Peanuts',
+  'Tree nuts',
+  'Milk',
+  'Eggs',
+  'Wheat',
+  'Soy',
+  'Fish',
+  'Shellfish',
+  'Sesame',
+  'Gluten',
 ];
 
 const COMMON_CONDITIONS = [
-  'Asthma', 'Diabetes (Type 1)', 'Diabetes (Type 2)', 'Hypertension',
-  'Heart disease', 'Epilepsy', 'Anemia', 'Thyroid disorder',
-  'Kidney disease', 'Arthritis',
+  'Asthma',
+  'Diabetes (Type 1)',
+  'Diabetes (Type 2)',
+  'Hypertension',
+  'Heart disease',
+  'Epilepsy',
+  'Anemia',
+  'Thyroid disorder',
+  'Kidney disease',
+  'Arthritis',
 ];
 
 const COMMON_MEDICATIONS = [
-  'Paracetamol', 'Ibuprofen', 'Amoxicillin', 'Metformin',
-  'Amlodipine', 'Losartan', 'Omeprazole', 'Cetirizine',
-  'Salbutamol', 'Insulin',
+  'Paracetamol',
+  'Ibuprofen',
+  'Amoxicillin',
+  'Metformin',
+  'Amlodipine',
+  'Losartan',
+  'Omeprazole',
+  'Cetirizine',
+  'Salbutamol',
+  'Insulin',
 ];
 
 function CheckboxGroup({
@@ -188,14 +213,15 @@ export const MedicalInformationPage: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  if (loading) return (
-    <div className="flex px-1 w-full">
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-        <div className="w-4 h-4 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
-        Loading...
+  if (loading)
+    return (
+      <div className="flex px-1 w-full">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <div className="w-4 h-4 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+          Loading...
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="flex px-1 w-full">
@@ -211,16 +237,15 @@ export const MedicalInformationPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="flex flex-col gap-1.5">
               <Label>Blood Type</Label>
-              <Select
-                value={form.blood_type}
-                onValueChange={(val) => update('blood_type', val)}
-              >
+              <Select value={form.blood_type} onValueChange={(val) => update('blood_type', val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select blood type" />
                 </SelectTrigger>
                 <SelectContent>
                   {BLOOD_TYPES.map((bt) => (
-                    <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                    <SelectItem key={bt} value={bt}>
+                      {bt}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
