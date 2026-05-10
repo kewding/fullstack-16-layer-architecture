@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { loginService } from '@/features/auth/login/services/login.service';
 import { LogOut } from 'lucide-react';
@@ -51,12 +52,15 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
   const location = useLocation();
   const { logout } = useAuth();
   const unreadCount = useNotificationCount();
+  const { state } = useSidebar();
 
   const handleLogout = async () => {
     await loginService.logout();
     logout();
     window.location.replace('/login');
   };
+
+  const isCollapsed = state === 'collapsed';
 
   return (
     <Sidebar collapsible="icon" {...props} className="pr-0">
@@ -80,18 +84,21 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                       isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50'
                     }`}
                   >
-                    <NavLink to={item.url}>
-                      <Icon className="text-current" />
-                      {/* unread badge — only on notifications item */}
-                      {isNotifications && unreadCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                      )}
+                    <NavLink to={item.url} className="flex items-center gap-2 w-full">
+                      <div className="relative shrink-0">
+                        <Icon className="h-4 w-4 text-current" />
+
+                        {isNotifications && unreadCount > 0 && isCollapsed && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
+
                       <span className="font-normal no-underline">{item.title}</span>
-                      {/* inline count when sidebar is expanded */}
-                      {isNotifications && unreadCount > 0 && (
-                        <span className="ml-auto text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold">
+
+                      {isNotifications && unreadCount > 0 && !isCollapsed && (
+                        <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">
                           {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}

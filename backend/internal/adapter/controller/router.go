@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	admintransactions "github.com/kewding/backend/internal/admin-transactions"
+	concessionfees "github.com/kewding/backend/internal/concession-fees"
 	"github.com/kewding/backend/internal/dashboard"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/login"
@@ -16,6 +17,7 @@ import (
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
+	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
 )
 
 type Dependencies struct {
@@ -34,6 +36,8 @@ type Dependencies struct {
 	UserController             *user.Controller
 	DashboardController        *dashboard.Controller
 	TopUpRequestController     *topup.Controller
+	ConcessionFeesController   *concessionfees.Controller
+	VendorLedgerController     *vendorsledger.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -107,7 +111,14 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			admin.GET("/dashboard/nutritional-target", deps.DashboardController.GetNutritionalTarget)
 			admin.GET("/dashboard/revenue-distribution", deps.DashboardController.GetRevenueDistribution)
 			admin.GET("/dashboard/stall-settlement", deps.DashboardController.GetStallSettlement)
-			//
+
+			// --- Concession Fees ---
+			admin.GET("/concession-fees", deps.ConcessionFeesController.GetFees)
+			admin.POST("/concession-fees/:fee_type", deps.ConcessionFeesController.SetFee)
+
+			// --- Vendor Ledger (admin view) ---
+			admin.GET("/vendor/:id/ledger", deps.VendorLedgerController.GetLedger)
+			admin.POST("/ledger/post-monthly", deps.VendorLedgerController.PostMonthly)
 		}
 
 		// Cashier only — role_id: 4
@@ -173,6 +184,8 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			vendorAuth.GET("/business-info", deps.VendorInfoController.GetBusinessInfo)
 			vendorAuth.PUT("/business-info", deps.VendorInfoController.UpsertBusinessInfo)
 			vendorAuth.POST("/documents/:type", deps.VendorInfoController.UploadDocument)
+
+			vendorAuth.GET("/ledger", deps.VendorLedgerController.GetLedger)
 		}
 
 	}

@@ -9,12 +9,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kewding/backend/internal/adapter/controller"
 	admintransactions "github.com/kewding/backend/internal/admin-transactions"
+	concessionfees "github.com/kewding/backend/internal/concession-fees"
 	"github.com/kewding/backend/internal/config"
 	"github.com/kewding/backend/internal/dashboard"
 	"github.com/kewding/backend/internal/infra/cleanup"
 	"github.com/kewding/backend/internal/infra/cloudinary"
 	"github.com/kewding/backend/internal/infra/db"
 	"github.com/kewding/backend/internal/infra/health"
+	"github.com/kewding/backend/internal/jobs"
 	"github.com/kewding/backend/internal/login"
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
 	"github.com/kewding/backend/internal/register"
@@ -27,6 +29,7 @@ import (
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
+	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
 )
 
 func main() {
@@ -81,10 +84,10 @@ func main() {
 	rfidTaggingController := rfidtagging.NewController(rfidTaggingUseCase)
 
 	// --- Credit Top-up --- Old direct top-up (kept while old cashier flow still exists)
-	topupRepo := topup.NewPostgresRepository(dbNode.Connection)
-	topupNotifier := topup.NewPrintNotifier()
-	topupUsecase := topup.NewUseCase(topupRepo, topupNotifier)
-	topupController := topup.NewController(topupUsecase)
+	// topupRepo := topup.NewPostgresRepository(dbNode.Connection)
+	// topupNotifier := topup.NewPrintNotifier()
+	// topupUsecase := topup.NewUseCase(topupRepo, topupNotifier)
+	// topupController := topup.NewController(topupUsecase)
 
 	// --- User Info ---
 	userRepo := user.NewPostgresRepository(dbNode.Connection)
@@ -148,16 +151,37 @@ func main() {
 
 	// --- Top-up request (new request-based flow) ---
 	topUpRequestRepo := topup.NewPostgresRepository(dbNode.Connection)
-	topUpRequestUseCase := topup.NewUseCase(topUpRequestRepo, topupNotifier)
+	topUpRequestUseCase := topup.NewUseCase(topUpRequestRepo, topup.NewPrintNotifier())
 	topUpRequestController := topup.NewController(topUpRequestUseCase)
+
+	// --- Concession Fees ---
+	concessionFeesRepo := concessionfees.NewPostgresRepository(dbNode.Connection)
+	concessionFeesUseCase := concessionfees.NewUseCase(concessionFeesRepo)
+	concessionFeesController := concessionfees.NewController(concessionFeesUseCase)
+
+	// --- Vendors Ledger ---
+	vendorLedgerRepo := vendorsledger.NewPostgresRepository(dbNode.Connection)
+	vendorLedgerUseCase := vendorsledger.NewUseCase(vendorLedgerRepo)
+	vendorLedgerController := vendorsledger.NewController(vendorLedgerUseCase)
+
+	// --- Fee Scheduler (background job) ---
+	adminEmailProvider := jobs.NewAdminEmailProvider(dbNode.Connection)
+	feeScheduler := jobs.NewFeeScheduler(
+		concessionFeesUseCase,
+		vendorLedgerUseCase,
+		vendorUseCase,           // already wired — implements NotificationWriter via CreateNotification
+		vendorInviteEmailSender, // already wired — add SendFeeReminderEmail method (see below)
+		adminEmailProvider,
+	)
+	go feeScheduler.Run(ctx)
 
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
-		RegisterController:         registerController,
-		LoginController:            loginController,
-		HealthHandler:              healthHandler,
-		RfidTaggingController:      rfidTaggingController,
-		CreditTopupController:      topupController,
+		RegisterController:    registerController,
+		LoginController:       loginController,
+		HealthHandler:         healthHandler,
+		RfidTaggingController: rfidTaggingController,
+		// CreditTopupController:      topupController,
 		UserInfoController:         userController,
 		VendorInviteController:     vendorInviteController,
 		VendorRegisterController:   vendorRegisterController,
@@ -168,6 +192,8 @@ func main() {
 		UserController:             userController,
 		DashboardController:        dashboardController,
 		TopUpRequestController:     topUpRequestController,
+		ConcessionFeesController:   concessionFeesController,
+		VendorLedgerController:     vendorLedgerController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

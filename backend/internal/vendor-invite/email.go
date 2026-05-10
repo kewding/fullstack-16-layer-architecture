@@ -20,6 +20,7 @@ type EmailSender interface {
 	SendRevocationEmail(toEmail string, ownerName string) error
 	SendApprovalEmail(toEmail string, ownerName string, stallName string) error
 	SendRemovalEmail(toEmail string, ownerName string, stallName string, balance float64, totalSales float64) error
+  SendFeeReminderEmail(toEmail string, adminName string, nextMonth string) error
 }
 
 func NewGmailEmailSender(host string, port int, username, password, fromEmail string, appURL string) EmailSender {
@@ -226,6 +227,50 @@ func (s *gmailEmailSender) SendRemovalEmail(toEmail string, ownerName string, st
 	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
 	if err := d.DialAndSend(m); err != nil {
 		return fmt.Errorf("failed to send removal email: %w", err)
+	}
+
+	return nil
+}
+
+func (s *gmailEmailSender) SendFeeReminderEmail(toEmail, adminName, nextMonth string) error {
+	htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px;">
+  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px;">
+    <h2 style="color: #111;">Hello, %s!</h2>
+    <p style="color: #555; line-height: 1.6;">
+      This is a reminder to review and update the concession fees for <strong>%s</strong>.
+      Fees can be updated until the last day of this month.
+      If no changes are made, the current fees will automatically carry forward.
+    </p>
+    <a href="%s/admin/fees" style="
+      display: inline-block;
+      margin-top: 24px;
+      padding: 14px 28px;
+      background-color: #3F6F64;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 999px;
+    ">Review Fees →</a>
+    <p style="margin-top: 32px; color: #999; font-size: 12px;">
+      You are receiving this because you are an administrator on the platform.
+    </p>
+  </div>
+</body>
+</html>`, adminName, nextMonth, s.appURL)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", fmt.Sprintf("Reminder: Review Concession Fees for %s", nextMonth))
+	m.SetBody("text/html", htmlBody)
+
+	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
+
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send fee reminder email: %w", err)
 	}
 
 	return nil
