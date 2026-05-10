@@ -27,6 +27,7 @@ type AdminInfoResponse struct {
 	LastName      string `json:"last_name"`
 	BirthDate     string `json:"birth_date"`
 	ContactNumber string `json:"contact_number"`
+	Email         string `json:"email"`
 }
 
 // ── Customer list ─────────────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ type UserProfileResponse struct {
 	CustomerRole  string `json:"customer_role"` // "student" | "teacher" | "faculty" | ""
 	Email         string `json:"email"`
 }
- 
+
 type UpdateUserProfileRequest struct {
 	FirstName     string `json:"first_name"     validate:"required,max=100"`
 	MiddleName    string `json:"middle_name"     validate:"required,max=100"`
@@ -118,4 +119,3 @@ type UpdateUserProfileRequest struct {
 	ContactNumber string `json:"contact_number"  validate:"required"`
 	CustomerRole  string `json:"customer_role"   validate:"required,oneof=student teacher faculty"`
 }
- 

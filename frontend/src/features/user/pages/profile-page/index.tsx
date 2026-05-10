@@ -5,6 +5,7 @@ import type { UserProfileInput } from './schemas/profile.schema';
 import { PersonalInfoForm } from './components/PersonalInforForm';
 import { userProfileService } from './services/profile.service';
 
+//info
 interface BannerState {
   firstName: string;
   middleName: string;

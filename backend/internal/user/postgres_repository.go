@@ -87,15 +87,22 @@ func (r *postgresRepository) GetWallet(ctx context.Context, userID string) (*Wal
 
 func (r *postgresRepository) GetAdminInfo(ctx context.Context, userID string) (*AdminInfoResponse, error) {
 	query := `
-		SELECT ui.first_name, ui.middle_name, ui.last_name,
-		       ui.birth_date, ui.contact_no
+		SELECT
+			u.email,
+			ui.first_name,
+			ui.middle_name,
+			ui.last_name,
+			ui.birth_date,
+			ui.contact_no
 		FROM users_info ui
+		JOIN users u ON u.id = ui.user_id
 		WHERE ui.user_id = $1
 		LIMIT 1`
 
 	var res AdminInfoResponse
 	var birthDate time.Time
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&res.Email,
 		&res.FirstName,
 		&res.MiddleName,
 		&res.LastName,
@@ -478,7 +485,7 @@ func (r *postgresRepository) GetUserProfile(ctx context.Context, userID string) 
 		JOIN users_info ui ON ui.user_id = u.id
 		WHERE u.id = $1 AND u.deleted_at IS NULL
 		LIMIT 1`
- 
+
 	var res UserProfileResponse
 	var birthDate time.Time
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
@@ -496,17 +503,17 @@ func (r *postgresRepository) GetUserProfile(ctx context.Context, userID string) 
 		}
 		return nil, fmt.Errorf("GetUserProfile: %w", err)
 	}
- 
+
 	res.BirthDate = birthDate.Format("2006-01-02")
 	return &res, nil
 }
- 
+
 func (r *postgresRepository) UpdateUserProfile(ctx context.Context, userID string, req UpdateUserProfileRequest) error {
 	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
 	if err != nil {
 		return fmt.Errorf("invalid birth date format: %w", err)
 	}
- 
+
 	_, err = r.db.ExecContext(ctx, `
 		UPDATE users_info
 		SET
@@ -530,4 +537,3 @@ func (r *postgresRepository) UpdateUserProfile(ctx context.Context, userID strin
 	}
 	return nil
 }
- 

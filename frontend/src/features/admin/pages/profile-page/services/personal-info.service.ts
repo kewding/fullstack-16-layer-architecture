@@ -4,6 +4,7 @@ export interface PersonalInfoData {
   last_name: string;
   birth_date: string;
   contact_number: string;
+  email: string; // added — now returned by the backend
 }
 
 export interface APIResponse<T = any> {
@@ -12,7 +13,7 @@ export interface APIResponse<T = any> {
   error?: { code: string; message: string };
 }
 
-const BASE_URL = '/api/admin'; 
+const BASE_URL = '/api/admin';
 
 export const adminInfoService = {
   async getPersonalInfo(): Promise<PersonalInfoData> {
@@ -22,7 +23,7 @@ export const adminInfoService = {
     return json.data!;
   },
 
-  async updatePersonalInfo(data: PersonalInfoData): Promise<void> {
+  async updatePersonalInfo(data: Omit<PersonalInfoData, 'email'>): Promise<void> {
     const res = await fetch(`${BASE_URL}/profile`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
