@@ -2,8 +2,8 @@ package vendors
 
 import (
 	"context"
-	"errors"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -163,15 +163,13 @@ func (r *postgresRepository) ListVendorsBalance(ctx context.Context, params List
 			s.stall_name,
 			CONCAT(ui.first_name, ' ', ui.last_name) AS owner_name,
 			COALESCE(SUM(t.amount), 0) AS vendor_profit,
-			v.concession_fee_type,
 			v.concession_fee_value
 		FROM vendors v
 		LEFT JOIN stalls s ON s.user_id = v.user_id
 		LEFT JOIN users_info ui ON ui.user_id = v.user_id
 		LEFT JOIN top_up_transactions t ON t.user_id = v.user_id
 		%s
-		GROUP BY v.id, s.stall_name, ui.first_name, ui.last_name,
-		         v.concession_fee_type, v.concession_fee_value
+		GROUP BY v.id, s.stall_name, ui.first_name, ui.last_name, v.concession_fee_value
 		ORDER BY vendor_profit DESC
 		LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
 

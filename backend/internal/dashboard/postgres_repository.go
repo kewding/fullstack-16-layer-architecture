@@ -350,14 +350,13 @@ func (r *postgresRepository) GetRevenueDistribution(ctx context.Context, req Dat
 		SELECT
 			s.stall_name,
 			COALESCE(SUM(sa.total_amount), 0)   AS gross_sales,
-			v.concession_fee_type,
 			v.concession_fee_value
 		FROM stalls s
 		LEFT JOIN vendors v  ON v.user_id = s.user_id AND v.deleted_at IS NULL
 		LEFT JOIN sales sa   ON sa.stall_id = s.id
 			AND sa.created_at BETWEEN $1 AND $2
 		WHERE s.deleted_at IS NULL
-		GROUP BY s.stall_name, v.concession_fee_type, v.concession_fee_value
+		GROUP BY s.stall_name, v.concession_fee_value
 		ORDER BY gross_sales DESC`,
 		from, to,
 	)

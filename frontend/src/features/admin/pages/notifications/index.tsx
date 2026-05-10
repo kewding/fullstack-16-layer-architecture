@@ -1,20 +1,32 @@
 import { Button } from '@/components/ui/button';
-import { Bell, CheckCheck, ShieldCheck, ShieldX, UserPlus } from 'lucide-react';
+import {
+  AlertTriangle,
+  Bell,
+  CheckCheck,
+  CheckCircle,
+  CircleDollarSign,
+  Clock,
+  Info,
+  ShieldCheck,
+  ShieldX,
+  UserPlus,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { vendorService, type Notification } from '../vendors/services/vendor.service';
 
-// Per-type config: label, icon, and color tokens using the app's design system
+// ── Per-type config ───────────────────────────────────────────────────────────
 const TYPE_CONFIG: Record<
   string,
   {
     label: string;
     icon: React.ElementType;
-    dot: string; // unread dot color
-    badge: string; // pill bg + text
-    iconBg: string; // icon circle bg
-    iconColor: string; // icon stroke color
+    dot: string;
+    badge: string;
+    iconBg: string;
+    iconColor: string;
   }
 > = {
+  // ── Vendor lifecycle ──────────────────────────────────────────────────────
   vendor_approved: {
     label: 'Vendor Approved',
     icon: ShieldCheck,
@@ -38,6 +50,68 @@ const TYPE_CONFIG: Record<
     badge: 'bg-[#fdf3de] text-[#a07520]',
     iconBg: 'bg-[#fdf3de]',
     iconColor: 'text-[#cd9a34]',
+  },
+
+  // ── Fee reminders ─────────────────────────────────────────────────────────
+  fee_edit_open: {
+    label: 'Fees Open for Editing',
+    icon: CheckCircle,
+    dot: 'bg-[#3f6f64]',
+    badge: 'bg-[#d6ede9] text-[#3f6f64]',
+    iconBg: 'bg-[#d6ede9]',
+    iconColor: 'text-[#3f6f64]',
+  },
+  fee_reminder: {
+    label: 'Fee Reminder — 15 Days',
+    icon: Clock,
+    dot: 'bg-[#cd9a34]',
+    badge: 'bg-[#fdf3de] text-[#a07520]',
+    iconBg: 'bg-[#fdf3de]',
+    iconColor: 'text-[#cd9a34]',
+  },
+  fee_reminder_7day: {
+    label: 'Fee Reminder — 7 Days',
+    icon: Clock,
+    dot: 'bg-orange-400',
+    badge: 'bg-orange-100 text-orange-700',
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-500',
+  },
+  fee_reminder_3day: {
+    label: 'Fee Reminder — 3 Days',
+    icon: AlertTriangle,
+    dot: 'bg-red-500',
+    badge: 'bg-red-100 text-red-700',
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
+  },
+
+  // ── Fee changes ───────────────────────────────────────────────────────────
+  fee_updated: {
+    label: 'Fee Updated',
+    icon: CircleDollarSign,
+    dot: 'bg-[#3f6f64]',
+    badge: 'bg-[#d6ede9] text-[#3f6f64]',
+    iconBg: 'bg-[#d6ede9]',
+    iconColor: 'text-[#3f6f64]',
+  },
+
+  // ── System ────────────────────────────────────────────────────────────────
+  system_info: {
+    label: 'System',
+    icon: Info,
+    dot: 'bg-slate-400',
+    badge: 'bg-slate-100 text-slate-600',
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-500',
+  },
+  system_alert: {
+    label: 'System Alert',
+    icon: AlertTriangle,
+    dot: 'bg-red-500',
+    badge: 'bg-red-100 text-red-700',
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
   },
 };
 
@@ -142,10 +216,7 @@ export const AdminNotificationsPage: React.FC = () => {
                 >
                   {/* Icon circle */}
                   <div
-                    className={`
-                      shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5
-                      ${cfg.iconBg}
-                    `}
+                    className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5 ${cfg.iconBg}`}
                   >
                     <Icon className={`w-4 h-4 ${cfg.iconColor}`} />
                   </div>
@@ -153,26 +224,18 @@ export const AdminNotificationsPage: React.FC = () => {
                   {/* Content */}
                   <div className="flex flex-col flex-1 gap-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {/* Type pill */}
                       <span
-                        className={`
-                          inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold
-                          ${cfg.badge}
-                        `}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.badge}`}
                       >
                         {cfg.label}
                       </span>
-
-                      {/* Unread dot */}
                       {!n.is_read && (
                         <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                       )}
                     </div>
-
                     <p className="text-sm text-[hsl(var(--foreground))] leading-snug">
                       {n.message}
                     </p>
-
                     <p className="text-[11px] text-muted-foreground">{formatDate(n.created_at)}</p>
                   </div>
                 </div>

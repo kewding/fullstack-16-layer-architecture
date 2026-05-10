@@ -157,7 +157,10 @@ func main() {
 	// --- Concession Fees ---
 	concessionFeesRepo := concessionfees.NewPostgresRepository(dbNode.Connection)
 	concessionFeesUseCase := concessionfees.NewUseCase(concessionFeesRepo)
-	concessionFeesController := concessionfees.NewController(concessionFeesUseCase)
+	concessionFeesController := concessionfees.NewControllerWithNotifier(
+		concessionFeesUseCase,
+		vendorUseCase,
+	)
 
 	// --- Vendors Ledger ---
 	vendorLedgerRepo := vendorsledger.NewPostgresRepository(dbNode.Connection)
