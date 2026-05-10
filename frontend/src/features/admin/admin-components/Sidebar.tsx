@@ -28,9 +28,7 @@ function useNotificationCount() {
 
     // WebSocket for real-time updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(
-      `${protocol}//${window.location.host}/api/admin/notifications/ws`,
-    );
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/admin/notifications/ws`);
 
     ws.onmessage = (event) => {
       try {
@@ -75,21 +73,22 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    className={`flex flex-row w-full h-[3rem] justify-stretch gap-2 p-3 transition-colors ${
-                      isActive ? '!bg-black !text-white' : 'hover:bg-sidebar-accent/50'
+                    // className={`flex flex-row w-full h-[3rem] justify-stretch gap-2 p-3 transition-colors ${
+                    //   isActive ? '!bg-[#E3EDEC] !text-[#415B5A]' : 'hover:bg-sidebar-accent/50'
+                    // }`}
+                    className={`flex h-[3rem] w-full flex-row gap-2 p-3 transition-colors ${
+                      isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50'
                     }`}
                   >
                     <NavLink to={item.url}>
-                      <div className="relative shrink-0">
-                        <Icon />
-                        {/* unread badge — only on notifications item */}
-                        {isNotifications && unreadCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-normal">{item.title}</span>
+                      <Icon className="text-current" />
+                      {/* unread badge — only on notifications item */}
+                      {isNotifications && unreadCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                      <span className="font-normal no-underline">{item.title}</span>
                       {/* inline count when sidebar is expanded */}
                       {isNotifications && unreadCount > 0 && (
                         <span className="ml-auto text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 font-bold">

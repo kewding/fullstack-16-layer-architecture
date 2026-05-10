@@ -33,6 +33,7 @@ type Dependencies struct {
 	AdminTransactionController *admintransactions.Controller
 	UserController             *user.Controller
 	DashboardController        *dashboard.Controller
+	TopUpRequestController     *topup.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -115,6 +116,20 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		{
 			cashier.POST("/tag/rfid-tagging", deps.RfidTaggingController.RfidTagging)
 			cashier.POST("/credit/top-up", deps.CreditTopupController.CreditTopup)
+
+			// New request-based top-up
+			cashierTopUp := cashier.Group("/top-up")
+			{
+				cashierTopUp.GET("/requests", deps.TopUpRequestController.ListPendingRequests)
+				cashierTopUp.GET("/user-detail/:user_id", deps.TopUpRequestController.GetUserDetailForCashier)
+				cashierTopUp.PATCH("/request/:id/accept", deps.TopUpRequestController.AcceptRequest)
+				cashierTopUp.PATCH("/request/:id/reject", deps.TopUpRequestController.RejectRequest)
+				cashierTopUp.GET("/rejected", deps.TopUpRequestController.ListRejectedRequests)
+				cashierTopUp.GET("/completed", deps.TopUpRequestController.ListCompletedRequests)
+				cashierTopUp.GET("/pending-count", deps.TopUpRequestController.GetPendingCount)
+				cashierTopUp.GET("/ws", deps.TopUpRequestController.CashierPendingWebSocket)
+			}
+
 		}
 
 		// Customer only — role_id: 2
@@ -128,6 +143,24 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			customer.GET("/user/profile", deps.UserController.GetUserProfile)
 			customer.PUT("/user/profile", deps.UserController.UpdateUserProfile)
+
+			// New top-up request flow
+			customerTopUp := customer.Group("/top-up")
+			{
+				customerTopUp.POST("/request", deps.TopUpRequestController.SubmitRequest)
+				customerTopUp.GET("/pending", deps.TopUpRequestController.GetPendingRequest)
+				customerTopUp.DELETE("/request/:id", deps.TopUpRequestController.CancelRequest)
+				customerTopUp.GET("/history", deps.TopUpRequestController.ListTopUpHistory)
+			}
+
+			// User notifications
+			customerNotif := customer.Group("/notifications")
+			{
+				customerNotif.GET("/", deps.TopUpRequestController.GetUserNotifications)
+				customerNotif.GET("/unread-count", deps.TopUpRequestController.GetUserUnreadCount)
+				customerNotif.PATCH("/mark-read", deps.TopUpRequestController.MarkUserNotificationsRead)
+				customerNotif.GET("/ws", deps.TopUpRequestController.UserNotificationsWebSocket)
+			}
 		}
 
 		// Vendor only — role_id: 3

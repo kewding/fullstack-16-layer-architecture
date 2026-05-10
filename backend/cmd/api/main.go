@@ -38,11 +38,6 @@ func main() {
 	validation.Init()
 	cfg := config.LoadEnv()
 
-	// temporary debug — remove after fixing
-	log.Printf("SMTP_FROM_EMAIL: '%s'", cfg.SMTPFromEmail)
-	log.Printf("SMTP_USERNAME: '%s'", cfg.SMTPUsername)
-	log.Printf("SMTP_HOST: '%s'", cfg.SMTPHost)
-
 	dbNode, err := db.Connect(*cfg)
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v", err)
@@ -85,7 +80,7 @@ func main() {
 	rfidTaggingUseCase := rfidtagging.NewUseCase(rfidTaggingRepo)
 	rfidTaggingController := rfidtagging.NewController(rfidTaggingUseCase)
 
-	// --- Credit Top-up ---
+	// --- Credit Top-up --- Old direct top-up (kept while old cashier flow still exists)
 	topupRepo := topup.NewPostgresRepository(dbNode.Connection)
 	topupNotifier := topup.NewPrintNotifier()
 	topupUsecase := topup.NewUseCase(topupRepo, topupNotifier)
@@ -151,6 +146,11 @@ func main() {
 	dashboardUseCase := dashboard.NewUseCase(dashboardRepo)
 	dashboardController := dashboard.NewController(dashboardUseCase)
 
+	// --- Top-up request (new request-based flow) ---
+	topUpRequestRepo := topup.NewPostgresRepository(dbNode.Connection)
+	topUpRequestUseCase := topup.NewUseCase(topUpRequestRepo, topupNotifier)
+	topUpRequestController := topup.NewController(topUpRequestUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:         registerController,
@@ -167,6 +167,7 @@ func main() {
 		AdminTransactionController: adminTxController,
 		UserController:             userController,
 		DashboardController:        dashboardController,
+		TopUpRequestController:     topUpRequestController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

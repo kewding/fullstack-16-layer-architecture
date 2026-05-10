@@ -103,7 +103,7 @@ func (r *postgresRepository) LedgerRecordsCredit(ctx context.Context, tx Tx, use
 	}
 
 	query := `
-        INSERT INTO customers_ledger (user_id, debit, reference_id, reference_type) 
+        INSERT INTO customers_ledger (user_id, credit, reference_id, reference_type) 
         VALUES ($1, $2, $3, $4)
         RETURNING id`
 
@@ -447,7 +447,7 @@ func (r *postgresRepository) AcceptRequest(ctx context.Context, requestID string
 
 	// 4. Insert customers_ledger credit row
 	if _, err := tx.ExecContext(ctx,
-		`INSERT INTO customers_ledger (user_id, debit, reference_id, reference_type)
+		`INSERT INTO customers_ledger (user_id, credit, reference_id, reference_type)
 		 VALUES ($1, $2, $3, 'top-up')`,
 		req.UserID, req.Amount, txID,
 	); err != nil {

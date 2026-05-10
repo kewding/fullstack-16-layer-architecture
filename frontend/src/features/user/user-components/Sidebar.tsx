@@ -24,6 +24,8 @@ export function UserSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
     window.location.replace('/login');
   };
 
+  //askjdhajsd
+
   return (
     <Sidebar collapsible="icon" {...props} className="pr-0">
       <SidebarContent className="py-20">
