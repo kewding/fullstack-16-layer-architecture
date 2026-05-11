@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type postgresRepository struct {
@@ -36,17 +37,16 @@ func (r *postgresRepository) GetCurrentAndNextRows(ctx context.Context, currentM
 
 	for rows.Next() {
 		var row FeeRow
-		var effectiveMonth string
-		if err := rows.Scan(&row.ID, &row.FeeType, &row.Amount, &effectiveMonth); err != nil {
+		if err := rows.Scan(&row.ID, &row.FeeType, &row.Amount, &row.EffectiveMonth); err != nil {
 			return nil, fmt.Errorf("GetCurrentAndNextRows scan: %w", err)
 		}
-		row.EffectiveMonth = effectiveMonth
 
 		pair := result[row.FeeType]
-		if effectiveMonth == currentMonth {
-			pair[0] = &FeeRow{ID: row.ID, FeeType: row.FeeType, Amount: row.Amount, EffectiveMonth: effectiveMonth}
-		} else if effectiveMonth == nextMonth {
-			pair[1] = &FeeRow{ID: row.ID, FeeType: row.FeeType, Amount: row.Amount, EffectiveMonth: effectiveMonth}
+		switch row.EffectiveMonth {
+		case currentMonth:
+			pair[0] = &FeeRow{ID: row.ID, FeeType: row.FeeType, Amount: row.Amount, EffectiveMonth: row.EffectiveMonth}
+		case nextMonth:
+			pair[1] = &FeeRow{ID: row.ID, FeeType: row.FeeType, Amount: row.Amount, EffectiveMonth: row.EffectiveMonth}
 		}
 		result[row.FeeType] = pair
 	}
@@ -187,4 +187,50 @@ func isUniqueViolation(err error) bool {
 		return pg.SQLState() == "23505"
 	}
 	return false
+}
+
+func (r *postgresRepository) GetFeeHistory(ctx context.Context) ([]FeeHistoryRow, error) {
+	query := `
+		SELECT
+			cfs.id::TEXT,
+			cfs.fee_type,
+			cfs.amount,
+			cfs.effective_month::TEXT,
+			cfs.set_by::TEXT,
+			COALESCE(CONCAT(ui.first_name, ' ', ui.last_name), 'System') AS set_by_name,
+			cfs.created_at
+		FROM concession_fee_settings cfs
+		LEFT JOIN users u ON u.id = cfs.set_by
+		LEFT JOIN users_info ui ON ui.user_id = u.id
+		ORDER BY cfs.effective_month DESC, cfs.fee_type ASC`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("GetFeeHistory query: %w", err)
+	}
+	defer rows.Close()
+
+	result := make([]FeeHistoryRow, 0)
+	for rows.Next() {
+		var row FeeHistoryRow
+		var createdAt time.Time
+		if err := rows.Scan(
+			&row.ID,
+			&row.FeeType,
+			&row.Amount,
+			&row.EffectiveMonth,
+			&row.SetByUserID,
+			&row.SetByName,
+			&createdAt,
+		); err != nil {
+			return nil, fmt.Errorf("GetFeeHistory scan: %w", err)
+		}
+		row.CreatedAt = createdAt.Format(time.RFC3339)
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetFeeHistory rows: %w", err)
+	}
+
+	return result, nil
 }

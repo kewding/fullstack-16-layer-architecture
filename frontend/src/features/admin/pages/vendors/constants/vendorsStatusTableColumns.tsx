@@ -2,94 +2,70 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+import { RevokeVendorModal } from '../components/RevokeVendorModal';
 import { VendorDetailModal } from '../components/VendorDetailModal';
 import { capitalizeWords } from '../helper/capitalize';
 import type { VendorReviewRow } from '../services/vendor.service';
-import { vendorService } from '../services/vendor.service';
 
 function ActionButtons({
   id,
+  email,
   status,
   onRevoked,
   onApproved,
-  onRemoved,
 }: {
   id: string;
+  email: string;
   status: string;
   onRevoked: () => void;
   onApproved: () => void;
-  onRemoved: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
 
   const canRevoke = status === 'invited' || status === 'for_review';
   const canView = status === 'for_review' || status === 'in_business';
-
-  const handleRevoke = async () => {
-    setLoading(true);
-    try {
-      const res = await vendorService.revokeVendor(id);
-      if (res.success) {
-        onRevoked();
-      } else {
-        alert(res.error?.message ?? 'Failed to revoke vendor');
-      }
-    } catch {
-      alert('A network error occurred');
-    } finally {
-      setLoading(false);
-      setConfirmOpen(false);
-    }
-  };
 
   return (
     <>
       <div className="flex items-center gap-2">
         {canView && (
-          <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
+          <Button variant="outline" size="sm" onClick={() => setShowDetailModal(true)}>
             View
           </Button>
         )}
 
         {canRevoke && (
-          <>
-            {!confirmOpen ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-red-400/50 text-red-400 bg-red-100 hover:bg-red-500/10 hover:text-red-400"
-                onClick={() => setConfirmOpen(true)}
-              >
-                Remove
-              </Button>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Sure?</span>
-                <Button size="sm" variant="destructive" disabled={loading} onClick={handleRevoke}>
-                  {loading ? '...' : 'Yes'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setConfirmOpen(false)}>
-                  No
-                </Button>
-              </div>
-            )}
-          </>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-red-400/50 text-red-400 bg-red-100 hover:bg-red-500/10 hover:text-red-400"
+            onClick={() => setShowRevokeModal(true)}
+          >
+            Remove
+          </Button>
         )}
       </div>
 
-      {showModal && (
+      {showDetailModal && (
         <VendorDetailModal
           vendorID={id}
-          onClose={() => setShowModal(false)}
+          onClose={() => setShowDetailModal(false)}
           onApproved={() => {
             onApproved();
-            setShowModal(false);
+            setShowDetailModal(false);
           }}
-          onRemoved={() => {
-            onRemoved();
-            setShowModal(false);
+        />
+      )}
+
+      {showRevokeModal && (
+        <RevokeVendorModal
+          vendorID={id}
+          vendorEmail={email}
+          onClose={() => setShowRevokeModal(false)}
+          onRevoked={() => {
+            onRevoked();
+            setShowRevokeModal(false);
           }}
         />
       )}
@@ -100,7 +76,6 @@ function ActionButtons({
 export const VENDORS_STATUS_TABLE_COLUMNS = (
   onRevoked: () => void,
   onApproved: () => void,
-  onRemoved: () => void,
 ): ColumnDef<VendorReviewRow>[] => [
   {
     accessorKey: 'owner_name',
@@ -164,10 +139,10 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
       <div className="flex justify-center">
         <ActionButtons
           id={row.original.id}
+          email={row.original.email}
           status={row.original.status}
           onRevoked={onRevoked}
           onApproved={onApproved}
-          onRemoved={onRemoved}
         />
       </div>
     ),

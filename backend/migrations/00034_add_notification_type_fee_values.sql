@@ -12,6 +12,8 @@ ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'fee_edit_open';
 ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'fee_updated';
 ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'system_alert';
 ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'system_info';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'customer_disabled';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'customer_reactivated';
 
 -- +goose StatementEnd
 

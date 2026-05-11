@@ -45,7 +45,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 	r.GET("/health/db", deps.HealthHandler.Check)
 
-	// shared login repo for session middleware
 	loginRepo := login.NewPostgresRepository(postgresNode.Connection)
 
 	api := r.Group("/api")
@@ -65,7 +64,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			auth.POST("/logout", deps.LoginController.Logout)
 		}
 
-		// Public vendor routes — unauthenticated vendor access
 		vendor := api.Group("/vendor")
 		{
 			vendor.GET("/invite/validate", deps.VendorInviteController.ValidateToken)
@@ -78,33 +76,53 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		admin := api.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(loginRepo, 1))
 		{
+			// Invitations
 			admin.POST("/vendor/invite", deps.VendorInviteController.SendInvite)
-			admin.GET("/vendors/review", deps.VendorController.ListVendorsReview)
-			admin.GET("/vendors/balance", deps.VendorController.ListVendorsBalance)
-			admin.DELETE("/vendor/:id/revoke", deps.VendorInviteController.RevokeVendor)
 
+			// Vendor review list + actions
+			admin.GET("/vendors/review", deps.VendorController.ListVendorsReview)
 			admin.GET("/vendor/:id", deps.VendorController.GetVendorDetail)
 			admin.PATCH("/vendor/:id/approve", deps.VendorController.ApproveVendor)
 
+			// Revoke (invited / for_review) — persists reason; replaces old DELETE revoke
+			admin.PATCH("/vendor/:id/revoke", deps.VendorController.RevokeVendorWithReason)
+
+			// Balance / stalls tab
+			admin.GET("/vendors/balance", deps.VendorController.ListVendorsBalance)
+
+			// Wallet balance check (frontend guard before showing graduate modal)
+			admin.GET("/vendor/:id/wallet-balance", deps.VendorController.GetVendorWalletBalance)
+
+			// Graduate vendor (in_business → former_vendor archive)
+			admin.PATCH("/vendor/:id/graduate", deps.VendorController.GraduateVendor)
+
+			// Former vendors
+			admin.GET("/former-vendors", deps.VendorController.ListFormerVendors)
+			admin.GET("/former-vendor/:id", deps.VendorController.GetFormerVendorDetail)
+			admin.GET("/former-vendor/:id/ledger-csv", deps.VendorController.DownloadFormerVendorLedgerCSV)
+
+			// Notifications
 			admin.GET("/notifications", deps.VendorController.GetNotifications)
 			admin.GET("/notifications/unread-count", deps.VendorController.GetUnreadCount)
 			admin.PATCH("/notifications/mark-read", deps.VendorController.MarkNotificationsRead)
 			admin.GET("/notifications/ws", deps.VendorController.NotificationsWebSocket)
 
-			admin.PATCH("/vendor/:id/remove-business", deps.VendorController.RemoveFromBusiness)
-
+			// Admin profile
 			admin.GET("/profile", deps.UserInfoController.GetAdminInfo)
 			admin.PUT("/profile", deps.UserInfoController.UpdateAdminInfo)
 
+			// Transactions
 			admin.GET("/transactions/vendors", deps.AdminTransactionController.ListVendorTransactions)
 			admin.GET("/transactions/customers", deps.AdminTransactionController.ListCustomerTransactions)
 			admin.GET("/transactions/purchase/:id", deps.AdminTransactionController.GetPurchaseDetail)
 
+			// Customers
 			admin.GET("/users/customers", deps.UserController.ListCustomers)
 			admin.GET("/users/customer/:id", deps.UserController.GetCustomerDetail)
 			admin.PATCH("/users/customer/:id/disable", deps.UserController.DisableCustomer)
 			admin.PATCH("/users/customer/:id/reactivate", deps.UserController.ReactivateCustomer)
 
+			// Dashboard
 			admin.GET("/dashboard/stat-cards", deps.DashboardController.GetStatCards)
 			admin.GET("/dashboard/nqs-trend", deps.DashboardController.GetNQSTrend)
 			admin.GET("/dashboard/allergen-interventions", deps.DashboardController.GetAllergenInterventions)
@@ -112,11 +130,12 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			admin.GET("/dashboard/revenue-distribution", deps.DashboardController.GetRevenueDistribution)
 			admin.GET("/dashboard/stall-settlement", deps.DashboardController.GetStallSettlement)
 
-			// --- Concession Fees ---
+			// Concession fees
 			admin.GET("/concession-fees", deps.ConcessionFeesController.GetFees)
 			admin.POST("/concession-fees/:fee_type", deps.ConcessionFeesController.SetFee)
+			admin.GET("/concession-fees/history", deps.ConcessionFeesController.GetFeeHistory)
 
-			// --- Vendor Ledger (admin view) ---
+			// Vendor ledger (admin view — any vendor by ID)
 			admin.GET("/vendor/:id/ledger", deps.VendorLedgerController.GetLedger)
 			admin.POST("/ledger/post-monthly", deps.VendorLedgerController.PostMonthly)
 		}
@@ -128,7 +147,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			cashier.POST("/tag/rfid-tagging", deps.RfidTaggingController.RfidTagging)
 			cashier.POST("/credit/top-up", deps.CreditTopupController.CreditTopup)
 
-			// New request-based top-up
+			// Request-based top-up
 			cashierTopUp := cashier.Group("/top-up")
 			{
 				cashierTopUp.GET("/requests", deps.TopUpRequestController.ListPendingRequests)
@@ -140,7 +159,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 				cashierTopUp.GET("/pending-count", deps.TopUpRequestController.GetPendingCount)
 				cashierTopUp.GET("/ws", deps.TopUpRequestController.CashierPendingWebSocket)
 			}
-
 		}
 
 		// Customer only — role_id: 2
@@ -155,7 +173,7 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			customer.GET("/user/profile", deps.UserController.GetUserProfile)
 			customer.PUT("/user/profile", deps.UserController.UpdateUserProfile)
 
-			// New top-up request flow
+			// Top-up request flow
 			customerTopUp := customer.Group("/top-up")
 			{
 				customerTopUp.POST("/request", deps.TopUpRequestController.SubmitRequest)
@@ -178,7 +196,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 		vendorAuth := api.Group("/vendor-auth")
 		vendorAuth.Use(middleware.AuthMiddleware(loginRepo, 3))
 		{
-			// vendor authenticated endpoints go here as you build them
 			vendorAuth.GET("/personal-info", deps.VendorInfoController.GetPersonalInfo)
 			vendorAuth.PUT("/personal-info", deps.VendorInfoController.UpdatePersonalInfo)
 			vendorAuth.GET("/business-info", deps.VendorInfoController.GetBusinessInfo)
@@ -187,7 +204,6 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			vendorAuth.GET("/ledger", deps.VendorLedgerController.GetLedger)
 		}
-
 	}
 
 	return r

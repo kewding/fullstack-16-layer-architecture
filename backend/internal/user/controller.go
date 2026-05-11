@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,12 +12,21 @@ import (
 	"github.com/kewding/backend/internal/validation"
 )
 
+type NotificationWriter interface {
+	CreateNotification(ctx context.Context, notifType string, message string) error
+}
+
 type Controller struct {
-	uc UseCase
+	uc       UseCase
+	notifier NotificationWriter // nil-safe; only set via NewControllerWithNotifier
 }
 
 func NewController(uc UseCase) *Controller {
 	return &Controller{uc: uc}
+}
+
+func NewControllerWithNotifier(uc UseCase, notifier NotificationWriter) *Controller {
+	return &Controller{uc: uc, notifier: notifier}
 }
 
 func (c *Controller) GetUser(ctx *gin.Context) {
@@ -236,6 +246,14 @@ func (c *Controller) DisableCustomer(ctx *gin.Context) {
 		return
 	}
 
+	// Fetch name before disabling so we can include it in the notification.
+	var fullName string
+	if c.notifier != nil {
+		if detail, err := c.uc.GetCustomerDetail(ctx.Request.Context(), userID); err == nil {
+			fullName = detail.FirstName + " " + detail.LastName
+		}
+	}
+
 	if err := c.uc.DisableCustomer(ctx.Request.Context(), userID); err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			ctx.JSON(http.StatusNotFound, response.APIResponse{
@@ -251,10 +269,13 @@ func (c *Controller) DisableCustomer(ctx *gin.Context) {
 		return
 	}
 
+	if c.notifier != nil {
+		msg := fmt.Sprintf("Customer account for %s has been disabled.", fullName)
+		_ = c.notifier.CreateNotification(ctx.Request.Context(), "customer_disabled", msg)
+	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
-
-// ── PATCH /api/admin/users/customer/:id/reactivate ────────────────────────────
 
 func (c *Controller) ReactivateCustomer(ctx *gin.Context) {
 	userID := ctx.Param("id")
@@ -264,6 +285,14 @@ func (c *Controller) ReactivateCustomer(ctx *gin.Context) {
 			Error:   &response.APIError{Code: "missing_user_id", Message: "User ID is required"},
 		})
 		return
+	}
+
+	// Fetch name before reactivating.
+	var fullName string
+	if c.notifier != nil {
+		if detail, err := c.uc.GetCustomerDetail(ctx.Request.Context(), userID); err == nil {
+			fullName = detail.FirstName + " " + detail.LastName
+		}
 	}
 
 	if err := c.uc.ReactivateCustomer(ctx.Request.Context(), userID); err != nil {
@@ -281,12 +310,17 @@ func (c *Controller) ReactivateCustomer(ctx *gin.Context) {
 		return
 	}
 
+	if c.notifier != nil {
+		msg := fmt.Sprintf("Customer account for %s has been reactivated.", fullName)
+		_ = c.notifier.CreateNotification(ctx.Request.Context(), "customer_reactivated", msg)
+	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
 
 func (c *Controller) GetUserProfile(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
- 
+
 	res, err := c.uc.GetUserProfile(ctx.Request.Context(), userID)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
@@ -302,13 +336,13 @@ func (c *Controller) GetUserProfile(ctx *gin.Context) {
 		})
 		return
 	}
- 
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
- 
+
 func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
- 
+
 	var req UpdateUserProfileRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.APIResponse{
@@ -317,7 +351,7 @@ func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
 		})
 		return
 	}
- 
+
 	if err := validation.Validator.Struct(req); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.APIResponse{
 			Success: false,
@@ -325,7 +359,7 @@ func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
 		})
 		return
 	}
- 
+
 	if err := c.uc.UpdateUserProfile(ctx.Request.Context(), userID, req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -333,6 +367,6 @@ func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
 		})
 		return
 	}
- 
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }

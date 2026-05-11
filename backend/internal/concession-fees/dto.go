@@ -65,3 +65,18 @@ type FeeRow struct {
 	Amount         float64
 	EffectiveMonth string // YYYY-MM-DD (always 1st of month)
 }
+
+// FeeHistoryRow is a single row in the fee change audit trail.
+type FeeHistoryRow struct {
+	ID             string  `json:"id"`
+	FeeType        FeeType `json:"fee_type"`
+	Amount         float64 `json:"amount"`
+	EffectiveMonth string  `json:"effective_month"` // YYYY-MM-DD
+	SetByUserID    string  `json:"set_by_user_id"`
+	SetByName      string  `json:"set_by_name"`     // first + last name of the admin
+	CreatedAt      string  `json:"created_at"`      // ISO-8601
+}
+
+type FeeHistoryResponse struct {
+	Data []FeeHistoryRow `json:"data"`
+}

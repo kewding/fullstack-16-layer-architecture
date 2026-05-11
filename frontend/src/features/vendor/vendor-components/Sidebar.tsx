@@ -46,12 +46,21 @@ export function VendorSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
                     //   isActive ? '!bg-[#E3EDEC] !text-[#415B5A]' : 'hover:bg-sidebar-accent/50'
                     // }`}
                     className={`flex h-[3rem] w-full flex-row gap-2 p-3 transition-colors ${
-                      isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50'
+                      isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50 hover:text-white'
                     }`}
                   >
-                    <NavLink to={item.url}>
-                      <Icon className="text-current" />
-                      <span className="font-normal no-underline">{item.title}</span>
+                    <NavLink to={item.url} className="flex items-center gap-2 w-full">
+                      <div className="relative shrink-0">
+                        <Icon className="h-4 w-4 text-current" />
+                      </div>
+
+                      <span
+                        className={`font-normal no-underline ${
+                          isActive ? 'text-[#415B5A]' : 'text-[#E3EDEC]'
+                        }`}
+                      >
+                        {item.title}
+                      </span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

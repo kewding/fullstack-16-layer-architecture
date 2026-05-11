@@ -138,16 +138,36 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, token string) e
 	return nil
 }
 
+// CreateVendorInvitedRecord upserts the vendors row for the invited email.
+//
+// Two cases handled by one query:
+//
+//  1. Brand-new invite — no vendors row exists → INSERT a fresh 'invited' row.
+//
+//  2. Re-invite of a graduated vendor — the old vendors row exists but has
+//     deleted_at IS NOT NULL (soft-deleted during graduation).
+//     The ON CONFLICT clause fires only when deleted_at IS NOT NULL, which
+//     reactivates the row: clears deleted_at, resets status to 'invited',
+//     clears the old user_id (the old users row is soft-deleted, not hard-deleted),
+//     and updates owner_name in case it changed.
+//
+// NOTE: this relies on the partial unique index
+//
+//	CREATE UNIQUE INDEX uq_vendors_email_active ON vendors(email) WHERE deleted_at IS NULL
+//
+// created by migration__vendors_email_partial_unique.sql.
+// A hard UNIQUE(email) constraint must have been dropped before this runs.
 func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, email string, ownerName string) error {
 	query := `
-    INSERT INTO vendors (email, owner_name, status)
-    VALUES ($1, $2, 'invited')
-    ON CONFLICT (email) DO UPDATE
-    SET owner_name = EXCLUDED.owner_name,
-        status = 'invited',
-        deleted_at = NULL,
-        updated_at = NOW()
-    WHERE vendors.deleted_at IS NOT NULL`
+		INSERT INTO vendors (email, owner_name, status)
+		VALUES ($1, $2, 'invited')
+		ON CONFLICT (email) WHERE deleted_at IS NOT NULL
+		DO UPDATE SET
+			owner_name  = EXCLUDED.owner_name,
+			status      = 'invited',
+			user_id     = NULL,
+			deleted_at  = NULL,
+			updated_at  = NOW()`
 
 	_, err := r.db.ExecContext(ctx, query, email, ownerName)
 	if err != nil {
@@ -163,7 +183,7 @@ func (r *postgresRepository) GetVendorByID(ctx context.Context, vendorID string)
 		JOIN vendors v ON v.email = vi.email
 		WHERE v.id = $1
 		AND v.deleted_at IS NULL
-      	AND vi.deleted_at IS NULL
+		AND vi.deleted_at IS NULL
 		LIMIT 1`
 
 	var res InviteTokenResponse
@@ -189,56 +209,60 @@ func (r *postgresRepository) GetVendorByID(ctx context.Context, vendorID string)
 }
 
 func (r *postgresRepository) RevokeVendor(ctx context.Context, vendorID string) error {
-	// Start a transaction
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	// 1. Retrieve the vendor's email and associated user_id (nullable) for the audit trail and cleanup
 	var email string
 	var userID sql.NullString
-	query := `SELECT email, user_id FROM vendors WHERE id = $1`
-	err = tx.QueryRowContext(ctx, query, vendorID).Scan(&email, &userID)
+	err = tx.QueryRowContext(ctx,
+		`SELECT email, user_id FROM vendors WHERE id = $1`,
+		vendorID,
+	).Scan(&email, &userID)
 	if err != nil {
 		return fmt.Errorf("failed to find vendor data: %w", err)
 	}
 
-	// 2. Soft delete the vendor invitations
-	queryInvitations := `
-		UPDATE vendor_invitations 
-		SET deleted_at = NOW() 
-		WHERE email = $1 AND deleted_at IS NULL`
-	_, err = tx.ExecContext(ctx, queryInvitations, email)
+	// Soft-delete the vendor invitation row
+	_, err = tx.ExecContext(ctx,
+		`UPDATE vendor_invitations SET deleted_at = NOW() WHERE email = $1 AND deleted_at IS NULL`,
+		email,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to soft delete vendor invitations: %w", err)
 	}
 
-	// 3. Soft delete the vendor record
-	queryVendor := `
-		UPDATE vendors 
-		SET deleted_at = NOW() 
-		WHERE id = $1 AND deleted_at IS NULL`
-	_, err = tx.ExecContext(ctx, queryVendor, vendorID)
+	// Soft-delete the vendor record
+	_, err = tx.ExecContext(ctx,
+		`UPDATE vendors SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+		vendorID,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to soft delete vendor: %w", err)
 	}
 
-	// 4. Hard delete the user associated with this email
-	// This clears the UNIQUE constraint on the email column, allowing for re-registration
+	// Soft-delete the user so the email is freed for re-registration.
+	// EmailExists checks deleted_at IS NULL, so a soft-deleted row does not
+	// block re-registration. For 'invited' vendors user_id is NULL (they haven't
+	// registered yet), so we only act when userID is present.
 	if userID.Valid {
-		queryUser := `DELETE FROM users WHERE id = $1`
-		_, err = tx.ExecContext(ctx, queryUser, userID.String)
+		_, err = tx.ExecContext(ctx,
+			`UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+			userID.String,
+		)
 		if err != nil {
-			return fmt.Errorf("failed to purge user and connected records: %w", err)
+			return fmt.Errorf("failed to soft-delete user: %w", err)
 		}
 	}
 
 	return tx.Commit()
 }
 
-// checks if email already exists in users table
+// IsEmailRegistered returns true only if an ACTIVE (non-deleted) users row
+// exists for this email. Graduated vendors have deleted_at set, so they
+// return false and can be re-invited.
 func (r *postgresRepository) IsEmailRegistered(ctx context.Context, email string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL)`
 
@@ -250,7 +274,6 @@ func (r *postgresRepository) IsEmailRegistered(ctx context.Context, email string
 	return exists, nil
 }
 
-// checks if email has any invite record regardless of status
 func (r *postgresRepository) HasAnyInviteRecord(ctx context.Context, email string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM vendor_invitations WHERE email = $1)`
 	var exists bool

@@ -127,3 +127,16 @@ func feeTypeLabel(ft FeeType) string {
 		return string(ft)
 	}
 }
+
+// GET /api/admin/concession-fees/history
+func (c *Controller) GetFeeHistory(ctx *gin.Context) {
+	res, err := c.uc.GetFeeHistory(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
+			Success: false,
+			Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
+}

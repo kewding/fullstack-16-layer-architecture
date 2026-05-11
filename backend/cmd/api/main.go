@@ -92,7 +92,6 @@ func main() {
 	// --- User Info ---
 	userRepo := user.NewPostgresRepository(dbNode.Connection)
 	userUseCase := user.NewUseCase(userRepo)
-	userController := user.NewController(userUseCase)
 
 	// --- Vendor Status ---
 	vendorInviteRepo := vendorinvite.NewPostgresRepository(dbNode.Connection)
@@ -161,6 +160,9 @@ func main() {
 		concessionFeesUseCase,
 		vendorUseCase,
 	)
+
+	// --- User Controller (needs vendorUseCase for notifications) ---
+	userController := user.NewControllerWithNotifier(userUseCase, vendorUseCase)
 
 	// --- Vendors Ledger ---
 	vendorLedgerRepo := vendorsledger.NewPostgresRepository(dbNode.Connection)

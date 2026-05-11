@@ -22,6 +22,9 @@ CREATE TABLE concession_fee_settings (
     CONSTRAINT chk_amount_non_negative CHECK (amount >= 0)
 );
 
+ALTER TABLE concession_fee_settings
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 CREATE INDEX idx_concession_fee_settings_type_month
     ON concession_fee_settings (fee_type, effective_month DESC);
 

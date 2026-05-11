@@ -10,6 +10,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { loginService } from '@/features/auth/login/services/login.service';
+import { notificationBus } from '@/lib/notificationBus';
 import { LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -27,7 +28,7 @@ function useNotificationCount() {
       })
       .catch(() => {});
 
-    // WebSocket for real-time updates
+    // WebSocket for real-time updates from other admins
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(`${protocol}//${window.location.host}/api/admin/notifications/ws`);
 
@@ -43,6 +44,18 @@ function useNotificationCount() {
     ws.onerror = () => ws.close();
 
     return () => ws.close();
+  }, []);
+
+  // Subscribe to manual triggers (disable/reactivate actions on this tab)
+  useEffect(() => {
+    return notificationBus.subscribe(() => {
+      fetch('/api/admin/notifications/unread-count')
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success) setUnreadCount(json.data.count);
+        })
+        .catch(() => {});
+    });
   }, []);
 
   return unreadCount;
@@ -81,7 +94,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                     //   isActive ? '!bg-[#E3EDEC] !text-[#415B5A]' : 'hover:bg-sidebar-accent/50'
                     // }`}
                     className={`flex h-[3rem] w-full flex-row gap-2 p-3 transition-colors ${
-                      isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50'
+                      isActive ? '!bg-[#E3EDEC]' : 'hover:bg-sidebar-accent/50 hover:text-white'
                     }`}
                   >
                     <NavLink to={item.url} className="flex items-center gap-2 w-full">
@@ -95,7 +108,13 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                         )}
                       </div>
 
-                      <span className="font-normal no-underline">{item.title}</span>
+                      <span
+                        className={`font-normal no-underline ${
+                          isActive ? 'text-[#415B5A]' : 'text-[#E3EDEC]'
+                        }`}
+                      >
+                        {item.title}
+                      </span>
 
                       {isNotifications && unreadCount > 0 && !isCollapsed && (
                         <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">

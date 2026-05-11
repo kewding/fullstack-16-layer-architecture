@@ -8,7 +8,6 @@ interface VendorDetailModalProps {
   vendorID: string;
   onClose: () => void;
   onApproved: () => void;
-  onRemoved: () => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -43,21 +42,14 @@ function DocumentRow({ label, url }: { label: string; url: string | null }) {
   );
 }
 
-export function VendorDetailModal({
-  vendorID,
-  onClose,
-  onApproved,
-  onRemoved,
-}: VendorDetailModalProps) {
+export function VendorDetailModal({ vendorID, onClose, onApproved }: VendorDetailModalProps) {
   const [vendor, setVendor] = useState<VendorDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [confirmRemove, setConfirmRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const load = async () => {
+    (async () => {
       try {
         const data = await vendorService.getVendorDetail(vendorID);
         setVendor(data);
@@ -66,8 +58,7 @@ export function VendorDetailModal({
       } finally {
         setLoading(false);
       }
-    };
-    load();
+    })();
   }, [vendorID]);
 
   const handleApprove = async () => {
@@ -88,25 +79,6 @@ export function VendorDetailModal({
     }
   };
 
-  const handleRemove = async () => {
-    if (!vendor) return;
-    setRemoving(true);
-    try {
-      const res = await vendorService.removeFromBusiness(vendorID);
-      if (res.success) {
-        onRemoved();
-        onClose();
-      } else {
-        setError(res.error?.message ?? 'Failed to remove vendor from business');
-      }
-    } catch {
-      setError('A network error occurred');
-    } finally {
-      setRemoving(false);
-      setConfirmRemove(false);
-    }
-  };
-
   return (
     <div className="modal-overlay">
       <div className="modal-container max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -118,8 +90,7 @@ export function VendorDetailModal({
           </div>
           <button
             onClick={onClose}
-            className="text-white
-           hover:bg-white hover:text-[#415B5A] transition-colors"
+            className="text-white hover:bg-white hover:text-[#415B5A] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -176,7 +147,6 @@ export function VendorDetailModal({
                   <span className="modal-value text-black">{vendor.tin || '—'}</span>
                 </div>
 
-                {/* Documents */}
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground">Supporting Documents</span>
@@ -198,63 +168,29 @@ export function VendorDetailModal({
           </div>
         ) : null}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-neutral-800 sticky bottom-0">
-          {/* <Button variant="outline" onClick={onClose}>
-            Close
-          </Button> */}
+        {/* Footer — only approve button for for_review; read-only badge for in_business */}
+        <div className="flex items-center justify-end p-6 border-t border-neutral-800 sticky bottom-0 bg-[hsl(var(--modal-background))]">
+          {vendor?.status === 'for_review' && (
+            <Button
+              onClick={handleApprove}
+              disabled={approving}
+              className="gap-2 p-3 bg-[#3F6F64] text-white hover:bg-white hover:text-[#3F6F64] border border-[#3F6F64] transition-colors"
+            >
+              {approving ? 'Approving...' : 'Accept Vendor'}
+            </Button>
+          )}
 
-          <div className="flex items-center gap-2">
-            {/* Accept button — only for for_review */}
-            {vendor?.status === 'for_review' && (
-              <Button
-                onClick={handleApprove}
-                disabled={approving}
-                className="gap-2 p-3 bg-[#3F6F64] text-white hover:bg-white hover:text-[#3F6F64] border border-[#3F6F64] transition-colors"
-              >
-                {approving ? 'Approving...' : 'Accept Vendor'}
-              </Button>
-            )}
+          {vendor?.status === 'in_business' && (
+            <Badge variant="default" className="text-sm px-4 py-2">
+              In Business
+            </Badge>
+          )}
 
-            {/* Remove from Business — only for in_business */}
-            {vendor?.status === 'in_business' && (
-              <>
-                {!confirmRemove ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => setConfirmRemove(true)}
-                    className="border-red-600 text-red-400 hover:bg-red-500/10 hover:text-red-400 bg-transparent"
-                  >
-                    Remove from Business
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      This will revert vendor to For Review. Sure?
-                    </span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={removing}
-                      onClick={handleRemove}
-                    >
-                      {removing ? '...' : 'Yes, Remove'}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setConfirmRemove(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Status badge for invited */}
-            {vendor?.status === 'invited' && (
-              <Badge variant="outline" className="text-sm px-4 py-2">
-                Invited — Not Yet Registered
-              </Badge>
-            )}
-          </div>
+          {vendor?.status === 'invited' && (
+            <Badge variant="outline" className="text-sm px-4 py-2">
+              Invited — Not Yet Registered
+            </Badge>
+          )}
         </div>
       </div>
     </div>

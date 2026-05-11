@@ -20,6 +20,9 @@ type UseCase interface {
 	// It inserts carry-forward rows for any fee_type not yet set for this month,
 	// then syncs vendors.concession_fee_value.
 	CarryForwardAndSync(ctx context.Context) error
+
+	// GetFeeHistory returns the full audit trail of fee changes.
+	GetFeeHistory(ctx context.Context) (*FeeHistoryResponse, error)
 }
 
 type feeUseCase struct {
@@ -155,4 +158,12 @@ func (uc *feeUseCase) CarryForwardAndSync(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (uc *feeUseCase) GetFeeHistory(ctx context.Context) (*FeeHistoryResponse, error) {
+	rows, err := uc.repo.GetFeeHistory(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("GetFeeHistory: %w", err)
+	}
+	return &FeeHistoryResponse{Data: rows}, nil
 }

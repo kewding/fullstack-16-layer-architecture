@@ -1,7 +1,37 @@
+/* =========================
+   TAILWIND IMPORTS
+   ========================= */
+
+/* Injects Tailwind's base/reset styles
+   Affects:
+   - Browser CSS reset
+   - Default typography
+   - Normalize styles across browsers
+*/
 @tailwind base;
+
+/* Injects reusable Tailwind component classes
+   Affects:
+   - Tailwind component utilities
+   - Any custom components added via @layer components
+*/
 @tailwind components;
+
+/* Injects all Tailwind utility classes
+   Affects:
+   - Utility classes like flex, p-4, text-center, etc.
+*/
 @tailwind utilities;
 
+
+/* =========================
+   CUSTOM FONT DEFINITIONS
+   ========================= */
+
+/* Roboto Light (300)
+   Affects:
+   - Any element using font-weight: 300
+*/
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Light.woff2') format('woff2');
@@ -9,6 +39,10 @@
   font-style: normal;
 }
 
+/* Roboto Regular (400)
+   Affects:
+   - Default body text
+*/
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Regular.woff2') format('woff2');
@@ -16,6 +50,11 @@
   font-style: normal;
 }
 
+/* Roboto Medium (500)
+   Affects:
+   - Medium emphasis text
+   - Buttons/links using font-weight: 500
+*/
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Medium.woff2') format('woff2');
@@ -23,6 +62,11 @@
   font-style: normal;
 }
 
+/* Roboto Bold (700)
+   Affects:
+   - Bold headings
+   - Strong emphasis text
+*/
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Bold.woff2') format('woff2');
@@ -30,6 +74,10 @@
   font-style: normal;
 }
 
+/* Roboto Black (900)
+   Affects:
+   - Heavy bold text
+*/
 @font-face {
   font-family: 'Roboto';
   src: url('./fonts/Roboto-Black.woff2') format('woff2');
@@ -37,6 +85,18 @@
   font-style: normal;
 }
 
+
+/* =========================
+   GLOBAL ROOT STYLES
+   ========================= */
+
+/* Global app-wide defaults
+   Affects:
+   - Entire document
+   - Typography rendering
+   - Default font family
+   - Global color scheme
+*/
 :root {
   font-family: 'Roboto', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -44,27 +104,55 @@
 
   color-scheme: light;
 
+  /* Improves font rendering */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+/* =========================
+   LINK STYLES
+   ========================= */
+
+/* Default anchor styling
+   Affects:
+   - All <a> tags
+*/
 a {
   font-weight: 500;
   color: #cd9a34;
   text-decoration: none;
 }
 
+/* Hover state for links
+   Affects:
+   - <a> when hovered
+*/
 a:hover {
   color: #cd9a34;
   text-decoration: none;
 }
 
+
+/* =========================
+   BODY / PAGE LAYOUT
+   ========================= */
+
+/* Main page container
+   Affects:
+   - Entire app/page layout
+   - Full viewport sizing
+   - Background + text colors
+*/
 body {
   margin: 0;
+
+  /* Centers content */
   display: flex;
   place-items: center;
+
   min-width: 320px;
   min-height: 100vh;
 
@@ -72,20 +160,49 @@ body {
   color: hsl(var(--foreground));
 }
 
+
+/* =========================
+   TYPOGRAPHY
+   ========================= */
+
+/* Main heading style
+   Affects:
+   - All <h1> tags
+*/
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
+
+/* =========================
+   INPUT STYLES
+   ========================= */
+
+/* Default input appearance
+   Affects:
+   - All <input> fields
+*/
 input {
   background-color: transparent;
   border-color: #3f6f64;
 }
 
+
+/* =========================
+   BUTTON STYLES
+   ========================= */
+
+/* Base button styling
+   Affects:
+   - All <button> elements
+*/
 button {
   border-radius: 8px;
   border: 1px solid transparent;
+
   padding: 0.6em 1.2em;
+
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -93,73 +210,106 @@ button {
   background-color: #3f6f64;
 
   cursor: pointer;
+
   transition: border-color 0.25s;
 }
 
+/* Button hover state
+   Affects:
+   - Buttons on hover
+*/
 button:hover {
   border-color: #27463f;
 }
 
+/* Button accessibility focus ring
+   Affects:
+   - Keyboard-focused buttons
+*/
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+
+/* =========================
+   BASE LAYER
+   Tailwind base customizations
+   ========================= */
+
 @layer base {
+
+  /* Autofill customization
+     Affects:
+     - Chrome autofilled input fields
+  */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
     -webkit-text-fill-color: #3f6f64 !important;
     -webkit-box-shadow: 0 0 0 1000px #e9f4f1 inset !important;
+
+    /* Prevents yellow autofill flash */
     transition: background-color 5000s ease-in-out 0s;
   }
 
-  :root {
-    /* Main app background */
-    --background: 163 20% 91%; /* #E3EDEC */
-    --foreground: 178 17% 31%; /* #415B5A */
+  /* =========================
+     LIGHT THEME VARIABLES
+     ========================= */
 
-    /* Cards */
+  /* Global CSS variables for LIGHT MODE
+     Affects:
+     - Entire app theme
+     - Tailwind hsl(var(--...)) references
+  */
+  :root {
+
+    /* Main app background */
+    --background: 163 20% 91%;
+    --foreground: 178 17% 31%;
+
+    /* Card components */
     --card: 0 0% 100%;
     --card-foreground: 178 17% 31%;
 
-    /* Popovers */
+    /* Popovers/tooltips/dropdowns */
     --popover: 0 0% 100%;
     --popover-foreground: 178 17% 31%;
 
-    /* Primary brand */
-    --primary: 178 17% 31%; /* #415B5A */
+    /* Primary brand color */
+    --primary: 178 17% 31%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
-    --secondary: 163 20% 91%; /* #E3EDEC */
+    /* Secondary surfaces */
+    --secondary: 163 20% 91%;
     --secondary-foreground: 178 17% 31%;
 
-    /* Muted */
+    /* Muted/disabled content */
     --muted: 163 20% 91%;
     --muted-foreground: 178 10% 40%;
 
-    /* Accent */
+    /* Accent colors */
     --accent: 163 20% 91%;
     --accent-foreground: 178 17% 31%;
 
-    /* Destructive */
+    /* Error/destructive UI */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Borders/Input */
+    /* Borders + inputs */
     --border: 178 15% 80%;
     --input: 178 15% 80%;
     --ring: 178 17% 31%;
 
+    /* Global border radius */
     --radius: 0.75rem;
 
-    /* Sidebar */
-    --sidebar-background: 178 17% 31%; /* #415B5A */
+    /* Sidebar styling */
+    --sidebar-background: 178 17% 31%;
     --sidebar-foreground: 0 0% 100%;
 
-    --sidebar-primary: 45 63% 51%; /* #CD9A34 */
+    --sidebar-primary: 45 63% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
 
     --sidebar-accent: 178 15% 36%;
@@ -168,22 +318,41 @@ button:focus-visible {
     --sidebar-border: 178 15% 40%;
     --sidebar-ring: 45 63% 51%;
 
-    --sidebar-foreground: 163 20% 91%; /* #E3EDEC (inactive text) */
-    --sidebar-accent-foreground: 178 17% 31%; /* ACTIVE text */
+    /* Sidebar inactive text */
+    --sidebar-foreground: 163 20% 91%;
 
+    /* Sidebar active text */
+    --sidebar-accent-foreground: 178 17% 31%;
+
+    /* Modal styling */
     --modal-background: 0 0% 100%;
     --modal-foreground: 178 17% 31%;
 
     --modal-border: 178 15% 84%;
 
+    /* Modal backdrop overlay */
     --modal-overlay: 178 17% 10% / 0.45;
 
-    --modal-shadow: 0 24px 48px rgba(0, 0, 0, 0.18), 0 12px 24px rgba(0, 0, 0, 0.12);
+    /* Modal shadow */
+    --modal-shadow:
+      0 24px 48px rgba(0, 0, 0, 0.18),
+      0 12px 24px rgba(0, 0, 0, 0.12);
 
+    /* Muted modal text */
     --modal-muted: 178 10% 40%;
   }
 
+
+  /* =========================
+     DARK MODE VARIABLES
+     ========================= */
+
+  /* Activated when .dark class exists
+     Affects:
+     - Entire application dark mode theme
+  */
   .dark {
+
     --background: 178 20% 14%;
     --foreground: 0 0% 98%;
 
@@ -209,6 +378,7 @@ button:focus-visible {
     --input: 178 15% 25%;
     --ring: 163 20% 91%;
 
+    /* Dark sidebar */
     --sidebar-background: 178 20% 16%;
     --sidebar-foreground: 0 0% 98%;
 
@@ -222,93 +392,190 @@ button:focus-visible {
     --sidebar-ring: 45 63% 51%;
   }
 
+
+  /* =========================
+     TABLE DEFAULTS
+     ========================= */
+
+  /* Full-width tables
+     Affects:
+     - All <table> elements
+  */
   table {
     @apply w-full;
   }
 
+  /* Table header styling
+     Affects:
+     - All <th> elements
+  */
   th {
     @apply px-4 py-3 text-left font-medium text-muted-foreground;
   }
 
+  /* Table cell styling
+     Affects:
+     - All <td> elements
+  */
   td {
     @apply px-4 py-3 align-middle;
   }
 }
 
+
+/* =========================
+   COMPONENT LAYER
+   Custom reusable components
+   ========================= */
+
 @layer components {
+
+  /* Modal overlay/backdrop
+     Affects:
+     - Full-screen modal background
+  */
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center;
+
     background: hsl(var(--modal-overlay));
+
+    /* Background blur effect */
     backdrop-filter: blur(4px);
   }
 
+  /* Main modal container
+     Affects:
+     - Modal box styling
+  */
   .modal-container {
     @apply w-full rounded-2xl border overflow-hidden;
+
     background: hsl(var(--modal-background));
     color: hsl(var(--modal-foreground));
+
     border-color: hsl(var(--modal-border));
+
     box-shadow: var(--modal-shadow);
   }
 
+  /* Modal header section
+     Affects:
+     - Top section of modal
+  */
   .modal-header {
     @apply flex items-center justify-between px-6 py-5 border-b;
+
     border-color: hsl(var(--border));
   }
 
+  /* Modal title text
+     Affects:
+     - Main modal heading
+  */
   .modal-title {
     @apply text-lg font-semibold;
+
     color: hsl(var(--foreground));
   }
 
+  /* Modal description/subtitle
+     Affects:
+     - Supporting text inside modal
+  */
   .modal-description {
     @apply text-sm;
+
     color: hsl(var(--modal-muted));
   }
 
+  /* Modal content area
+     Affects:
+     - Main body of modal
+  */
   .modal-body {
     @apply p-6;
   }
 
+  /* Modal footer actions
+     Affects:
+     - Bottom action section
+  */
   .modal-footer {
     @apply flex items-center justify-between px-6 py-5 border-t;
+
     border-color: hsl(var(--border));
   }
 
+  /* Close button/icon
+     Affects:
+     - Modal close controls
+  */
   .modal-close {
     @apply transition-colors flex items-center justify-center rounded-md;
+
     color: hsl(var(--foreground));
   }
 
+  /* Close button hover state
+     Affects:
+     - Hover feedback for close button
+  */
   .modal-close:hover {
     background: hsl(var(--accent));
     color: hsl(var(--foreground));
   }
 
+  /* Section title inside modal
+     Affects:
+     - Subsections within modal
+  */
   .modal-section-title {
     @apply text-base font-semibold pb-2 border-b;
+
     border-color: hsl(var(--border));
     color: hsl(var(--foreground));
   }
 
+  /* Form labels in modal
+     Affects:
+     - Small label text
+  */
   .modal-label {
     @apply text-xs;
+
     color: hsl(var(--muted-foreground));
   }
 
+  /* Display values/content
+     Affects:
+     - Modal value text
+  */
   .modal-value {
     @apply text-sm;
+
     color: hsl(var(--foreground));
   }
 
+  /* Modal input fields
+     Affects:
+     - Inputs inside modal
+  */
   .modal-input {
     @apply h-12 rounded-lg border px-3 transition-colors;
+
     background: white;
+
     border-color: hsl(var(--input));
     color: hsl(var(--foreground));
   }
 
+  /* Focus state for modal inputs
+     Affects:
+     - Focused modal form fields
+  */
   .modal-input:focus {
     @apply outline-none ring-2;
+
     ring-color: hsl(var(--ring));
     border-color: hsl(var(--ring));
   }

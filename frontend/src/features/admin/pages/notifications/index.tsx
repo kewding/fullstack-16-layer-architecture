@@ -9,7 +9,9 @@ import {
   Info,
   ShieldCheck,
   ShieldX,
+  UserCheck,
   UserPlus,
+  UserX,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { vendorService, type Notification } from '../vendors/services/vendor.service';
@@ -112,6 +114,22 @@ const TYPE_CONFIG: Record<
     badge: 'bg-red-100 text-red-700',
     iconBg: 'bg-red-100',
     iconColor: 'text-red-600',
+  },
+  customer_disabled: {
+    label: 'Account Disabled',
+    icon: UserX, // add UserX to the lucide-react import
+    dot: 'bg-red-500',
+    badge: 'bg-red-100 text-red-700',
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
+  },
+  customer_reactivated: {
+    label: 'Account Reactivated',
+    icon: UserCheck, // add UserCheck to the lucide-react import
+    dot: 'bg-[#3f6f64]',
+    badge: 'bg-[#d6ede9] text-[#3f6f64]',
+    iconBg: 'bg-[#d6ede9]',
+    iconColor: 'text-[#3f6f64]',
   },
 };
 

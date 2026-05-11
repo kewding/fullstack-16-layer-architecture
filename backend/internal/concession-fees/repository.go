@@ -25,4 +25,7 @@ type Repository interface {
 	// SyncVendorsConcessionFeeValue updates vendors.concession_fee_value for all
 	// in_business vendors to the given total.
 	SyncVendorsConcessionFeeValue(ctx context.Context, total float64) error
+
+	// GetFeeHistory returns all fee rows ordered by effective_month DESC, fee_type ASC.
+	GetFeeHistory(ctx context.Context) ([]FeeHistoryRow, error)
 }
