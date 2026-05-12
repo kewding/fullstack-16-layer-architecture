@@ -11,6 +11,7 @@ import (
 	"github.com/kewding/backend/internal/middleware"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
+	studenttransactions "github.com/kewding/backend/internal/student-transactions"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/user"
 	vendorinfo "github.com/kewding/backend/internal/vendor-info"
@@ -21,23 +22,24 @@ import (
 )
 
 type Dependencies struct {
-	RegisterController         *register.Controller
-	LoginController            *login.Controller
-	HealthHandler              *HealthHandler
-	RfidTaggingController      *rfidtagging.Controller
-	CreditTopupController      *topup.Controller
-	UserInfoController         *user.Controller
-	VendorInviteController     *vendorinvite.Controller
-	VendorRegisterController   *vendorregister.Controller
-	VendorController           *vendors.Controller
-	VendorInfoController       *vendorinfo.Controller
-	MedicalInfoController      *medicalinfo.Controller
-	AdminTransactionController *admintransactions.Controller
-	UserController             *user.Controller
-	DashboardController        *dashboard.Controller
-	TopUpRequestController     *topup.Controller
-	ConcessionFeesController   *concessionfees.Controller
-	VendorLedgerController     *vendorsledger.Controller
+	RegisterController           *register.Controller
+	LoginController              *login.Controller
+	HealthHandler                *HealthHandler
+	RfidTaggingController        *rfidtagging.Controller
+	CreditTopupController        *topup.Controller
+	UserInfoController           *user.Controller
+	VendorInviteController       *vendorinvite.Controller
+	VendorRegisterController     *vendorregister.Controller
+	VendorController             *vendors.Controller
+	VendorInfoController         *vendorinfo.Controller
+	MedicalInfoController        *medicalinfo.Controller
+	AdminTransactionController   *admintransactions.Controller
+	UserController               *user.Controller
+	DashboardController          *dashboard.Controller
+	TopUpRequestController       *topup.Controller
+	ConcessionFeesController     *concessionfees.Controller
+	VendorLedgerController       *vendorsledger.Controller
+	StudentTransactionController *studenttransactions.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -172,6 +174,9 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			customer.GET("/user/profile", deps.UserController.GetUserProfile)
 			customer.PUT("/user/profile", deps.UserController.UpdateUserProfile)
+
+			// Transaction history
+			customer.GET("/transactions", deps.StudentTransactionController.ListTransactions)
 
 			// Top-up request flow
 			customerTopUp := customer.Group("/top-up")

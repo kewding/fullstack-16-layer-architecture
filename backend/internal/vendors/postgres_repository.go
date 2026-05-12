@@ -206,7 +206,7 @@ func (r *postgresRepository) ListVendorsBalance(ctx context.Context, params List
 	}
 	return result, total, nil
 
-	return result, total, nil
+	// return result, total, nil
 }
 
 // ── GetVendorDetail ───────────────────────────────────────────────────────────

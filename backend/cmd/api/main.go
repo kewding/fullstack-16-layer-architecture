@@ -21,6 +21,7 @@ import (
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
+	studenttransactions "github.com/kewding/backend/internal/student-transactions"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/user"
@@ -169,6 +170,11 @@ func main() {
 	vendorLedgerUseCase := vendorsledger.NewUseCase(vendorLedgerRepo)
 	vendorLedgerController := vendorsledger.NewController(vendorLedgerUseCase)
 
+	// --- Student Transactions ---
+	studentTxRepo := studenttransactions.NewPostgresRepository(dbNode.Connection)
+	studentTxUseCase := studenttransactions.NewUseCase(studentTxRepo)
+	studentTxController := studenttransactions.NewController(studentTxUseCase)
+
 	// --- Fee Scheduler (background job) ---
 	adminEmailProvider := jobs.NewAdminEmailProvider(dbNode.Connection)
 	feeScheduler := jobs.NewFeeScheduler(
@@ -187,18 +193,19 @@ func main() {
 		HealthHandler:         healthHandler,
 		RfidTaggingController: rfidTaggingController,
 		// CreditTopupController:      topupController,
-		UserInfoController:         userController,
-		VendorInviteController:     vendorInviteController,
-		VendorRegisterController:   vendorRegisterController,
-		VendorController:           vendorController,
-		VendorInfoController:       vendorInfoController,
-		MedicalInfoController:      medicalInfoController,
-		AdminTransactionController: adminTxController,
-		UserController:             userController,
-		DashboardController:        dashboardController,
-		TopUpRequestController:     topUpRequestController,
-		ConcessionFeesController:   concessionFeesController,
-		VendorLedgerController:     vendorLedgerController,
+		UserInfoController:           userController,
+		VendorInviteController:       vendorInviteController,
+		VendorRegisterController:     vendorRegisterController,
+		VendorController:             vendorController,
+		VendorInfoController:         vendorInfoController,
+		MedicalInfoController:        medicalInfoController,
+		AdminTransactionController:   adminTxController,
+		UserController:               userController,
+		DashboardController:          dashboardController,
+		TopUpRequestController:       topUpRequestController,
+		ConcessionFeesController:     concessionFeesController,
+		VendorLedgerController:       vendorLedgerController,
+		StudentTransactionController: studentTxController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

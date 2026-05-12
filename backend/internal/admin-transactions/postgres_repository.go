@@ -56,9 +56,10 @@ func (r *postgresRepository) ListVendorTransactions(ctx context.Context, params 
 	argIdx++
 
 	typeFilter := ""
-	if params.Type == VendorTxSale {
+	switch params.Type {
+	case VendorTxSale:
 		typeFilter = "WHERE type = 'sale'"
-	} else if params.Type == VendorTxRemittance {
+	case VendorTxRemittance:
 		typeFilter = "WHERE type = 'remittance'"
 	}
 

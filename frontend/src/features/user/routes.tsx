@@ -3,7 +3,7 @@ import { MedicalInformationPage } from './pages/medical-info';
 import { UserNotificationsPage } from './pages/notification-page';
 import { UserProfilePage } from './pages/profile-page';
 import { UserTopUpPage } from './pages/top-up';
-import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
+import { TransactionHistoryPage } from './pages/transaction-history';
 import { UserSettingPage } from './pages/UserSettingPage';
 import { UserRootPage } from './UserRoot';
 
