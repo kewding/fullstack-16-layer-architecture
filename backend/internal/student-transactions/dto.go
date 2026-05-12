@@ -26,6 +26,7 @@ type ListRequest struct {
 // TransactionRow is one ledger row returned to the client.
 type TransactionRow struct {
 	ID              string          `json:"id"`
+	ReferenceID    string          `json:"reference_id"`
 	ReferenceType   TransactionType `json:"reference_type"`
 	// Human-readable label sent to the frontend ("Balance Top-up", "Purchase", "Withdrawal")
 	Label           string          `json:"label"`

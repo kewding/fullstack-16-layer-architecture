@@ -106,6 +106,7 @@ func (r *postgresRepository) List(req ListRequest) ([]TransactionRow, int, error
 		WITH ledger AS (
 			SELECT
 				id,
+				reference_id,  
 				reference_type,
 				CASE
 					WHEN credit > 0 THEN credit
@@ -123,6 +124,7 @@ func (r *postgresRepository) List(req ListRequest) ([]TransactionRow, int, error
 		)
 		SELECT
 			id,
+			reference_id,  
 			reference_type,
 			net_amount,
 			new_balance,
@@ -150,6 +152,7 @@ func (r *postgresRepository) List(req ListRequest) ([]TransactionRow, int, error
 
 		if err := rows.Scan(
 			&row.ID,
+			 &row.ReferenceID,
 			&refType,
 			&row.Amount,
 			&row.NewBalance,

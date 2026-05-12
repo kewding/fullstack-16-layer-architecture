@@ -192,13 +192,13 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 		JOIN users_info ui ON ui.user_id = u.id
 		WHERE cl.reference_type = 'refund' AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d
 		UNION ALL
-		SELECT cl.id::TEXT, cl.created_at AS date, 'withdraw' AS type,
-		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
-		       cl.debit AS amount, 'completed' AS status
-		FROM customers_ledger cl
-		JOIN users u ON u.id = cl.user_id
-		JOIN users_info ui ON ui.user_id = u.id
-		WHERE cl.reference_type = 'top-up' AND cl.debit > 0 AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
+SELECT wr.id::TEXT, wr.created_at AS date, 'withdraw' AS type,
+       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
+       wr.amount, 'completed' AS status
+FROM withdrawal_requests wr
+JOIN users u ON u.id = wr.user_id
+JOIN users_info ui ON ui.user_id = u.id
+WHERE wr.status = 'completed' AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
 		topupDate, topupSearchIdx,
 		purchaseDate, purchaseSearchIdx,
 		refundDate, refundSearchIdx,
