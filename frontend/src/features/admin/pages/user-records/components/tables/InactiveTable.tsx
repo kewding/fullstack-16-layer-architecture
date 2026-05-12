@@ -104,16 +104,24 @@ export default function InactiveTable({
   });
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+    <section className="rounded-2xl border border-[hsl(var(--border))] bg-white shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-gray-50">
+              <TableRow
+                key={hg.id}
+                className="border-b border-[hsl(var(--border))] hover:bg-transparent"
+              >
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                    className="
+                    px-6 py-4 text-left
+                    text-[11px] font-semibold
+                    uppercase tracking-[0.08em]
+                    text-muted-foreground
+                  "
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -125,15 +133,15 @@ export default function InactiveTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-16 text-center">
-                  <Loader2 className="mx-auto size-5 animate-spin text-gray-300" />
+                <TableCell colSpan={columns.length} className="py-20 text-center">
+                  <Loader2 className="mx-auto w-5 h-5 animate-spin text-[#3f6f64]" />
                 </TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="py-10 text-center text-sm text-red-500"
+                  className="py-16 text-center text-sm text-red-500"
                 >
                   {error}
                 </TableCell>
@@ -142,7 +150,7 @@ export default function InactiveTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="py-10 text-center text-sm text-gray-400"
+                  className="py-20 text-center text-sm text-muted-foreground"
                 >
                   No inactive customers found.
                 </TableCell>
@@ -151,12 +159,15 @@ export default function InactiveTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={`transition-colors hover:bg-gray-50 ${
-                    actionLoading === row.original.user_id ? 'opacity-50 pointer-events-none' : ''
-                  }`}
+                  className={`
+                  border-b border-[hsl(var(--border))]
+                  hover:bg-[hsl(var(--muted))]/30
+                  transition-colors
+                  ${actionLoading === row.original.user_id ? 'opacity-50 pointer-events-none' : ''}
+                `}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="px-6 py-5 align-middle">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -167,34 +178,41 @@ export default function InactiveTable({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between px-1 text-sm text-gray-500">
-        <span>
-          {total > 0
-            ? `Showing ${(page - 1) * PAGE_LIMIT + 1}–${Math.min(page * PAGE_LIMIT, total)} of ${total}`
-            : 'No results'}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-xs">
-            Page {page} of {totalPages}
+      <div className="px-5 pb-5 pt-4">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {total > 0
+              ? `Showing ${(page - 1) * PAGE_LIMIT + 1}–${Math.min(page * PAGE_LIMIT, total)} of ${total}`
+              : 'No results'}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-[hsl(var(--border))]"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            <span className="text-xs">
+              Page {page} of {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-[hsl(var(--border))]"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

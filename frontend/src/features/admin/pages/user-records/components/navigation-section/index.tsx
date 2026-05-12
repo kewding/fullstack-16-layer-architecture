@@ -20,10 +20,12 @@ export default function NavigationSection({
   onDateRangeChange,
 }: NavigationSectionProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <TabFilter activeTab={tab} onChange={onTabChange} />
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex items-center">
+        <TabFilter activeTab={tab} onChange={onTabChange} />
+      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <SearchFilter value={search} onChange={onSearchChange} />
         <DateRangePicker dateRange={dateRange} setDateRange={onDateRangeChange} />
       </div>

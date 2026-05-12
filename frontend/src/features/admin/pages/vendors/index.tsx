@@ -1,3 +1,4 @@
+// AdminVendorsPage.tsx
 import { Button } from '@/components/ui/button';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FormerVendorsTable } from './components/FormerVendorsTable';
@@ -35,14 +36,17 @@ export const AdminVendorsPage: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+
     try {
       if (activeTab === 'review') {
         const res = await vendorService.listReview(page, search, statusFilter);
+
         setReviewData(res.data);
         setTotalPages(res.total_pages);
         setTotal(res.total);
       } else {
         const res = await vendorService.listBalance(page, search);
+
         setBalanceData(res.data);
         setTotalPages(res.total_pages);
         setTotal(res.total);
@@ -63,64 +67,91 @@ export const AdminVendorsPage: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <div className="px-1 w-full">
-      <main className="flex flex-col w-full h-full gap-4">
-        <h1 className="text-2xl font-semibold">Vendors</h1>
+    <div className="w-full px-6 py-6">
+      <main className="flex flex-col gap-6">
+        {/* Header */}
+        <section className="flex flex-col gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Vendors
+          </h1>
 
-        <NavigationSection
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          search={search}
-          onSearchChange={setSearch}
-          onInvited={fetchData}
-        />
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            Manage onboarding vendors, active business stalls, removals,
+            and operational records.
+          </p>
+        </section>
 
-        {activeTab === 'review' && (
-          <div className="flex gap-2 flex-wrap">
-            {STATUS_FILTERS.map((f) => (
-              <Button
-                key={f.value}
-                variant={statusFilter === f.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(f.value)}
-                className="rounded-full"
-              >
-                {f.label}
-              </Button>
-            ))}
+        {/* Navigation Card */}
+        <section className="rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm">
+          <div className="p-5">
+            <NavigationSection
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              search={search}
+              onSearchChange={setSearch}
+              onInvited={fetchData}
+            />
           </div>
+        </section>
+
+        {/* Filters */}
+        {activeTab === 'review' && (
+          <section className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => {
+              const active = statusFilter === f.value;
+
+              return (
+                <Button
+                  key={f.value}
+                  variant={active ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter(f.value)}
+                  className={`
+                    h-9 rounded-xl px-4 transition-all
+                    ${
+                      active
+                        ? 'bg-[#3F6F64] text-white hover:bg-[#345d54]'
+                        : 'border-border hover:border-[#3F6F64]/40 hover:bg-[#3F6F64]/5'
+                    }
+                  `}
+                >
+                  {f.label}
+                </Button>
+              );
+            })}
+          </section>
         )}
 
-        {activeTab === 'review' ? (
-          <VendorsTable
-            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData)}
-            data={reviewData}
-            isLoading={isLoading}
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            onPageChange={setPage}
-          />
-        ) : (
-          <>
-            {/* Active stalls table */}
+        {/* Content */}
+        <section className="flex flex-col gap-6">
+          {activeTab === 'review' ? (
             <VendorsTable
-              columns={VENDORS_BALANCE_TABLE_COLUMNS(fetchData)}
-              data={balanceData}
+              columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData)}
+              data={reviewData}
               isLoading={isLoading}
               page={page}
               totalPages={totalPages}
               total={total}
               onPageChange={setPage}
             />
+          ) : (
+            <>
+              <VendorsTable
+                columns={VENDORS_BALANCE_TABLE_COLUMNS(fetchData)}
+                data={balanceData}
+                isLoading={isLoading}
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                onPageChange={setPage}
+              />
 
-            {/* Divider */}
-            <div className="border-t border-[hsl(var(--border))] my-2" />
+              <div className="h-px bg-border/70" />
 
-            {/* Former vendors section — self-contained with its own pagination/filters */}
-            <FormerVendorsTable />
-          </>
-        )}
+              <FormerVendorsTable />
+            </>
+          )}
+        </section>
       </main>
     </div>
   );

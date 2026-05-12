@@ -17,7 +17,7 @@ export function SearchFilter({ value, onChange }: SearchFilterProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search by stall name"
-        className="pl-10"
+        className="h-10 pl-10"
       />
     </div>
   );

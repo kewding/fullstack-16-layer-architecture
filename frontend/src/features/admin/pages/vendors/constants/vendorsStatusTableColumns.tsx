@@ -30,16 +30,30 @@ function ActionButtons({
     <>
       <div className="flex items-center gap-2">
         {canView && (
-          <Button variant="outline" size="sm" onClick={() => setShowDetailModal(true)}>
+          <Button variant="outline"
+  size="sm"
+  className="
+    h-9 rounded-lg
+    border-border
+    hover:border-[#3F6F64]/40
+    hover:bg-[#3F6F64]/5
+  " onClick={() => setShowDetailModal(true)}>
             View
           </Button>
         )}
 
         {canRevoke && (
           <Button
-            variant="outline"
-            size="sm"
-            className="border-red-400/50 text-red-400 bg-red-100 hover:bg-red-500/10 hover:text-red-400"
+             variant="outline"
+  size="sm"
+  className="
+    h-9 rounded-lg
+    border-red-500/30
+    bg-red-500/5
+    text-red-500
+    hover:bg-red-500/10
+    hover:text-red-500
+  "
             onClick={() => setShowRevokeModal(true)}
           >
             Remove

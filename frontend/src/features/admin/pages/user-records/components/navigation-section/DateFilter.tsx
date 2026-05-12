@@ -50,7 +50,16 @@ export default function DateRangePicker({ dateRange, setDateRange }: DateRangePi
         <PopoverTrigger
           className={cn(
             buttonVariants({ variant: 'outline' }),
-            !dateRange.start && 'justify-between text-left font-medium p-3 text-black',
+            `
+              h-11 min-w-[240px]
+              justify-between
+              rounded-xl
+              border-[hsl(var(--border))]
+             bg-white
+              px-4
+              text-sm font-medium
+              text-[hsl(var(--foreground))]
+            `,
           )}
         >
           <CalendarIcon className="mr-2 size-4" />
@@ -76,30 +85,40 @@ export default function DateRangePicker({ dateRange, setDateRange }: DateRangePi
           )}
         </PopoverTrigger>
 
-        <PopoverContent className="w-auto p-0 fill-[#243c5a]" align="start">
-          <div className="flex w-full flex-row justify-evenly gap-4 p-4 ">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="startDate" className="text-center text-sm">
-                Start Date
+        <PopoverContent
+          className="
+    w-auto rounded-2xl border
+    border-[hsl(var(--border))]
+    p-0 shadow-xl
+  "
+          align="start"
+        >
+          <div className="flex flex-col gap-4 p-5 sm:flex-row">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="startDate" className="text-xs font-medium text-muted-foreground">
+                From
               </label>
+
               <Input
                 type="date"
                 id="startDate"
                 value={startDateInput}
                 onChange={handleDateChange('start')}
-                className="custom-date-input"
+                className="h-10 bg-white"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="endDate" className="text-center text-sm">
-                End Date
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="endDate" className="text-xs font-medium text-muted-foreground">
+                To
               </label>
+
               <Input
                 type="date"
                 id="endDate"
                 value={endDateInput}
                 onChange={handleDateChange('end')}
-                className="custom-date-input"
+                className="h-10 bg-white"
               />
             </div>
           </div>

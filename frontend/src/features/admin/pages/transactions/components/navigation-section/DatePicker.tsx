@@ -45,8 +45,8 @@ export default function DateRangePicker({ dateRange, setDateRange }: DateRangePi
   };
 
   return (
-    <div className="grid gap-2 text-black">
-      <Popover>
+    <div className="grid gap-2 text-black ">
+      <Popover >
         <PopoverTrigger
           className={cn(
             buttonVariants({ variant: 'outline' }),

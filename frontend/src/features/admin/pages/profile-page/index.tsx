@@ -49,7 +49,7 @@ export const AdminProfilePage: React.FC = () => {
         <h1 className="text-2xl font-semibold">Profile</h1>
 
         {/* Banner card */}
-        <div className="rounded-lg border border-[#3F6F64]/20 bg-[#E9F4F1] p-6">
+        <div className="rounded-lg border border-[#3F6F64]/20 bg-white p-6">
           <ProfileBanner
             firstName={banner.firstName}
             middleName={banner.middleName}
@@ -58,7 +58,7 @@ export const AdminProfilePage: React.FC = () => {
         </div>
 
         {/* Info card */}
-        <div className="rounded-lg border border-[#3F6F64]/20 bg-[#E9F4F1] p-6 flex flex-col gap-8">
+        <div className="rounded-lg border border-[#3F6F64]/20 bg-white p-6 flex flex-col gap-8">
           <AccountInfoSection />
           <div className="border-t border-[#3F6F64]/20" />
           <PersonalInfoForm onSaveSuccess={handleSaveSuccess} />

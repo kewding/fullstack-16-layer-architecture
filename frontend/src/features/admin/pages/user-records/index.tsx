@@ -61,41 +61,48 @@ export default function UserRecordPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">User Records</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Manage customer accounts — view, disable, or reactivate.
-        </p>
-      </div>
+    <div className="px-1 w-full">
+      <main className="flex flex-col w-full gap-6">
+        {/* Header */}
+        <section className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">User Records</h1>
 
-      {/* Navigation: tabs + search + date range */}
-      <NavigationSection
-        tab={tab}
-        onTabChange={handleTabChange}
-        search={searchInput}
-        onSearchChange={handleSearchChange}
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
+          <p className="text-sm text-muted-foreground">
+            Manage customer accounts — view, disable, or reactivate.
+          </p>
+        </section>
 
-      {/* Table */}
-      {tab === 'active' ? (
-        <ActiveTable search={debouncedSearch} dateRange={dateRange} onView={handleView} />
-      ) : (
-        <InactiveTable
-          search={debouncedSearch}
-          dateRange={dateRange}
-          onView={handleView}
-          // When a reactivation succeeds from the inactive table,
-          // we optionally switch the user back to the Active tab.
-          onReactivateSuccess={() => setTab('active')}
-        />
-      )}
+        {/* Navigation */}
+        <section className="rounded-2xl border border-[hsl(var(--border))] bg-white shadow-sm">
+          <div className="px-5 py-4">
+            <NavigationSection
+              tab={tab}
+              onTabChange={handleTabChange}
+              search={searchInput}
+              onSearchChange={handleSearchChange}
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
+          </div>
+        </section>
 
-      {/* Detail modal */}
-      <CustomerDetailModal userID={selectedUserID} open={modalOpen} onClose={handleModalClose} />
+        {/* Table */}
+        <section>
+          {tab === 'active' ? (
+            <ActiveTable search={debouncedSearch} dateRange={dateRange} onView={handleView} />
+          ) : (
+            <InactiveTable
+              search={debouncedSearch}
+              dateRange={dateRange}
+              onView={handleView}
+              onReactivateSuccess={() => setTab('active')}
+            />
+          )}
+        </section>
+
+        {/* Modal */}
+        <CustomerDetailModal userID={selectedUserID} open={modalOpen} onClose={handleModalClose} />
+      </main>
     </div>
   );
 }

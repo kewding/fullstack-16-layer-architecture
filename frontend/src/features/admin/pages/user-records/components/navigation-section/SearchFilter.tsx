@@ -13,13 +13,24 @@ export default function SearchFilter({
   placeholder = 'Search by name…',
 }: SearchFilterProps) {
   return (
-    <div className="relative w-full max-w-sm">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+    <div className="relative w-full sm:w-[280px]">
+      <Search
+        className="
+        absolute left-3 top-1/2
+        size-4 -translate-y-1/2
+        text-muted-foreground
+        pointer-events-none
+      "
+      />
+
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="pl-9 text-sm"
+        className="
+        h-11 pl-9 bg-white
+        border-[hsl(var(--border))]
+      "
       />
     </div>
   );

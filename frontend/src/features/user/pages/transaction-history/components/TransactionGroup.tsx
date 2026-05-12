@@ -1,8 +1,7 @@
-
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { TransactionCard } from './TransactionCard';
-import type { TransactionRow } from '../services/transactionhistory.service';
 import { useState } from 'react';
+import type { TransactionRow } from '../services/transactionhistory.service';
+import { TransactionCard } from './TransactionCard';
 
 interface TransactionGroupProps {
   label: string;
@@ -17,15 +16,15 @@ export function TransactionGroup({ label, transactions }: TransactionGroupProps)
       {/* Section header — matches mockup chevron + label style */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-muted-foreground transition-colors group"
+        className="flex items-center gap-2 text-sm font-semibold text-white hover:text-[#CD9A34] transition-colors group"
       >
         {open ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <ChevronDown className="w-4 h-4 text-white text-muted-foreground group-hover:text-[#CD9A34] transition-colors" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <ChevronUp className="w-4 h-4 text-white text-muted-foreground group-hover:text-[#CD9A34] transition-colors" />
         )}
         {label}
-        <span className="ml-1 text-xs font-normal text-muted-foreground">
+        <span className="ml-1 text-xs font-normal text-white text-muted-foreground">
           ({transactions.length})
         </span>
       </button>

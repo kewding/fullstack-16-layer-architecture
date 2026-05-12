@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Loader2, Wifi, WifiOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { customerService, type CustomerDetailResponse } from '../services/customer.service';
 
@@ -109,7 +109,7 @@ export default function CustomerDetailModal({ userID, open, onClose }: CustomerD
 
             <Separator />
 
-            {/* ── RFID Status ── */}
+            {/* ── RFID Status ──
             <section>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
                 RFID Status
@@ -139,7 +139,7 @@ export default function CustomerDetailModal({ userID, open, onClose }: CustomerD
               </div>
             </section>
 
-            <Separator />
+            <Separator /> */}
 
             {/* ── Medical Information ── */}
             <section>

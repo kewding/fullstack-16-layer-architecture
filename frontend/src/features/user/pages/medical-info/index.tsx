@@ -126,7 +126,7 @@ function CheckboxGroup({
               type="button"
               onClick={() => toggle(option)}
               className={`
-                px-3 py-1.5 rounded-full text-xs font-medium border transition-all
+                px-3 py-1.5 rounded-full text-xs font-medium border transition-all text-white
                 ${
                   active
                     ? 'bg-[#d6ede9] text-[#3f6f64] border-[#d6ede9]'

@@ -1,3 +1,4 @@
+// NavigationSection.tsx
 import { VendorInviteButton } from './InviteButton';
 import { SearchFilter } from './SearchFilter';
 import { AdminActionsTabFilter } from './TabFilter';
@@ -20,10 +21,18 @@ export function NavigationSection({
   onInvited,
 }: NavigationSectionProps) {
   return (
-    <div className="grid w-full gap-4 grid-rows-4 grid-cols-2 lg:grid-rows-1 lg:grid-flow-col justify-between">
-      <AdminActionsTabFilter activeTab={activeTab} onTabChange={onTabChange} />
-      <div className="grid w-full gap-2 grid-rows-4 grid-cols-1 lg:grid-rows-1 lg:grid-flow-col justify-between">
-        <SearchFilter value={search} onChange={onSearchChange} />
+    <div className="flex flex-row justify-between xl:flex-row xl:items-center xl:justify-between">
+      <AdminActionsTabFilter
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+      />
+
+      <div className="flex flex-row gap-3 sm:flex-row sm:items-center">
+        <SearchFilter
+          value={search}
+          onChange={onSearchChange}
+        />
+
         <VendorInviteButton onInvited={onInvited} />
       </div>
     </div>
