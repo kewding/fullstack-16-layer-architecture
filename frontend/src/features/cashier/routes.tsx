@@ -1,6 +1,7 @@
 import { CashierRootPage } from './CashierRoot';
 // import { CashierDashboardPage } from './pages/dashboard';
 import { CashierTopUpPage } from './pages/top-up';
+import { CashierWithdrawPage } from './pages/withdraw';
 
 export const cashierRoutes = [
   {
@@ -10,6 +11,7 @@ export const cashierRoutes = [
       // { path: 'dashboard', element: <CashierDashboardPage /> },
       // { path: 'rfid-tagging', element: <CashierRfidTaggingPage/>},
       { path: 'top-up', element: <CashierTopUpPage /> },
+      { path: 'withdraw', element: <CashierWithdrawPage /> },
     ],
   },
 ];

@@ -31,6 +31,7 @@ import (
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
 	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
+	"github.com/kewding/backend/internal/withdrawal"
 )
 
 func main() {
@@ -186,6 +187,11 @@ func main() {
 	)
 	go feeScheduler.Run(ctx)
 
+	// --- Withdrawal ---
+	withdrawalRepo := withdrawal.NewPostgresRepository(dbNode.Connection)
+	withdrawalUseCase := withdrawal.NewUseCase(withdrawalRepo)
+	withdrawalController := withdrawal.NewController(withdrawalUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:    registerController,
@@ -206,6 +212,7 @@ func main() {
 		ConcessionFeesController:     concessionFeesController,
 		VendorLedgerController:       vendorLedgerController,
 		StudentTransactionController: studentTxController,
+		WithdrawalController:         withdrawalController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

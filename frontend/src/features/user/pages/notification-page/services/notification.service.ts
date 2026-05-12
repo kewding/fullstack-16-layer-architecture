@@ -39,9 +39,16 @@ export interface TopUpHistoryRow {
 
 // ── user notification types ───────────────────────────────────────────────────
 
+export type UserNotificationType =
+  | 'topup_accepted'
+  | 'topup_rejected'
+  | 'purchase'
+  | 'withdrawal_accepted'
+  | 'withdrawal_rejected';
+ 
 export interface UserNotification {
   id: string;
-  type: 'topup_accepted' | 'topup_rejected' | 'purchase';
+  type: UserNotificationType;
   message: string;
   metadata?: Record<string, unknown>;
   is_read: boolean;

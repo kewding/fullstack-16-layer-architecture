@@ -5,6 +5,7 @@ import { UserProfilePage } from './pages/profile-page';
 import { UserTopUpPage } from './pages/top-up';
 import { TransactionHistoryPage } from './pages/transaction-history';
 import { UserSettingPage } from './pages/UserSettingPage';
+import { UserWithdrawPage } from './pages/withdrawal';
 import { UserRootPage } from './UserRoot';
 
 export const userRoutes = [
@@ -14,6 +15,7 @@ export const userRoutes = [
     children: [
       { path: 'medical_information', element: <MedicalInformationPage /> },
       { path: 'top-up', element: <UserTopUpPage /> },
+      { path: 'withdraw', element: <UserWithdrawPage /> },
       { path: 'notifications', element: <UserNotificationsPage /> },
       { path: 'transactions', element: <TransactionHistoryPage /> },
       { path: 'dashboard', element: <UserDashboardPage /> },

@@ -19,6 +19,7 @@ import (
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
 	"github.com/kewding/backend/internal/vendors"
 	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
+	"github.com/kewding/backend/internal/withdrawal"
 )
 
 type Dependencies struct {
@@ -40,6 +41,7 @@ type Dependencies struct {
 	ConcessionFeesController     *concessionfees.Controller
 	VendorLedgerController       *vendorsledger.Controller
 	StudentTransactionController *studenttransactions.Controller
+	WithdrawalController         *withdrawal.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -161,6 +163,18 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 				cashierTopUp.GET("/pending-count", deps.TopUpRequestController.GetPendingCount)
 				cashierTopUp.GET("/ws", deps.TopUpRequestController.CashierPendingWebSocket)
 			}
+
+			// Withdrawal requests
+			cashierWithdraw := cashier.Group("/withdraw")
+			{
+				cashierWithdraw.GET("/requests", deps.WithdrawalController.ListPendingRequests)
+				cashierWithdraw.PATCH("/request/:id/complete", deps.WithdrawalController.CompleteRequest)
+				cashierWithdraw.PATCH("/request/:id/reject", deps.WithdrawalController.RejectRequest)
+				cashierWithdraw.GET("/completed", deps.WithdrawalController.ListCompletedRequests)
+				cashierWithdraw.GET("/rejected", deps.WithdrawalController.ListRejectedRequests)
+				cashierWithdraw.GET("/pending-count", deps.WithdrawalController.GetPendingCount)
+				cashierWithdraw.GET("/ws", deps.WithdrawalController.CashierWithdrawWebSocket)
+			}
 		}
 
 		// Customer only — role_id: 2
@@ -185,6 +199,15 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 				customerTopUp.GET("/pending", deps.TopUpRequestController.GetPendingRequest)
 				customerTopUp.DELETE("/request/:id", deps.TopUpRequestController.CancelRequest)
 				customerTopUp.GET("/history", deps.TopUpRequestController.ListTopUpHistory)
+			}
+
+			// Withdrawal request flow
+			customerWithdraw := customer.Group("/withdraw")
+			{
+				customerWithdraw.POST("/request", deps.WithdrawalController.SubmitRequest)
+				customerWithdraw.GET("/pending", deps.WithdrawalController.GetPendingRequest)
+				customerWithdraw.DELETE("/request/:id", deps.WithdrawalController.CancelRequest)
+				customerWithdraw.GET("/history", deps.WithdrawalController.ListHistory)
 			}
 
 			// User notifications
