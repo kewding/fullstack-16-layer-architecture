@@ -88,9 +88,9 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
   {
     accessorKey: 'email',
     header: 'Email',
-    size: 150,
-    minSize: 130,
-    maxSize: 180,
+    size: 130,
+    minSize: 100,
+    maxSize: 150,
   },
   {
     accessorKey: 'status',

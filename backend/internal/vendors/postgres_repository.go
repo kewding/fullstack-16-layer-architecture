@@ -26,8 +26,10 @@ func NewPostgresRepository(db *sql.DB) Repository {
 func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListVendorsParams) ([]VendorReviewRow, int, error) {
 	offset := (params.Page - 1) * params.Limit
 
-	// Added "u.deleted_at IS NULL" for Solution A consistency
-	conditions := []string{"vi.deleted_at IS NULL", "v.deleted_at IS NULL", "u.deleted_at IS NULL"}
+	// u.deleted_at IS NULL OR u.id IS NULL — the second condition allows invited
+	// vendors through since they have no users row yet (v.user_id IS NULL → LEFT JOIN
+	// produces a null row, and NULL IS NULL evaluates to TRUE).
+	conditions := []string{"vi.deleted_at IS NULL", "v.deleted_at IS NULL", "(u.deleted_at IS NULL OR u.id IS NULL)"}
 	args := []any{}
 	argIdx := 1
 
@@ -55,7 +57,7 @@ func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListV
 		SELECT COUNT(*)
 		FROM vendor_invitations vi
 		LEFT JOIN vendors v ON v.email = vi.email
-		LEFT JOIN users u ON u.id = v.user_id -- Added join for Solution A
+		LEFT JOIN users u ON u.id = v.user_id
 		LEFT JOIN stalls s ON s.user_id = v.user_id
 		%s`, where)
 
@@ -77,7 +79,7 @@ func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListV
 			v.updated_at AS registered_at
 		FROM vendor_invitations vi
 		LEFT JOIN vendors v ON v.email = vi.email
-		LEFT JOIN users u ON u.id = v.user_id -- Added join for Solution A
+		LEFT JOIN users u ON u.id = v.user_id
 		LEFT JOIN stalls s ON s.user_id = v.user_id
 		LEFT JOIN users u_admin ON u_admin.id = vi.invited_by
 		LEFT JOIN users_info ui_admin ON ui_admin.user_id = u_admin.id
@@ -94,16 +96,28 @@ func (r *postgresRepository) ListVendorsReview(ctx context.Context, params ListV
 	var vendors []VendorReviewRow
 	for rows.Next() {
 		var v VendorReviewRow
+		var vendorID sql.NullString
+		var ownerName sql.NullString
+		var status sql.NullString
 		var registeredAt sql.NullString
 		var invitedByName sql.NullString
 
 		if err := rows.Scan(
-			&v.ID, &v.Email, &v.OwnerName, &v.StallName, &v.Status,
+			&vendorID, &v.Email, &ownerName, &v.StallName, &status,
 			&invitedByName, &v.InvitedAt, &registeredAt,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan vendor review row: %w", err)
 		}
 
+		if vendorID.Valid {
+			v.ID = vendorID.String
+		}
+		if ownerName.Valid {
+			v.OwnerName = ownerName.String
+		}
+		if status.Valid {
+			v.Status = status.String
+		}
 		if registeredAt.Valid {
 			v.RegisteredAt = &registeredAt.String
 		}
@@ -186,6 +200,11 @@ func (r *postgresRepository) ListVendorsBalance(ctx context.Context, params List
 		}
 		result = append(result, row)
 	}
+
+	if result == nil {
+		result = []VendorBalanceRow{}
+	}
+	return result, total, nil
 
 	return result, total, nil
 }
@@ -275,8 +294,7 @@ func (r *postgresRepository) RevokeVendorWithReason(ctx context.Context, vendorI
 	defer tx.Rollback()
 
 	// 1. Fetch vendor email and check it exists
-	var email string
-	var status string
+	var email, status string
 	err = tx.QueryRowContext(ctx,
 		`SELECT email, status FROM vendors WHERE id = $1 AND deleted_at IS NULL`,
 		vendorID,
@@ -305,7 +323,7 @@ func (r *postgresRepository) RevokeVendorWithReason(ctx context.Context, vendorI
 
 	_, err = tx.ExecContext(ctx, `
 		UPDATE vendor_invitations
-		SET revoked_reason = $1::TEXT[], revoked_other_reason = $2
+		SET revoked_reason = $1::jsonb, revoked_other_reason = $2
 		WHERE email = $3 AND deleted_at IS NULL`,
 		string(reasonsJSON), otherReason, email,
 	)
@@ -497,33 +515,31 @@ func (r *postgresRepository) GraduateVendor(
 		return nil, fmt.Errorf("GraduateVendor insert former_vendors: %w", err)
 	}
 
-	// 8. Soft-delete the users row (the vendor user account)
+	// 8. Detach user_id from vendors BEFORE hard-deleting the user.
+	//    vendors.user_id has ON DELETE CASCADE from users, so deleting the user
+	//    would cascade-delete the vendors row too — which would then violate the
+	//    former_vendors_vendor_id_fkey FK we're about to insert.
+	//    Nulling it first breaks the cascade while keeping the vendors row intact
+	//    for the former_vendors FK reference.
 	if userID.Valid {
 		_, err = tx.ExecContext(ctx,
-			`UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1`,
-			userID.String,
+			`UPDATE vendors SET user_id = NULL, updated_at = NOW() WHERE id = $1`,
+			vendorID,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("GraduateVendor soft-delete user: %w", err)
+			return nil, fmt.Errorf("GraduateVendor detach user_id: %w", err)
 		}
 
-		// Also soft-delete the stall
 		_, err = tx.ExecContext(ctx,
-			`UPDATE stalls SET deleted_at = NOW(), updated_at = NOW() WHERE user_id = $1`,
+			`DELETE FROM users WHERE id = $1`,
 			userID.String,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("GraduateVendor soft-delete stall: %w", err)
+			return nil, fmt.Errorf("GraduateVendor hard-delete user: %w", err)
 		}
 	}
 
-	// 9. Soft-delete the vendors row
-	//    NOTE: We soft-delete vendors so the former_vendors FK reference remains valid,
-	//    but a future re-invite for the same email will create a NEW vendors row.
-	//    The unique constraint on vendors.email must allow this — if your schema has
-	//    a hard UNIQUE on email (not partial), you will need to change it to a
-	//    partial unique index: CREATE UNIQUE INDEX uq_vendors_email_active
-	//    ON vendors(email) WHERE deleted_at IS NULL;
+	// 9. Soft-delete the vendors row — kept for former_vendors FK integrity.
 	_, err = tx.ExecContext(ctx,
 		`UPDATE vendors SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1`,
 		vendorID,

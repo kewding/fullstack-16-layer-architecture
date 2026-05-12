@@ -158,18 +158,11 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, token string) e
 // created by migration__vendors_email_partial_unique.sql.
 // A hard UNIQUE(email) constraint must have been dropped before this runs.
 func (r *postgresRepository) CreateVendorInvitedRecord(ctx context.Context, email string, ownerName string) error {
-	query := `
+	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO vendors (email, owner_name, status)
-		VALUES ($1, $2, 'invited')
-		ON CONFLICT (email) WHERE deleted_at IS NOT NULL
-		DO UPDATE SET
-			owner_name  = EXCLUDED.owner_name,
-			status      = 'invited',
-			user_id     = NULL,
-			deleted_at  = NULL,
-			updated_at  = NOW()`
-
-	_, err := r.db.ExecContext(ctx, query, email, ownerName)
+		VALUES ($1, $2, 'invited')`,
+		email, ownerName,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create vendor invited record: %w", err)
 	}
@@ -243,17 +236,16 @@ func (r *postgresRepository) RevokeVendor(ctx context.Context, vendorID string) 
 		return fmt.Errorf("failed to soft delete vendor: %w", err)
 	}
 
-	// Soft-delete the user so the email is freed for re-registration.
-	// EmailExists checks deleted_at IS NULL, so a soft-deleted row does not
-	// block re-registration. For 'invited' vendors user_id is NULL (they haven't
-	// registered yet), so we only act when userID is present.
+	// Hard-delete the user — ON DELETE CASCADE cleans up stalls, wallets,
+	// vendor_business_info, users_info, etc. automatically.
+	// For 'invited' vendors user_id is NULL so we only act when present.
 	if userID.Valid {
 		_, err = tx.ExecContext(ctx,
-			`UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+			`DELETE FROM users WHERE id = $1`,
 			userID.String,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to soft-delete user: %w", err)
+			return fmt.Errorf("failed to hard-delete user on revoke: %w", err)
 		}
 	}
 

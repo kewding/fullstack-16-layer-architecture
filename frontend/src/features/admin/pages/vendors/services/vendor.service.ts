@@ -145,7 +145,10 @@ export const vendorService = {
     const res = await fetch(`/api/admin/vendors/review?${params}`);
     const json: APIResponse<PaginatedResponse<VendorReviewRow>> = await res.json();
     if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch vendors');
-    return json.data!;
+    return {
+      ...json.data!,
+      data: json.data?.data ?? [],
+    };
   },
 
   // Balance list
@@ -157,7 +160,10 @@ export const vendorService = {
     const res = await fetch(`/api/admin/vendors/balance?${params}`);
     const json: APIResponse<PaginatedResponse<VendorBalanceRow>> = await res.json();
     if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch vendors');
-    return json.data!;
+    return {
+      ...json.data!,
+      data: json.data?.data ?? [],
+    };
   },
 
   // Vendor detail
@@ -226,14 +232,18 @@ export const vendorService = {
     const res = await fetch(`/api/admin/former-vendors?${params}`);
     const json: APIResponse<PaginatedResponse<FormerVendorRow>> = await res.json();
     if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch former vendors');
-    return json.data!;
+    return {
+      ...json.data!,
+      data: json.data?.data ?? [],
+    };
   },
 
   // Former vendor detail
   async getFormerVendorDetail(formerVendorID: string): Promise<FormerVendorDetail> {
     const res = await fetch(`/api/admin/former-vendor/${formerVendorID}`);
     const json: APIResponse<FormerVendorDetail> = await res.json();
-    if (!json.success) throw new Error(json.error?.message ?? 'Failed to fetch former vendor detail');
+    if (!json.success)
+      throw new Error(json.error?.message ?? 'Failed to fetch former vendor detail');
     return json.data!;
   },
 
