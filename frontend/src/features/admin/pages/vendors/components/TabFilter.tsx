@@ -1,6 +1,6 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type TabType = 'review' | 'balance';
+type TabType = 'review' | 'stalls';
 
 interface AdminActionsTabFilterProps {
   activeTab: TabType;
@@ -8,8 +8,8 @@ interface AdminActionsTabFilterProps {
 }
 
 const TABS: { id: TabType; title: string }[] = [
-  { id: 'review', title: 'Review' },
-  { id: 'balance', title: 'Balance' },
+  { id: 'review', title: 'Onboarding' },
+  { id: 'stalls', title: 'Active Vendors' },
 ];
 
 export function AdminActionsTabFilter({ activeTab, onTabChange }: AdminActionsTabFilterProps) {

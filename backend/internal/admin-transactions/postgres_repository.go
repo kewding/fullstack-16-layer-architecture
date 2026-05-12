@@ -49,7 +49,21 @@ func (r *postgresRepository) ListVendorTransactions(ctx context.Context, params 
 	salesSearchIdx := argIdx
 	args = append(args, search)
 	argIdx++
-	salesBranch := fmt.Sprintf(`
+
+	remittanceDate := buildDate("r.created_at")
+	remittanceSearchIdx := argIdx
+	args = append(args, search)
+	argIdx++
+
+	typeFilter := ""
+	switch params.Type {
+	case VendorTxSale:
+		typeFilter = "WHERE type = 'sale'"
+	case VendorTxRemittance:
+		typeFilter = "WHERE type = 'remittance'"
+	}
+
+	union := fmt.Sprintf(`
 		SELECT sa.id::TEXT, sa.created_at AS date, 'sale' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS owner_name,
 		       st.stall_name, sa.total_amount AS amount
@@ -57,15 +71,8 @@ func (r *postgresRepository) ListVendorTransactions(ctx context.Context, params 
 		JOIN stalls st ON st.id = sa.stall_id
 		JOIN users u ON u.id = sa.user_id
 		JOIN users_info ui ON ui.user_id = u.id
-		WHERE %s AND (st.stall_name ILIKE $%d OR CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d)`,
-		salesDate, salesSearchIdx, salesSearchIdx)
-
-	// Remittance branch
-	remittanceDate := buildDate("r.created_at")
-	remittanceSearchIdx := argIdx
-	args = append(args, search)
-	argIdx++
-	remittanceBranch := fmt.Sprintf(`
+		WHERE %s AND (st.stall_name ILIKE $%d OR CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d)
+		UNION ALL
 		SELECT r.id::TEXT, r.created_at AS date, 'remittance' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS owner_name,
 		       COALESCE(st.stall_name, '') AS stall_name, r.amount
@@ -74,34 +81,22 @@ func (r *postgresRepository) ListVendorTransactions(ctx context.Context, params 
 		JOIN users_info ui ON ui.user_id = u.id
 		LEFT JOIN stalls st ON st.user_id = r.user_id
 		WHERE %s AND (COALESCE(st.stall_name, '') ILIKE $%d OR CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d)`,
-		remittanceDate, remittanceSearchIdx, remittanceSearchIdx)
+		salesDate, salesSearchIdx, salesSearchIdx,
+		remittanceDate, remittanceSearchIdx, remittanceSearchIdx,
+	)
 
-	// Select branches by type
-	var branches []string
-	switch params.Type {
-	case VendorTxSale:
-		branches = []string{salesBranch}
-	case VendorTxRemittance:
-		branches = []string{remittanceBranch}
-	default:
-		branches = []string{salesBranch, remittanceBranch}
-	}
-	union := strings.Join(branches, " UNION ALL ")
-
-	// Count
-	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS combined`, union)
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS combined %s`, union, typeFilter)
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("failed to count vendor transactions: %w", err)
 	}
 
-	// Data
 	args = append(args, params.Limit, offset)
 	dataQuery := fmt.Sprintf(`
 		SELECT id, date, type, owner_name, stall_name, amount
-		FROM (%s) AS combined
+		FROM (%s) AS combined %s
 		ORDER BY date DESC, id DESC
-		LIMIT $%d OFFSET $%d`, union, argIdx, argIdx+1)
+		LIMIT $%d OFFSET $%d`, union, typeFilter, argIdx, argIdx+1)
 
 	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
 	if err != nil {
@@ -127,7 +122,7 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 	offset := (params.Page - 1) * params.Limit
 	search := "%" + params.Search + "%"
 
-	var args []any
+	args := []any{}
 	argIdx := 1
 
 	buildDate := func(col string) string {
@@ -148,27 +143,37 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 		return strings.Join(parts, " AND ")
 	}
 
-	// Top-up branch
+	// Always build all branches — filter by type in the outer WHERE to avoid
+	// parameter index gaps when a branch is dropped from the UNION.
 	topupDate := buildDate("t.created_at")
 	topupSearchIdx := argIdx
 	args = append(args, search)
 	argIdx++
-	topupBranch := fmt.Sprintf(`
+
+	purchaseDate := buildDate("sa.created_at")
+	purchaseSearchIdx := argIdx
+	args = append(args, search)
+	argIdx++
+
+	refundDate := buildDate("cl.created_at")
+	refundSearchIdx := argIdx
+	args = append(args, search)
+	argIdx++
+
+	withdrawDate := buildDate("cl.created_at")
+	withdrawSearchIdx := argIdx
+	args = append(args, search)
+	argIdx++
+
+	union := fmt.Sprintf(`
 		SELECT t.id::TEXT, t.created_at AS date, 'top-up' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
 		       t.amount, 'completed' AS status
 		FROM top_up_transactions t
 		JOIN users u ON u.id = t.user_id
 		JOIN users_info ui ON ui.user_id = u.id
-		WHERE %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
-		topupDate, topupSearchIdx)
-
-	// Purchase branch (from sales — customer's perspective)
-	purchaseDate := buildDate("sa.created_at")
-	purchaseSearchIdx := argIdx
-	args = append(args, search)
-	argIdx++
-	purchaseBranch := fmt.Sprintf(`
+		WHERE %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d
+		UNION ALL
 		SELECT sa.id::TEXT, sa.created_at AS date, 'purchase' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
 		       sa.total_amount AS amount,
@@ -177,30 +182,16 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 		JOIN users u ON u.id = sa.user_id
 		JOIN users_info ui ON ui.user_id = u.id
 		LEFT JOIN customers_ledger cl ON cl.reference_id = sa.id AND cl.reference_type = 'purchase'
-		WHERE %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
-		purchaseDate, purchaseSearchIdx)
-
-	// Refund branch
-	refundDate := buildDate("cl.created_at")
-	refundSearchIdx := argIdx
-	args = append(args, search)
-	argIdx++
-	refundBranch := fmt.Sprintf(`
+		WHERE %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d
+		UNION ALL
 		SELECT cl.id::TEXT, cl.created_at AS date, 'refund' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
 		       cl.credit AS amount, 'refunded' AS status
 		FROM customers_ledger cl
 		JOIN users u ON u.id = cl.user_id
 		JOIN users_info ui ON ui.user_id = u.id
-		WHERE cl.reference_type = 'refund' AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
-		refundDate, refundSearchIdx)
-
-	// Withdraw branch
-	withdrawDate := buildDate("cl.created_at")
-	withdrawSearchIdx := argIdx
-	args = append(args, search)
-	argIdx++
-	withdrawBranch := fmt.Sprintf(`
+		WHERE cl.reference_type = 'refund' AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d
+		UNION ALL
 		SELECT cl.id::TEXT, cl.created_at AS date, 'withdraw' AS type,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
 		       cl.debit AS amount, 'completed' AS status
@@ -208,38 +199,36 @@ func (r *postgresRepository) ListCustomerTransactions(ctx context.Context, param
 		JOIN users u ON u.id = cl.user_id
 		JOIN users_info ui ON ui.user_id = u.id
 		WHERE cl.reference_type = 'top-up' AND cl.debit > 0 AND %s AND CONCAT(ui.first_name, ' ', ui.last_name) ILIKE $%d`,
-		withdrawDate, withdrawSearchIdx)
+		topupDate, topupSearchIdx,
+		purchaseDate, purchaseSearchIdx,
+		refundDate, refundSearchIdx,
+		withdrawDate, withdrawSearchIdx,
+	)
 
-	// Select branches by type
-	var branches []string
+	typeFilter := ""
 	switch params.Type {
 	case CustomerTxTopUp:
-		branches = []string{topupBranch}
+		typeFilter = "WHERE type = 'top-up'"
 	case CustomerTxPurchase:
-		branches = []string{purchaseBranch}
+		typeFilter = "WHERE type = 'purchase'"
 	case CustomerTxRefund:
-		branches = []string{refundBranch}
+		typeFilter = "WHERE type = 'refund'"
 	case CustomerTxWithdraw:
-		branches = []string{withdrawBranch}
-	default:
-		branches = []string{topupBranch, purchaseBranch, refundBranch, withdrawBranch}
+		typeFilter = "WHERE type = 'withdraw'"
 	}
-	union := strings.Join(branches, " UNION ALL ")
 
-	// Count
-	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS combined`, union)
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS combined %s`, union, typeFilter)
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("failed to count customer transactions: %w", err)
 	}
 
-	// Data
 	args = append(args, params.Limit, offset)
 	dataQuery := fmt.Sprintf(`
 		SELECT id, date, type, full_name, amount, status
-		FROM (%s) AS combined
+		FROM (%s) AS combined %s
 		ORDER BY date DESC, id DESC
-		LIMIT $%d OFFSET $%d`, union, argIdx, argIdx+1)
+		LIMIT $%d OFFSET $%d`, union, typeFilter, argIdx, argIdx+1)
 
 	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
 	if err != nil {

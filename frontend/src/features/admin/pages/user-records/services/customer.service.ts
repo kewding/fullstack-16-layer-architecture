@@ -1,4 +1,4 @@
-export type CustomerRole = 'student' | 'teacher' | 'faculty';
+export type CustomerRole = 'student' | 'teacher' | 'staff';
 
 export interface CustomerRow {
   user_id: string;

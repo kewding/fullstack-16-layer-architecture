@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import React, { useCallback, useEffect, useState } from 'react';
+import { FormerVendorsTable } from './components/FormerVendorsTable';
 import { NavigationSection } from './components/NavigationSection';
 import { VendorsTable } from './components/VendorsTable';
 import { VENDORS_BALANCE_TABLE_COLUMNS } from './constants/vendorsBalanceTableColumns';
@@ -11,7 +12,7 @@ import {
   type VendorStatusFilter,
 } from './services/vendor.service';
 
-type TabType = 'review' | 'balance';
+type TabType = 'review' | 'stalls';
 
 const STATUS_FILTERS: { label: string; value: VendorStatusFilter }[] = [
   { label: 'All', value: '' },
@@ -92,7 +93,7 @@ export const AdminVendorsPage: React.FC = () => {
 
         {activeTab === 'review' ? (
           <VendorsTable
-            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData, fetchData)}
+            columns={VENDORS_STATUS_TABLE_COLUMNS(fetchData, fetchData)}
             data={reviewData}
             isLoading={isLoading}
             page={page}
@@ -101,15 +102,24 @@ export const AdminVendorsPage: React.FC = () => {
             onPageChange={setPage}
           />
         ) : (
-          <VendorsTable
-            columns={VENDORS_BALANCE_TABLE_COLUMNS}
-            data={balanceData}
-            isLoading={isLoading}
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            onPageChange={setPage}
-          />
+          <>
+            {/* Active stalls table */}
+            <VendorsTable
+              columns={VENDORS_BALANCE_TABLE_COLUMNS(fetchData)}
+              data={balanceData}
+              isLoading={isLoading}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              onPageChange={setPage}
+            />
+
+            {/* Divider */}
+            <div className="border-t border-[hsl(var(--border))] my-2" />
+
+            {/* Former vendors section — self-contained with its own pagination/filters */}
+            <FormerVendorsTable />
+          </>
         )}
       </main>
     </div>

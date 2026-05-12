@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { notificationBus } from '@/lib/notificationBus';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -80,7 +81,9 @@ export default function InactiveTable({
       const res = await customerService.reactivateCustomer(user.user_id);
       if (res.success) {
         fetchData(page);
+
         onReactivateSuccess();
+        notificationBus.emit();
       }
     } finally {
       setActionLoading(null);

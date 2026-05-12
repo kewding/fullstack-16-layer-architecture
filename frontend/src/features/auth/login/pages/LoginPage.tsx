@@ -50,7 +50,7 @@ export const LoginPage: React.FC = () => {
       1: '/admin/dashboard',
       2: '/user/dashboard',
       3: '/vendor/dashboard',
-      4: '/cashier/rfid-tagging',
+      4: '/cashier/top-up',
     };
     return <Navigate to={rolePaths[user?.roleId ?? 0] || '/'} replace />;
   }

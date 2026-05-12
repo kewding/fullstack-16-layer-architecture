@@ -2,7 +2,7 @@ import { VendorInviteButton } from './InviteButton';
 import { SearchFilter } from './SearchFilter';
 import { AdminActionsTabFilter } from './TabFilter';
 
-type TabType = 'review' | 'balance';
+type TabType = 'review' | 'stalls';
 
 interface NavigationSectionProps {
   activeTab: TabType;
@@ -24,7 +24,7 @@ export function NavigationSection({
       <AdminActionsTabFilter activeTab={activeTab} onTabChange={onTabChange} />
       <div className="grid w-full gap-2 grid-rows-4 grid-cols-1 lg:grid-rows-1 lg:grid-flow-col justify-between">
         <SearchFilter value={search} onChange={onSearchChange} />
-         <VendorInviteButton onInvited={onInvited} />
+        <VendorInviteButton onInvited={onInvited} />
       </div>
     </div>
   );

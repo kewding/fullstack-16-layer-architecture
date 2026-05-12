@@ -13,6 +13,9 @@ type UseCase interface {
 	GetCustomerDetail(ctx context.Context, userID string) (*CustomerDetailResponse, error)
 	DisableCustomer(ctx context.Context, userID string) error
 	ReactivateCustomer(ctx context.Context, userID string) error
+
+	GetUserProfile(ctx context.Context, userID string) (*UserProfileResponse, error)
+	UpdateUserProfile(ctx context.Context, userID string, req UpdateUserProfileRequest) error
 }
 
 type userUseCase struct {
@@ -53,4 +56,12 @@ func (uc *userUseCase) DisableCustomer(ctx context.Context, userID string) error
 
 func (uc *userUseCase) ReactivateCustomer(ctx context.Context, userID string) error {
 	return uc.repo.ReactivateCustomer(ctx, userID)
+}
+
+func (uc *userUseCase) GetUserProfile(ctx context.Context, userID string) (*UserProfileResponse, error) {
+	return uc.repo.GetUserProfile(ctx, userID)
+}
+
+func (uc *userUseCase) UpdateUserProfile(ctx context.Context, userID string, req UpdateUserProfileRequest) error {
+	return uc.repo.UpdateUserProfile(ctx, userID, req)
 }

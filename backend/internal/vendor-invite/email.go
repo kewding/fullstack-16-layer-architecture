@@ -20,6 +20,7 @@ type EmailSender interface {
 	SendRevocationEmail(toEmail string, ownerName string) error
 	SendApprovalEmail(toEmail string, ownerName string, stallName string) error
 	SendRemovalEmail(toEmail string, ownerName string, stallName string, balance float64, totalSales float64) error
+	SendFeeReminderEmail(toEmail, adminName, nextMonth string, daysLeft int) error
 }
 
 func NewGmailEmailSender(host string, port int, username, password, fromEmail string, appURL string) EmailSender {
@@ -229,4 +230,120 @@ func (s *gmailEmailSender) SendRemovalEmail(toEmail string, ownerName string, st
 	}
 
 	return nil
+}
+
+func (s *gmailEmailSender) SendFeeReminderEmail(toEmail, adminName, nextMonth string, daysLeft int) error {
+	subject, headerText, bodyText, accentColor := feeReminderContent(nextMonth, daysLeft)
+
+	htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px;">
+  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px;">
+ 
+    <!-- Urgency bar -->
+    <div style="
+      background-color: %s;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 24px;
+      display: inline-block;
+    ">
+      <span style="color: white; font-weight: bold; font-size: 13px;">%s</span>
+    </div>
+ 
+    <h2 style="color: #111; margin-top: 0;">Hello, %s!</h2>
+ 
+    <p style="color: #555; line-height: 1.6;">%s</p>
+ 
+    <ul style="color: #555; line-height: 1.8; padding-left: 20px;">
+      <li>Utility Charges</li>
+      <li>Maintenance &amp; Rent</li>
+      <li>Insurance &amp; Administrative</li>
+      <li>Performance &amp; Security</li>
+    </ul>
+ 
+    <p style="color: #555; line-height: 1.6;">
+      If no changes are made before the end of this month, the current fees will
+      <strong>carry forward automatically</strong> to %s.
+    </p>
+ 
+    <a href="%s/admin/fees" style="
+      display: inline-block;
+      margin-top: 24px;
+      padding: 14px 28px;
+      background-color: %s;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 999px;
+    ">Review Concession Fees →</a>
+ 
+    <p style="margin-top: 32px; color: #999; font-size: 12px;">
+      You are receiving this because you are an administrator on the platform.
+    </p>
+  </div>
+</body>
+</html>`, accentColor, headerText, adminName, bodyText, nextMonth, s.appURL, accentColor)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", htmlBody)
+
+	d := gomail.NewDialer(s.host, s.port, s.username, s.password)
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send fee reminder email: %w", err)
+	}
+	return nil
+}
+
+// feeReminderContent returns subject, urgency header, body text, and accent color
+// based on how many days are left before the edit window closes.
+func feeReminderContent(nextMonth string, daysLeft int) (subject, headerText, bodyText, accentColor string) {
+	switch {
+	case daysLeft == 0:
+		// Day 1 — edit window just opened
+		subject = fmt.Sprintf("Concession Fees for %s are now open for editing", nextMonth)
+		headerText = "✅ Fee Edit Window Open"
+		bodyText = fmt.Sprintf(
+			"The concession fee edit window for <strong>%s</strong> is now open. "+
+				"You can update the following fee components until the end of this month:",
+			nextMonth,
+		)
+		accentColor = "#3F6F64"
+
+	case daysLeft <= 3:
+		subject = fmt.Sprintf("Urgent: Only %d day(s) left to update concession fees for %s", daysLeft, nextMonth)
+		headerText = fmt.Sprintf("🚨 %d Day(s) Remaining", daysLeft)
+		bodyText = fmt.Sprintf(
+			"<strong>Only %d day(s) left</strong> to update the concession fees for <strong>%s</strong>. "+
+				"Please review and set the following fee components as soon as possible:",
+			daysLeft, nextMonth,
+		)
+		accentColor = "#dc2626" // red
+
+	case daysLeft <= 7:
+		subject = fmt.Sprintf("Reminder: %d days left to update concession fees for %s", daysLeft, nextMonth)
+		headerText = fmt.Sprintf("⚠️ %d Days Remaining", daysLeft)
+		bodyText = fmt.Sprintf(
+			"You have <strong>%d days remaining</strong> to update the concession fees for <strong>%s</strong>. "+
+				"Please review the following fee components:",
+			daysLeft, nextMonth,
+		)
+		accentColor = "#d97706" // amber
+
+	default:
+		// 15-day reminder
+		subject = fmt.Sprintf("Reminder: Review concession fees for %s (%d days left)", nextMonth, daysLeft)
+		headerText = fmt.Sprintf("📋 %d Days Remaining", daysLeft)
+		bodyText = fmt.Sprintf(
+			"This is a reminder to review and update the concession fees for <strong>%s</strong>. "+
+				"You have %d days to update the following fee components:",
+			nextMonth, daysLeft,
+		)
+		accentColor = "#3F6F64"
+	}
+	return
 }

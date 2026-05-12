@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MOCK_PURCHASE_HISTORY } from '../../user-constants/mockPurchases';
+import { MOCK_PURCHASE_HISTORY } from '../../../user-constants/mockPurchases';
 
 const userID: string = '6f92021a-1015-4999-b14a-d68377778b4d';
 
@@ -37,9 +37,9 @@ export function UserPurchasesSection() {
   };
 
   return (
-    <div className='flex flex-col h-full'>
+    <div className="flex flex-col h-full">
       <Card className="@container/card">
-        <CardHeader className='pb-2'>
+        <CardHeader className="pb-2">
           <CardTitle className="flex flex-row justify-between text-2xl font-semibold">
             Purchases
             <Button variant="ghost" className="bg-transparent text-muted-foreground">
@@ -72,9 +72,7 @@ export function UserPurchasesSection() {
 
               <div className="flex flex-col items-end gap-1">
                 {/* Using your formatAmount logic */}
-                <span className="text-lg font-semibold tabular-nums">
-                  - {purchase.amountspent}
-                </span>
+                <span className="text-lg font-semibold tabular-nums">- {purchase.amountspent}</span>
                 <span className="text-[10px] text-muted-foreground uppercase tracking-tight">
                   {formatDate(purchase.date)}
                 </span>

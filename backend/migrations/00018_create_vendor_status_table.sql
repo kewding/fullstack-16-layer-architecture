@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TYPE vendor_status AS ENUM ('invited', 'for_review', 'in_business');
-CREATE TYPE concession_fee_type AS ENUM ('percentage', 'fixed');
+-- CREATE TYPE concession_fee_type AS ENUM ('percentage', 'fixed');
 
 CREATE TABLE vendors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,7 +14,7 @@ CREATE TABLE vendors (
 
     status vendor_status NOT NULL DEFAULT 'invited',
 
-    concession_fee_type concession_fee_type,
+    -- concession_fee_type concession_fee_type,
     concession_fee_value DECIMAL(12, 2),
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

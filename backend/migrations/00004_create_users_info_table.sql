@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 
-CREATE TYPE customer_role AS ENUM ('student', 'teacher', 'faculty');
+CREATE TYPE customer_role AS ENUM ('student', 'teacher', 'staff');
 
 CREATE TABLE users_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

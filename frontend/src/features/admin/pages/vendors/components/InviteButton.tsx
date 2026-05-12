@@ -12,7 +12,11 @@ export function VendorInviteButton({ onInvited }: VendorInviteButtonProps) {
 
   return (
     <>
-      <Button variant="outline" className="text-black gap-2 p-3" onClick={() => setShowModal(true)}>
+      <Button
+        variant="default"
+        className="gap-2 p-3 bg-[#3F6F64] text-white hover:bg-white hover:text-[#3F6F64] border border-[#3F6F64] transition-colors"
+        onClick={() => setShowModal(true)}
+      >
         <Upload />
         <span>Invite Vendor</span>
       </Button>

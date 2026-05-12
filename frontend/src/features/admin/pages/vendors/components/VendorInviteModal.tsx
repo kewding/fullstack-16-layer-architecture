@@ -37,19 +37,23 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
+    <div className="modal-overlay">
+      <div className="modal-container max-w-sm flex flex-col gap-5 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Invite Vendor</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors">
+          <h2 className="modal-title">Invite Vendor</h2>
+          <button
+            onClick={onClose}
+            className="text-white
+           hover:bg-white hover:text-[#415B5A] transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {!success ? (
           <>
-            <p className="text-sm text-neutral-400">
+            <p className="modal-description">
               Enter the vendor's email address. They will receive a formal invitation with a
               registration link valid for 72 hours.
             </p>
@@ -65,7 +69,7 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 placeholder="Juan dela Cruz"
-                className="h-12 bg-neutral-800 border border-neutral-600 rounded p-3 text-white focus:outline-none focus:border-white transition-colors"
+                className="text-sm text-neutral-400"
               />
             </div>
 
@@ -80,8 +84,8 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vendor@company.com"
-                className={`h-12 bg-neutral-800 border rounded p-3 text-white focus:outline-none transition-colors ${
-                  error ? 'border-red-500' : 'border-neutral-600 focus:border-white'
+                className={`text-sm text-neutral-400 ${
+                  error ? 'border-red-500' : 'text-sm text-neutral-400'
                 }`}
               />
               {error && <p className="text-red-500 text-xs">{error}</p>}
@@ -110,8 +114,9 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
             </div>
             <p className="text-white font-medium">Invitation Sent</p>
             <p className="text-neutral-400 text-sm">
-              An invitation email has been sent to <strong className="text-white">{email}</strong>.
-              The link will expire in 72 hours.
+              An invitation email has been sent to{' '}
+              <strong className="modal-description">{email}</strong>. The link will expire in 72
+              hours.
             </p>
             <Button
               onClick={() => {

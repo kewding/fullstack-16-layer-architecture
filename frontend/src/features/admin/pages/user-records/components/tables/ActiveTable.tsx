@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { buildActiveColumns } from '../../constants/userActiveTableColumns';
 import { customerService, type CustomerRow } from '../../services/customer.service';
 import type { FlexibleDateRange } from '../navigation-section/DateFilter';
+import { notificationBus } from '@/lib/notificationBus';
 
 const PAGE_LIMIT = 20;
 const POLL_INTERVAL_MS = 30_000;
@@ -89,6 +90,7 @@ export default function ActiveTable({ search, dateRange, onView }: ActiveTablePr
       const res = await customerService.disableCustomer(user.user_id);
       if (res.success) {
         fetchData(page, true);
+        notificationBus.emit();
       }
     } finally {
       setActionLoading(null);

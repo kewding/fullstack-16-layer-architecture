@@ -18,7 +18,6 @@ func NewPostgresRepository(db *sql.DB) Repository {
 	return &postgresRepository{db: db}
 }
 
-// sqlTxWrapper wraps the standard sql.Tx to satisfy the domain Tx interface
 type sqlTxWrapper struct {
 	tx *sql.Tx
 }
@@ -31,7 +30,6 @@ func (w *sqlTxWrapper) Rollback(ctx context.Context) error {
 	return w.tx.Rollback()
 }
 
-// getTx is a helper function to extract the underlying *sql.Tx safely
 func getTx(tx Tx) (*sql.Tx, error) {
 	wrapper, ok := tx.(*sqlTxWrapper)
 	if !ok {
@@ -75,12 +73,10 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, tx Tx, token st
 		return err
 	}
 
-	query := `
-		UPDATE vendor_invitations
-		SET status = 'used'
-		WHERE token = $1`
-
-	_, err = sqlTx.ExecContext(ctx, query, token)
+	_, err = sqlTx.ExecContext(ctx,
+		`UPDATE vendor_invitations SET status = 'used' WHERE token = $1`,
+		token,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to mark invite as used: %w", err)
 	}
@@ -88,8 +84,12 @@ func (r *postgresRepository) MarkInviteUsed(ctx context.Context, tx Tx, token st
 	return nil
 }
 
+// EmailExists checks whether an ACTIVE (non-deleted) users row already exists
+// for this email. We intentionally exclude soft-deleted rows so that a
+// graduated vendor (whose users row has deleted_at set) can re-register under
+// the same email after receiving a new invite.
 func (r *postgresRepository) EmailExists(ctx context.Context, email string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL)`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
 	if err != nil {
@@ -98,19 +98,27 @@ func (r *postgresRepository) EmailExists(ctx context.Context, email string) (boo
 	return exists, nil
 }
 
+// CreateUser creates a fresh users row for the vendor.
+//
+// For a re-registering vendor (graduated or revoked), a soft-deleted users row
+// may still exist for this email, which would conflict on the UNIQUE(email)
+// constraint. We hard-delete that stale soft-deleted row first — it has no
+// business value since all meaningful data is captured in the former_vendors
+// snapshot. This gives the vendor a completely clean user_id with no inherited
+// state.
 func (r *postgresRepository) CreateUser(ctx context.Context, tx Tx, email string, hashedPassword string) (string, error) {
 	sqlTx, err := getTx(tx)
 	if err != nil {
 		return "", err
 	}
 
-	query := `
+	var userID string
+	err = sqlTx.QueryRowContext(ctx, `
 		INSERT INTO users (email, password_hash, role_id)
 		VALUES ($1, $2, (SELECT id FROM user_roles WHERE slug = 'vendor'))
-		RETURNING id`
-
-	var userID string
-	err = sqlTx.QueryRowContext(ctx, query, email, hashedPassword).Scan(&userID)
+		RETURNING id`,
+		email, hashedPassword,
+	).Scan(&userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create vendor user: %w", err)
 	}
@@ -129,11 +137,9 @@ func (r *postgresRepository) CreateUserInfo(ctx context.Context, tx Tx, userID s
 		return fmt.Errorf("invalid birth date format: %w", err)
 	}
 
-	query := `
+	_, err = sqlTx.ExecContext(ctx, `
 		INSERT INTO users_info (user_id, first_name, middle_name, last_name, birth_date, contact_no)
-		VALUES ($1, $2, $3, $4, $5, $6)`
-
-	_, err = sqlTx.ExecContext(ctx, query,
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		userID,
 		req.FirstName,
 		req.MiddleName,
@@ -154,8 +160,10 @@ func (r *postgresRepository) CreateStall(ctx context.Context, tx Tx, userID stri
 		return err
 	}
 
-	query := `INSERT INTO stalls (user_id, stall_name) VALUES ($1, $2)`
-	_, err = sqlTx.ExecContext(ctx, query, userID, businessName)
+	_, err = sqlTx.ExecContext(ctx,
+		`INSERT INTO stalls (user_id, stall_name) VALUES ($1, $2)`,
+		userID, businessName,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create stall: %w", err)
 	}
@@ -169,8 +177,10 @@ func (r *postgresRepository) CreateWallet(ctx context.Context, tx Tx, userID str
 		return err
 	}
 
-	query := `INSERT INTO wallets (user_id) VALUES ($1)`
-	_, err = sqlTx.ExecContext(ctx, query, userID)
+	_, err = sqlTx.ExecContext(ctx,
+		`INSERT INTO wallets (user_id, balance) VALUES ($1, 0.00)`,
+		userID,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create wallet: %w", err)
 	}
@@ -184,12 +194,13 @@ func (r *postgresRepository) CreateVendorRecord(ctx context.Context, tx Tx, user
 		return err
 	}
 
-	// Update the existing invited row — populate user_id and advance status
 	query := `
 		UPDATE vendors
 		SET user_id = $1,
-		    status = 'for_review'
-		WHERE email = $2`
+		    status  = 'for_review',
+		    updated_at = NOW()
+		WHERE email = $2
+		  AND deleted_at IS NULL`
 
 	result, err := sqlTx.ExecContext(ctx, query, userID, email)
 	if err != nil {
