@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+
 import { GraduateVendorModal } from '../components/GraduateVendorModal';
 import { VendorDetailModal } from '../components/VendorDetailModal';
 import { capitalizeWords } from '../helper/capitalize';
@@ -25,17 +26,17 @@ function BalanceActionButtons({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showGraduateModal, setShowGraduateModal] = useState(false);
 
-  // Refresh wallet balance when graduate modal opens to ensure freshness
   const [liveBalance, setLiveBalance] = useState<number>(walletBalance);
   const [loadingBalance, setLoadingBalance] = useState(false);
 
   const handleOpenGraduate = async () => {
     setLoadingBalance(true);
+
     try {
       const fresh = await vendorService.getWalletBalance(id);
       setLiveBalance(fresh);
     } catch {
-      // fall back to prop value
+      // fallback to prop value
     } finally {
       setLoadingBalance(false);
       setShowGraduateModal(true);
@@ -49,11 +50,12 @@ function BalanceActionButtons({
           variant="outline"
           size="sm"
           className="
-    h-9 rounded-lg
-    border-border
-    hover:border-[#3F6F64]/40
-    hover:bg-[#3F6F64]/5
-  "
+            h-9 rounded-lg
+            border-border
+            text-foreground
+            hover:border-[#CD9A34]/40
+            hover:bg-[#CD9A34]/5
+          "
           onClick={() => setShowDetailModal(true)}
         >
           View
@@ -63,13 +65,13 @@ function BalanceActionButtons({
           variant="outline"
           size="sm"
           className="
-    h-9 rounded-lg
-    border-red-500/30
-    bg-red-500/5
-    text-red-500
-    hover:bg-red-500/10
-    hover:text-red-500
-  "
+            h-9 rounded-lg
+            border-red-500/30
+            bg-red-500/5
+            text-red-500
+            hover:bg-red-500/10
+            hover:text-red-500
+          "
           onClick={handleOpenGraduate}
           disabled={loadingBalance}
         >
@@ -78,8 +80,6 @@ function BalanceActionButtons({
       </div>
 
       {showDetailModal && (
-        // VendorDetailModal in read-only mode for in_business vendors
-        // (no approve/remove buttons shown — handled in VendorDetailModal itself)
         <VendorDetailModal
           vendorID={id}
           onClose={() => setShowDetailModal(false)}
@@ -113,7 +113,7 @@ export const VENDORS_BALANCE_TABLE_COLUMNS = (
     header: 'Stall Name',
     cell: ({ row }) =>
       capitalizeWords(row.original.stall_name ?? '') || (
-        <span className="text-muted-foreground italic text-xs">—</span>
+        <span className="text-xs italic text-muted-foreground">—</span>
       ),
   },
   {
@@ -126,9 +126,11 @@ export const VENDORS_BALANCE_TABLE_COLUMNS = (
     header: 'Fee',
     cell: ({ row }) => {
       const { concession_fee_value, concession_fee } = row.original;
+
       if (!concession_fee_value) {
-        return <span className="text-muted-foreground text-xs">Not set</span>;
+        return <span className="text-xs text-muted-foreground">Not set</span>;
       }
+
       return (
         <span className="flex flex-col">
           <span>{formatPHP(concession_fee)}</span>
@@ -144,7 +146,9 @@ export const VENDORS_BALANCE_TABLE_COLUMNS = (
     header: 'Balance',
     cell: ({ row }) => (
       <span
-        className={`font-semibold ${row.original.wallet_balance > 0 ? 'text-green-400' : 'text-muted-foreground'}`}
+        className={`font-semibold ${
+          row.original.wallet_balance > 0 ? 'text-green-400' : 'text-muted-foreground'
+        }`}
       >
         {formatPHP(row.original.wallet_balance)}
       </span>
@@ -154,7 +158,7 @@ export const VENDORS_BALANCE_TABLE_COLUMNS = (
     id: 'actions',
     header: () => <div className="text-center">Actions</div>,
     cell: ({ row }) => (
-      <div className="flex justify-center">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <BalanceActionButtons
           id={row.original.id}
           stallName={row.original.stall_name ?? ''}

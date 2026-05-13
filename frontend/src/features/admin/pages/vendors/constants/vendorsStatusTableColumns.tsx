@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
+
 import { RevokeVendorModal } from '../components/RevokeVendorModal';
 import { VendorDetailModal } from '../components/VendorDetailModal';
 import { capitalizeWords } from '../helper/capitalize';
@@ -30,30 +31,34 @@ function ActionButtons({
     <>
       <div className="flex items-center gap-2">
         {canView && (
-          <Button variant="outline"
-  size="sm"
-  className="
-    h-9 rounded-lg
-    border-border
-    hover:border-[#3F6F64]/40
-    hover:bg-[#3F6F64]/5
-  " onClick={() => setShowDetailModal(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="
+              h-9 rounded-lg
+              border-border
+              text-foreground
+              hover:border-[#CD9A34]/40
+              hover:bg-[#CD9A34]/5
+            "
+            onClick={() => setShowDetailModal(true)}
+          >
             View
           </Button>
         )}
 
         {canRevoke && (
           <Button
-             variant="outline"
-  size="sm"
-  className="
-    h-9 rounded-lg
-    border-red-500/30
-    bg-red-500/5
-    text-red-500
-    hover:bg-red-500/10
-    hover:text-red-500
-  "
+            variant="outline"
+            size="sm"
+            className="
+              h-9 rounded-lg
+              border-red-500/30
+              bg-red-500/5
+              text-red-500
+              hover:bg-red-500/10
+              hover:text-red-500
+            "
             onClick={() => setShowRevokeModal(true)}
           >
             Remove
@@ -96,7 +101,7 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     header: 'Owner Name',
     cell: ({ row }) =>
       capitalizeWords(row.original.owner_name) ?? (
-        <span className="text-muted-foreground italic text-xs">Pending</span>
+        <span className="text-xs italic text-muted-foreground">Pending</span>
       ),
   },
   {
@@ -111,19 +116,27 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     header: () => <div className="text-center">Status</div>,
     cell: ({ row }) => {
       const status = row.original.status;
-      const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+
+      const variantMap: Record<
+        string,
+        'default' | 'secondary' | 'destructive' | 'outline'
+      > = {
         invited: 'outline',
         for_review: 'secondary',
         in_business: 'default',
       };
+
       const labelMap: Record<string, string> = {
         invited: 'Invited',
         for_review: 'For Review',
         in_business: 'In Business',
       };
+
       return (
         <div className="flex justify-center">
-          <Badge variant={variantMap[status]}>{labelMap[status]}</Badge>
+          <Badge variant={variantMap[status] ?? 'outline'}>
+            {labelMap[status] ?? status}
+          </Badge>
         </div>
       );
     },
@@ -137,7 +150,7 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     accessorKey: 'invited_at',
     header: () => <div className="text-center">Invite Date</div>,
     cell: ({ row }) => (
-      <div className="text-center">
+      <div className="text-center text-sm text-muted-foreground">
         {new Date(row.original.invited_at).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -150,7 +163,7 @@ export const VENDORS_STATUS_TABLE_COLUMNS = (
     id: 'actions',
     header: () => <div className="text-center">Actions</div>,
     cell: ({ row }) => (
-      <div className="flex justify-center">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <ActionButtons
           id={row.original.id}
           email={row.original.email}

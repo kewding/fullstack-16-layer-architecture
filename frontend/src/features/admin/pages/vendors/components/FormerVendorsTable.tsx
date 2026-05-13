@@ -1,9 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { FormerVendorDetailModal } from './FormerVendorDetailModal';
-import { vendorService, type FormerVendorRow } from '../services/vendor.service';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -12,6 +8,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  type ColumnDef,
+} from '@tanstack/react-table';
+
+import { ChevronLeft, ChevronRight, Inbox, Search } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { vendorService, type FormerVendorRow } from '../services/vendor.service';
+import { FormerVendorDetailModal } from './FormerVendorDetailModal';
 
 const COLUMNS: ColumnDef<FormerVendorRow>[] = [
   {
@@ -37,7 +47,7 @@ const COLUMNS: ColumnDef<FormerVendorRow>[] = [
     accessorKey: 'removed_at',
     header: () => <div className="text-center">Date Removed</div>,
     cell: ({ row }) => (
-      <div className="text-center">
+      <div className="text-center text-sm text-muted-foreground">
         {new Date(row.original.removed_at).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -55,13 +65,26 @@ const COLUMNS: ColumnDef<FormerVendorRow>[] = [
 
 function ViewButton({ formerVendorID }: { formerVendorID: string }) {
   const [showModal, setShowModal] = useState(false);
+
   return (
     <>
       <div className="flex justify-center">
-        <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="
+            h-9 rounded-lg
+            border-border
+            text-foreground
+            hover:border-[#CD9A34]/40
+            hover:bg-[#CD9A34]/5
+          "
+          onClick={() => setShowModal(true)}
+        >
           View
         </Button>
       </div>
+
       {showModal && (
         <FormerVendorDetailModal
           formerVendorID={formerVendorID}
@@ -85,6 +108,7 @@ export function FormerVendorsTable() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+
     try {
       const res = await vendorService.listFormerVendors(page, search, dateFrom, dateTo);
       setData(res.data);
@@ -97,7 +121,6 @@ export function FormerVendorsTable() {
     }
   }, [page, search, dateFrom, dateTo]);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [search, dateFrom, dateTo]);
@@ -109,147 +132,200 @@ export function FormerVendorsTable() {
   const table = useReactTable({
     data,
     columns: COLUMNS,
-    getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount: totalPages,
+
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+
+    state: {
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: 10,
+      },
+    },
+
+    onPaginationChange: () => {},
   });
 
+  const hasFilters = !!(search || dateFrom || dateTo);
+
   return (
-    <div className="flex flex-col gap-4">
-      {/* Section heading */}
+    <div className="flex flex-col gap-5">
+      {/* ───────────────── Header ───────────────── */}
+
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">Former Vendors</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          Former Vendors
+        </h2>
+
         <p className="text-sm text-muted-foreground">
           Vendors that have been removed from business.
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Search</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Stall name, owner, or email..."
-            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3F6F64] w-64"
-          />
+      {/* ───────────────── Filters ───────────────── */}
+
+      <div className="flex flex-col gap-4 rounded-xl border bg-white p-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="relative w-full sm:w-[320px]">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search stall name, owner, or email"
+              className="h-10 pl-10"
+            />
+          </div>
+
+          {/* From */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">From</label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-10 w-[180px]"
+            />
+          </div>
+
+          {/* To */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">To</label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-10 w-[180px]"
+            />
+          </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">From</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3F6F64]"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">To</label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3F6F64]"
-          />
-        </div>
-        {(search || dateFrom || dateTo) && (
+
+        {hasFilters && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
+            className="h-10 rounded-lg"
             onClick={() => {
               setSearch('');
               setDateFrom('');
               setDateTo('');
             }}
           >
-            Clear filters
+            Clear Filters
           </Button>
         )}
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-card shadow-sm">
-        <Table className="w-full table-fixed">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-b border-[hsl(var(--border))]">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="px-6 py-4 text-muted-foreground font-semibold"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={COLUMNS.length} className="px-6 py-4 align-middle">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className="w-4 h-4 rounded-full border-2 border-[#3f6f64] border-t-transparent animate-spin" />
-                    Loading...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="h-16 border-b border-[hsl(var(--border))] last:border-0 hover:bg-[hsl(var(--muted))/40] transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-6 py-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+      {/* ───────────────── Table ───────────────── */}
+
+      <div className="rounded-xl border bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((hg) => (
+                <TableRow key={hg.id} className="bg-muted/40 hover:bg-muted/40">
+                  {hg.headers.map((h) => (
+                    <TableHead
+                      key={h.id}
+                      className="
+                        h-12 px-5 text-xs font-semibold
+                        uppercase tracking-wide text-muted-foreground
+                      "
+                    >
+                      {h.isPlaceholder
+                        ? null
+                        : flexRender(h.column.columnDef.header, h.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={COLUMNS.length}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No former vendors found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
-        <span>
-          {total} former vendor{total !== 1 ? 's' : ''} total
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page <= 1}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm">
-            Page {page} of {totalPages === 0 ? 1 : totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page >= totalPages}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={COLUMNS.length} className="h-32">
+                    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#CD9A34] border-t-transparent" />
+                      Loading former vendors...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-5 py-4 align-middle text-sm">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={COLUMNS.length} className="h-40">
+                    <div className="flex flex-col items-center justify-center gap-3 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                        <Inbox className="h-6 w-6 text-[#CD9A34]" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">No former vendors found</p>
+
+                        <p className="text-xs text-muted-foreground">
+                          Try adjusting your search or date filters.
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* ───────────────── Footer Pagination ───────────────── */}
+
+        <div
+          className="
+            flex flex-col gap-3 border-t px-5 py-4
+            sm:flex-row sm:items-center sm:justify-between
+          "
+        >
+          <p className="text-sm text-muted-foreground">
+            {total.toLocaleString()} former vendor{total !== 1 ? 's' : ''} total
+          </p>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-lg"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="px-2 text-sm text-muted-foreground">
+              Page {page} of {Math.max(totalPages, 1)}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-lg"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

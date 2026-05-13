@@ -1,7 +1,6 @@
 // NavigationSection.tsx
 import { VendorInviteButton } from './InviteButton';
 import { SearchFilter } from './SearchFilter';
-import { AdminActionsTabFilter } from './TabFilter';
 
 type TabType = 'review' | 'stalls';
 
@@ -14,24 +13,21 @@ interface NavigationSectionProps {
 }
 
 export function NavigationSection({
-  activeTab,
-  onTabChange,
+  // activeTab,
+  // onTabChange,
   search,
   onSearchChange,
   onInvited,
 }: NavigationSectionProps) {
   return (
     <div className="flex flex-row justify-between xl:flex-row xl:items-center xl:justify-between">
-      <AdminActionsTabFilter
+      {/* <AdminActionsTabFilter
         activeTab={activeTab}
         onTabChange={onTabChange}
-      />
+      /> */}
 
       <div className="flex flex-row gap-3 sm:flex-row sm:items-center">
-        <SearchFilter
-          value={search}
-          onChange={onSearchChange}
-        />
+        <SearchFilter value={search} onChange={onSearchChange} />
 
         <VendorInviteButton onInvited={onInvited} />
       </div>

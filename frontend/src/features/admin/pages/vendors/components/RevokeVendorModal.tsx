@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { vendorService } from '../services/vendor.service';
 
@@ -40,48 +40,54 @@ export function RevokeVendorModal({
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+
     setLoading(true);
     setError(null);
+
     try {
       const res = await vendorService.revokeVendorWithReason(
         vendorID,
         selectedReasons,
         otherReason,
       );
+
       if (res.success) {
         onRevoked();
         onClose();
       } else {
-        setError(res.error?.message ?? 'Failed to revoke vendor');
+        setError(res.error?.message ?? 'Failed to revoke vendor.');
       }
     } catch {
-      setError('A network error occurred');
+      setError('A network error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-800">
+        <div className="flex items-center justify-between border-b px-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold">Remove Vendor</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">{vendorEmail}</p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Remove Vendor
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{vendorEmail}</p>
           </div>
+
           <button
             onClick={onClose}
-            className="text-white hover:bg-white hover:text-[#415B5A] transition-colors"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-6 py-5">
           <p className="text-sm text-muted-foreground">
-            Please select the reason(s) for removing this vendor. This will be recorded for audit
+            Select the reason(s) for removing this vendor. This action will be logged for audit
             purposes.
           </p>
 
@@ -89,46 +95,70 @@ export function RevokeVendorModal({
             {REVOKE_REASONS.map((reason) => (
               <label
                 key={reason.value}
-                className="flex items-center gap-3 cursor-pointer rounded-lg border border-neutral-700 px-4 py-3 hover:border-[#3F6F64] transition-colors"
+                className={`
+                  flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors
+                  ${
+                    selectedReasons.includes(reason.value)
+                      ? 'border-[#3F6F64]/40 bg-[#3F6F64]/10 text-[#3F6F64]'
+                      : 'border-border bg-white text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                  }
+                `}
               >
                 <input
                   type="checkbox"
                   checked={selectedReasons.includes(reason.value)}
                   onChange={() => toggleReason(reason.value)}
-                  className="w-4 h-4 accent-[#3F6F64]"
+                  className="h-4 w-4 accent-[#3F6F64]"
                 />
-                <span className="text-sm">{reason.label}</span>
+                {reason.label}
               </label>
             ))}
           </div>
 
           {showOtherInput && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-muted-foreground">Please specify</label>
+              <label className="text-xs font-medium text-muted-foreground">Please specify</label>
               <textarea
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
                 placeholder="Describe the reason..."
                 rows={3}
-                className="w-full bg-transparent border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3F6F64] resize-none placeholder:text-muted-foreground"
+                className="w-full resize-none rounded-xl border bg-white p-3 text-sm text-foreground outline-none focus:border-muted-foreground"
               />
             </div>
           )}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-6 border-t border-neutral-800">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <div className="flex items-center justify-end gap-2 border-t px-6 py-5">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="h-10 rounded-lg"
+          >
             Cancel
           </Button>
+
           <Button
-            variant="destructive"
             onClick={handleSubmit}
             disabled={!canSubmit || loading}
+            className="h-10 rounded-lg bg-red-600 text-white hover:bg-red-500"
           >
-            {loading ? 'Removing...' : 'Confirm Remove'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Removing...
+              </span>
+            ) : (
+              'Confirm Remove'
+            )}
           </Button>
         </div>
       </div>

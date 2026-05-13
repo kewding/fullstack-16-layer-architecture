@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { vendorService } from '../services/vendor.service';
 
@@ -42,6 +42,7 @@ export function GraduateVendorModal({
   };
 
   const showOtherInput = selectedReasons.includes('others');
+
   const canSubmit =
     !walletIsNotZero &&
     selectedReasons.length > 0 &&
@@ -49,10 +50,13 @@ export function GraduateVendorModal({
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+
     setLoading(true);
     setError(null);
+
     try {
       const res = await vendorService.graduateVendor(vendorID, selectedReasons, otherReason);
+
       if (res.success) {
         onGraduated();
         onClose();
@@ -62,108 +66,132 @@ export function GraduateVendorModal({
             'This vendor still has a balance. They must withdraw or remit before being removed.',
           );
         } else {
-          setError(res.error?.message ?? 'Failed to remove vendor from business');
+          setError(res.error?.message ?? 'Failed to remove vendor from business.');
         }
       }
     } catch {
-      setError('A network error occurred');
+      setError('A network error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-800">
+        <div className="flex items-center justify-between border-b px-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold">Remove Vendor from Business</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">{stallName}</p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Remove Vendor from Business
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{stallName}</p>
           </div>
+
           <button
             onClick={onClose}
-            className="text-white hover:bg-white hover:text-[#415B5A] transition-colors"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 flex flex-col gap-4">
-          {/* Wallet balance warning */}
+        <div className="flex flex-col gap-4 px-6 py-5">
           {walletIsNotZero ? (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/40 p-4 flex flex-col gap-2">
-              <p className="text-sm font-semibold text-red-400">Wallet Balance Must Be Zero</p>
-              <p className="text-sm text-red-300">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+              <p className="text-sm font-semibold text-red-600">Wallet Balance Must Be Zero</p>
+
+              <p className="mt-2 text-sm text-red-600/90">
                 This vendor currently has a balance of{' '}
-                <span className="font-bold">{formatPHP(walletBalance)}</span>. Before removing them
-                from business, they must either:
+                <span className="font-bold">{formatPHP(walletBalance)}</span>.
               </p>
-              <ul className="list-disc list-inside text-sm text-red-300 space-y-1 pl-1">
-                <li>Submit a remittance request to withdraw their balance, or</li>
-                <li>Have the balance settled by the admin.</li>
-              </ul>
-              <p className="text-xs text-red-400 mt-1">
-                This action cannot proceed until the wallet balance is{' '}
-                <span className="font-bold">₱0.00</span>.
+
+              <p className="mt-2 text-xs text-red-600/80">
+                They must withdraw or remit their wallet balance before they can be removed.
               </p>
             </div>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                This will permanently archive{' '}
-                <span className="font-semibold text-white">{stallName}</span> as a former vendor.
-                The vendor's account will be deactivated. Please select the reason(s).
+                This will permanently archive <span className="font-semibold">{stallName}</span> as
+                a former vendor. Please select the reason(s).
               </p>
 
               <div className="flex flex-col gap-2">
                 {GRADUATE_REASONS.map((reason) => (
                   <label
                     key={reason.value}
-                    className="flex items-center gap-3 cursor-pointer rounded-lg border border-neutral-700 px-4 py-3 hover:border-[#3F6F64] transition-colors"
+                    className={`
+                      flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors
+                      ${
+                        selectedReasons.includes(reason.value)
+                          ? 'border-[#3F6F64]/40 bg-[#3F6F64]/10 text-[#3F6F64]'
+                          : 'border-border bg-white text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                      }
+                    `}
                   >
                     <input
                       type="checkbox"
                       checked={selectedReasons.includes(reason.value)}
                       onChange={() => toggleReason(reason.value)}
-                      className="w-4 h-4 accent-[#3F6F64]"
+                      className="h-4 w-4 accent-[#3F6F64]"
                     />
-                    <span className="text-sm">{reason.label}</span>
+                    {reason.label}
                   </label>
                 ))}
               </div>
 
               {showOtherInput && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-muted-foreground">Please specify</label>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Please specify
+                  </label>
+
                   <textarea
                     value={otherReason}
                     onChange={(e) => setOtherReason(e.target.value)}
                     placeholder="Describe the reason..."
                     rows={3}
-                    className="w-full bg-transparent border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3F6F64] resize-none placeholder:text-muted-foreground"
+                    className="w-full resize-none rounded-xl border bg-white p-3 text-sm text-foreground outline-none focus:border-muted-foreground"
                   />
                 </div>
               )}
             </>
           )}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-6 border-t border-neutral-800">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <div className="flex items-center justify-end gap-2 border-t px-6 py-5">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="h-10 rounded-lg"
+          >
             {walletIsNotZero ? 'Close' : 'Cancel'}
           </Button>
+
           {!walletIsNotZero && (
             <Button
-              variant="destructive"
               onClick={handleSubmit}
               disabled={!canSubmit || loading}
+              className="h-10 rounded-lg bg-red-600 text-white hover:bg-red-500"
             >
-              {loading ? 'Processing...' : 'Confirm Remove'}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                'Confirm Remove'
+              )}
             </Button>
           )}
         </div>

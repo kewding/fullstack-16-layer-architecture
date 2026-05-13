@@ -37,73 +37,65 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container max-w-sm flex flex-col gap-5 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="modal-title">Invite Vendor</h2>
+          <h2 className="text-base font-semibold tracking-tight text-foreground">Invite Vendor</h2>
+
           <button
             onClick={onClose}
-            className="text-white
-           hover:bg-white hover:text-[#415B5A] transition-colors"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {!success ? (
-          <>
-            <p className="modal-description">
-              Enter the vendor's email address. They will receive a formal invitation with a
-              registration link valid for 72 hours.
+          <div className="mt-5 flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              Enter the vendor's email address. They will receive an invitation link valid for 72
+              hours.
             </p>
 
-            {/* owner name input box */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="vendor-owner" className="text-sm text-white">
-                Owner Name
-              </label>
+              <label className="text-xs font-medium text-muted-foreground">Owner Name</label>
               <input
-                id="vendor-owner"
                 type="text"
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 placeholder="Juan dela Cruz"
-                className="text-sm text-neutral-400"
+                className="h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:border-muted-foreground"
               />
             </div>
 
-            {/* email address input box*/}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="vendor-email" className="text-sm text-white">
-                Email Address
-              </label>
+              <label className="text-xs font-medium text-muted-foreground">Email Address</label>
               <input
-                id="vendor-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vendor@company.com"
-                className={`text-sm text-neutral-400 ${
-                  error ? 'border-red-500' : 'text-sm text-neutral-400'
+                className={`h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:border-muted-foreground ${
+                  error ? 'border-red-500/50' : ''
                 }`}
               />
-              {error && <p className="text-red-500 text-xs">{error}</p>}
+              {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
 
             <Button
               onClick={handleInvite}
               disabled={loading || !email || !ownerName}
-              className="w-full bg-white text-black font-semibold rounded-xl hover:bg-neutral-200 transition-colors"
+              className="h-10 w-full rounded-lg bg-[#3F6F64] text-white hover:bg-[#345d54]"
             >
               {loading ? 'Sending...' : 'Send Invitation'}
             </Button>
-          </>
+          </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+          <div className="mt-6 flex flex-col items-center gap-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/15">
               <svg
-                className="w-6 h-6 text-green-400"
+                className="h-6 w-6 text-green-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -112,18 +104,19 @@ export function VendorInviteModal({ onClose, onInvited }: VendorInviteModalProps
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-white font-medium">Invitation Sent</p>
-            <p className="text-neutral-400 text-sm">
-              An invitation email has been sent to{' '}
-              <strong className="modal-description">{email}</strong>. The link will expire in 72
-              hours.
+
+            <p className="text-sm font-medium text-foreground">Invitation Sent</p>
+
+            <p className="text-sm text-muted-foreground">
+              An invitation email has been sent to <span className="font-semibold">{email}</span>.
             </p>
+
             <Button
               onClick={() => {
                 onInvited();
                 onClose();
               }}
-              className="w-full bg-white text-black font-semibold rounded-xl hover:bg-neutral-200"
+              className="h-10 w-full rounded-lg bg-[#3F6F64] text-white hover:bg-[#345d54]"
             >
               Done
             </Button>

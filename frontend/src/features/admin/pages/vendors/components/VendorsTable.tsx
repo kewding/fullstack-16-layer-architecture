@@ -2,6 +2,7 @@
 import {
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
@@ -16,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { useState } from 'react';
 
 interface DataTableProps<TData, TValue> {
@@ -43,10 +44,13 @@ export function VendorsTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount: totalPages,
     columnResizeMode: 'onChange',
+
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+
     state: {
       pagination: {
         pageIndex: page - 1,
@@ -54,99 +58,74 @@ export function VendorsTable<TData, TValue>({
       },
       columnSizing,
     },
+
     onColumnSizingChange: setColumnSizing,
     onPaginationChange: () => {},
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Table Card */}
-      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <Table className="w-full">
-          <TableHeader className="bg-muted/30">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="border-border/60 hover:bg-transparent"
-              >
-                {headerGroup.headers.map((header) => (
+    <div className="flex flex-col">
+      {/* ───────────────── Table ───────────────── */}
+
+      <div className="overflow-x-auto">
+        <Table>
+          {/* Header */}
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="bg-muted/40 hover:bg-muted/40">
+                {hg.headers.map((h) => (
                   <TableHead
-                    key={header.id}
+                    key={h.id}
                     className="
-                      h-14
-                      px-6
-                      text-xs
-                      font-semibold
-                      uppercase
-                      tracking-wide
-                      text-muted-foreground
+                      h-12 px-5 text-xs font-semibold
+                      uppercase tracking-wide text-muted-foreground
                     "
                   >
-                    {header.isPlaceholder
+                    {h.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
 
+          {/* Body */}
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-[320px]"
-                >
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <div className="h-5 w-5 rounded-full border-2 border-[#3F6F64] border-t-transparent animate-spin" />
-                    <p className="text-sm text-muted-foreground">
-                      Loading vendors...
-                    </p>
+                <TableCell colSpan={columns.length} className="h-32">
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#CD9A34] border-t-transparent" />
+                    Loading vendors...
                   </div>
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="
-                    h-[74px]
-                    border-border/50
-                    transition-all
-                    hover:bg-muted/30
-                  "
-                >
+                <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="px-6 py-5 align-middle"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                    <TableCell key={cell.id} className="px-5 py-4 align-middle text-sm">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-[280px]"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <p className="text-sm font-medium text-foreground">
-                      No vendors found
-                    </p>
+                <TableCell colSpan={columns.length} className="h-40">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Inbox className="h-6 w-6 text-[#CD9A34]" />
+                    </div>
 
-                    <p className="text-sm text-muted-foreground">
-                      Try adjusting your search or filters.
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No vendors found</p>
+
+                      <p className="text-xs text-muted-foreground">
+                        Try adjusting your search or filters.
+                      </p>
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
@@ -155,45 +134,39 @@ export function VendorsTable<TData, TValue>({
         </Table>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm">
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-foreground">
-            {total} vendor{total !== 1 ? 's' : ''}
-          </span>
+      {/* ───────────────── Footer ───────────────── */}
 
-          <span className="text-xs text-muted-foreground">
-            Total records
-          </span>
-        </div>
+      <div
+        className="
+          flex flex-col gap-3 border-t px-5 py-4
+          sm:flex-row sm:items-center sm:justify-between
+        "
+      >
+        <p className="text-sm text-muted-foreground">
+          {total.toLocaleString()} vendor{total !== 1 ? 's' : ''} total
+        </p>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 rounded-lg"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="rounded-xl"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          <div className="min-w-[110px] text-center">
-            <p className="text-sm font-medium">
-              Page {page}
-            </p>
-
-            <p className="text-xs text-muted-foreground">
-              of {totalPages === 0 ? 1 : totalPages}
-            </p>
+          <div className="px-2 text-sm text-muted-foreground">
+            Page {page} of {Math.max(totalPages, 1)}
           </div>
 
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 rounded-lg"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="rounded-xl"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
