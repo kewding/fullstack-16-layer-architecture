@@ -148,3 +148,4 @@ func (c *Controller) UploadDocument(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
+//

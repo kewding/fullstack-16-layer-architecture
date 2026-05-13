@@ -9,11 +9,13 @@ import (
 	"github.com/kewding/backend/internal/login"
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
 	"github.com/kewding/backend/internal/middleware"
+	productratings "github.com/kewding/backend/internal/product-ratings"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	studenttransactions "github.com/kewding/backend/internal/student-transactions"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/user"
+	vendordashboard "github.com/kewding/backend/internal/vendor-dashboard"
 	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
@@ -42,6 +44,8 @@ type Dependencies struct {
 	VendorLedgerController       *vendorsledger.Controller
 	StudentTransactionController *studenttransactions.Controller
 	WithdrawalController         *withdrawal.Controller
+	VendorDashboardController    *vendordashboard.Controller
+	ProductRatingsController     *productratings.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -189,6 +193,8 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			customer.GET("/user/profile", deps.UserController.GetUserProfile)
 			customer.PUT("/user/profile", deps.UserController.UpdateUserProfile)
 
+			customer.POST("/ratings", deps.ProductRatingsController.SubmitRating)
+
 			// Transaction history
 			customer.GET("/transactions", deps.StudentTransactionController.ListTransactions)
 
@@ -231,8 +237,17 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			vendorAuth.POST("/documents/:type", deps.VendorInfoController.UploadDocument)
 
 			vendorAuth.GET("/ledger", deps.VendorLedgerController.GetLedger)
+
+			vendorAuth.GET("/dashboard/daily-profit", deps.VendorDashboardController.GetDailyProfitCard)
+			vendorAuth.GET("/dashboard/wallet", deps.VendorDashboardController.GetWalletCard)
+			vendorAuth.GET("/dashboard/top-selling", deps.VendorDashboardController.GetTopSelling)
+			vendorAuth.GET("/dashboard/top-rated", deps.VendorDashboardController.GetTopRated)
+			vendorAuth.GET("/dashboard/allergen-count", deps.VendorDashboardController.GetAllergenCount)
+			vendorAuth.GET("/dashboard/allergen-table", deps.VendorDashboardController.GetAllergenTable)
 		}
 	}
 
 	return r
 }
+
+//

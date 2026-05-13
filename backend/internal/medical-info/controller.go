@@ -52,3 +52,4 @@ func (c *Controller) UpsertMedicalInfo(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
+//

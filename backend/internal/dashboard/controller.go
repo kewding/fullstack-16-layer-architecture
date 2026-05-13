@@ -123,3 +123,4 @@ func (c *Controller) GetStallSettlement(ctx *gin.Context) {
 //   dashboardUseCase    := dashboard.NewUseCase(dashboardRepo)
 //   dashboardController := dashboard.NewController(dashboardUseCase)
 //   // then add to deps: DashboardController: dashboardController
+//

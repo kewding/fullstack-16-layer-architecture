@@ -370,3 +370,4 @@ func (c *Controller) UpdateUserProfile(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
+//

@@ -19,6 +19,7 @@ import (
 	"github.com/kewding/backend/internal/jobs"
 	"github.com/kewding/backend/internal/login"
 	medicalinfo "github.com/kewding/backend/internal/medical-info"
+	productratings "github.com/kewding/backend/internal/product-ratings"
 	"github.com/kewding/backend/internal/register"
 	rfidtagging "github.com/kewding/backend/internal/rfid-tagging"
 	studenttransactions "github.com/kewding/backend/internal/student-transactions"
@@ -26,6 +27,7 @@ import (
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/user"
 	"github.com/kewding/backend/internal/validation"
+	vendordashboard "github.com/kewding/backend/internal/vendor-dashboard"
 	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
@@ -192,6 +194,14 @@ func main() {
 	withdrawalUseCase := withdrawal.NewUseCase(withdrawalRepo)
 	withdrawalController := withdrawal.NewController(withdrawalUseCase)
 
+	vendorDashboardRepo := vendordashboard.NewPostgresRepository(dbNode.Connection)
+	vendorDashboardUseCase := vendordashboard.NewUseCase(vendorDashboardRepo)
+	vendorDashboardController := vendordashboard.NewController(vendorDashboardUseCase)
+
+	productRatingsRepo := productratings.NewPostgresRepository(dbNode.Connection)
+	productRatingsUseCase := productratings.NewUseCase(productRatingsRepo)
+	productRatingsController := productratings.NewController(productRatingsUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:    registerController,
@@ -213,6 +223,8 @@ func main() {
 		VendorLedgerController:       vendorLedgerController,
 		StudentTransactionController: studentTxController,
 		WithdrawalController:         withdrawalController,
+		VendorDashboardController:    vendorDashboardController,
+		ProductRatingsController:     productRatingsController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
@@ -229,3 +241,5 @@ func main() {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
+
+//

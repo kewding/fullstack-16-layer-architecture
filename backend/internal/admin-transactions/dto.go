@@ -80,3 +80,4 @@ type PaginatedCustomerTx struct {
 	Limit      int             `json:"limit"`
 	TotalPages int             `json:"total_pages"`
 }
+//

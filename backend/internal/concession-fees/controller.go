@@ -140,3 +140,4 @@ func (c *Controller) GetFeeHistory(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
+//
