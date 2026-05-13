@@ -82,7 +82,7 @@ export const AdminVendorsPage: React.FC = () => {
         </section>
 
         {/* Navigation Card */}
-        <section className="rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm">
+        <section className="rounded-2xl border bg-card/80 shadow-sm">
           <div className="p-5">
             <NavigationSection
               activeTab={activeTab}
