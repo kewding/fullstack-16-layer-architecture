@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2, Search, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -29,6 +28,57 @@ function peso(val: number) {
 
 function fmtDate(iso: string) {
   return format(new Date(iso), 'MMM d, yyyy · h:mm a');
+}
+
+function PaginationFooter({
+  page,
+  totalPages,
+  total,
+  label,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  label: string;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        {total.toLocaleString()} {label}
+        {total !== 1 ? 's' : ''} total
+      </p>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-lg"
+          disabled={page <= 1}
+          onClick={onPrev}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+
+        <div className="px-2 text-sm text-muted-foreground">
+          Page {page} of {Math.max(totalPages, 1)}
+        </div>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-lg"
+          disabled={page >= totalPages}
+          onClick={onNext}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 // ── Reject modal ──────────────────────────────────────────────────────────────
@@ -62,85 +112,118 @@ function RejectModal({ requestId, studentName, amount, onClose, onRejected }: Re
       setError('Please enter a comment for "Other".');
       return;
     }
+
     setLoading(true);
     setError(null);
+
     const res = await withdrawalService.rejectRequest(
       requestId,
       reason as RejectionReason,
       comment,
     );
+
     if (res.success) {
       onRejected();
       onClose();
     } else {
       setError(res.error?.message ?? 'Failed to reject request.');
     }
+
     setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Reject Withdrawal</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Reject Withdrawal
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="text-sm text-neutral-400">
-          Rejecting <span className="text-white font-medium">{studentName}</span>'s withdrawal of{' '}
-          <span className="text-white font-medium">{peso(amount)}</span>.
-        </p>
+        {/* Body */}
+        <div className="mt-5 flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Rejecting <span className="font-semibold text-foreground">{studentName}</span>'s
+            withdrawal of <span className="font-semibold text-foreground">{peso(amount)}</span>.
+          </p>
 
-        {/* Reason select */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-neutral-300">Rejection Reason</label>
-          <select
-            value={reason}
-            onChange={(e) => setReason(e.target.value as RejectionReason)}
-            className="h-10 rounded-md border border-neutral-600 bg-neutral-800 px-3 text-sm text-white focus:outline-none focus:border-white"
-          >
-            <option value="" disabled>
-              Select a reason…
-            </option>
-            {REJECTION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Rejection Reason
+            </p>
+
+            <div className="mt-3 flex flex-col gap-2">
+              {REJECTION_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    setReason(o.value);
+                    setError(null);
+                  }}
+                  className={`
+                    rounded-lg border px-3 py-2.5 text-left text-sm transition-colors
+                    ${
+                      reason === o.value
+                        ? 'border-red-500 bg-red-500/10 text-red-600'
+                        : 'border-muted bg-white text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                    }
+                  `}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {reason === 'other' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Comment <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={3}
+                placeholder="Provide additional details…"
+                className="w-full resize-none rounded-lg border bg-white p-3 text-sm text-foreground outline-none focus:border-muted-foreground"
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600">
+              {error}
+            </div>
+          )}
         </div>
 
-        {/* Comment (required for "other") */}
-        {reason === 'other' && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-neutral-300">
-              Comment <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              placeholder="Provide additional details…"
-              className="rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:border-white"
-            />
-          </div>
-        )}
-
-        {error && <p className="text-sm text-red-400">{error}</p>}
-
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1 border-neutral-600" onClick={onClose}>
+        {/* Footer */}
+        <div className="mt-6 flex gap-2">
+          <Button
+            variant="outline"
+            className="h-10 flex-1 rounded-lg"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </Button>
+
           <Button
-            variant="destructive"
-            className="flex-1"
-            disabled={loading}
             onClick={handleReject}
+            disabled={loading || !reason}
+            className="h-10 flex-1 rounded-lg bg-red-600 text-white hover:bg-red-500"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Reject'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Reject'}
           </Button>
         </div>
       </div>
@@ -200,68 +283,79 @@ function PendingTable({ search, onRefresh }: PendingTableProps) {
 
   return (
     <>
-      <div className="rounded-md border border-neutral-800 overflow-hidden">
+      <div className="rounded-xl border bg-white overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900">
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Student
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Requested
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Actions
               </TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center">
-                  <Loader2 className="mx-auto w-5 h-5 animate-spin text-neutral-400" />
+                <TableCell colSpan={4} className="h-32">
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3f6f64] border-t-transparent" />
+                    Loading requests...
+                  </div>
                 </TableCell>
               </TableRow>
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-500">
+                <TableCell colSpan={4} className="h-40 text-center text-sm text-muted-foreground">
                   No pending withdrawal requests.
                 </TableCell>
               </TableRow>
             ) : (
               data.map((row) => {
                 const isActing = actionLoading === row.id;
+
                 return (
                   <TableRow
                     key={row.id}
-                    className={`border-neutral-800 hover:bg-neutral-800/40 transition-opacity ${isActing ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`transition-colors hover:bg-muted/40 ${
+                      isActing ? 'opacity-60 pointer-events-none' : ''
+                    }`}
                   >
-                    <TableCell className="text-sm text-white font-medium">
+                    <TableCell className="px-5 py-4 text-sm font-medium text-foreground">
                       {row.full_name}
                     </TableCell>
-                    <TableCell className="text-sm font-semibold text-red-400">
+
+                    <TableCell className="px-5 py-4 text-sm font-semibold text-red-600">
                       {peso(row.amount)}
                     </TableCell>
-                    <TableCell className="text-sm text-neutral-400">
+
+                    <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                       {fmtDate(row.created_at)}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+
+                    <TableCell className="px-5 py-4 text-center align-middle">
+                      <div className="flex flex-wrap items-center justify-center gap-2">
                         <Button
                           size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
+                          className="h-9 rounded-lg bg-green-600 text-white hover:bg-green-500"
                           disabled={isActing}
                           onClick={() => handleComplete(row)}
                         >
-                          {isActing ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Complete'}
+                          {isActing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Complete'}
                         </Button>
+
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400 text-xs"
+                          className="h-9 rounded-lg border-red-500/30 bg-red-500/5 text-red-600 hover:bg-red-500/10 hover:text-red-600"
                           disabled={isActing}
                           onClick={() => setRejectTarget(row)}
                         >
@@ -275,36 +369,15 @@ function PendingTable({ search, onRefresh }: PendingTableProps) {
             )}
           </TableBody>
         </Table>
-      </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-neutral-500 px-1">
-        <span>
-          {total} request{total !== 1 ? 's' : ''}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="border-neutral-700"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-xs">
-            Page {page} of {totalPages || 1}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="border-neutral-700"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+        <PaginationFooter
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          label="request"
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
       </div>
 
       {rejectTarget && (
@@ -358,26 +431,26 @@ function CompletedTable({ search }: { search: string }) {
 
   return (
     <>
-      <div className="rounded-md border border-neutral-800 overflow-hidden">
+      <div className="rounded-xl border bg-white overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900">
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Student
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Balance Before
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Balance After
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Cashier
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Date
               </TableHead>
             </TableRow>
@@ -417,34 +490,15 @@ function CompletedTable({ search }: { search: string }) {
             )}
           </TableBody>
         </Table>
-      </div>
-      <div className="flex items-center justify-between text-sm text-neutral-500 px-1">
-        <span>
-          {total} record{total !== 1 ? 's' : ''}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="border-neutral-700"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-xs">
-            Page {page} of {totalPages || 1}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="border-neutral-700"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+
+        <PaginationFooter
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          label="request"
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
       </div>
     </>
   );
@@ -485,26 +539,26 @@ function RejectedTable({ search }: { search: string }) {
 
   return (
     <>
-      <div className="rounded-md border border-neutral-800 overflow-hidden">
+      <div className="rounded-xl border bg-white overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900">
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Student
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Reason
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Comment
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Cashier
               </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide text-neutral-400">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Date
               </TableHead>
             </TableRow>
@@ -546,34 +600,15 @@ function RejectedTable({ search }: { search: string }) {
             )}
           </TableBody>
         </Table>
-      </div>
-      <div className="flex items-center justify-between text-sm text-neutral-500 px-1">
-        <span>
-          {total} record{total !== 1 ? 's' : ''}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="border-neutral-700"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-xs">
-            Page {page} of {totalPages || 1}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="border-neutral-700"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+
+        <PaginationFooter
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          label="request"
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
       </div>
     </>
   );
@@ -598,47 +633,94 @@ export const CashierWithdrawPage: React.FC = () => {
   }, [refreshCount]);
 
   return (
-    <div className="px-1 w-full">
-      <main className="flex flex-col w-full gap-4">
-        <h1 className="text-2xl font-semibold">
-          Withdrawals
-        </h1>
-
-        {/* Tabs */}
-        <Tabs value={tab} onValueChange={(v) => setTab(v as TabType)}>
-          <TabsList className="flex h-auto w-auto bg-transparent p-0 gap-2">
-            <TabsTrigger value="pending" className="px-4 py-2 rounded-lg relative">
-              Requests
-              {pendingCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#CD9A34] text-white leading-none">
-                  {pendingCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="px-4 py-2 rounded-lg">
-              Completed
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="px-4 py-2 rounded-lg">
-              Rejected
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Search */}
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by student name…"
-            className="pl-9"
-          />
+    <div className="w-full px-1">
+      <main className="flex flex-col gap-5">
+        {/* Header */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Withdrawals</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Review and process withdrawal requests from students.
+            </p>
+          </div>
         </div>
 
-        {/* Table per tab */}
-        {tab === 'pending' && <PendingTable search={search} onRefresh={refreshCount} />}
-        {tab === 'completed' && <CompletedTable search={search} />}
-        {tab === 'rejected' && <RejectedTable search={search} />}
+        {/* Connected Tabs */}
+        <div className="flex flex-col gap-0">
+          <div className="flex items-center gap-0">
+            <div className="flex items-center gap-1 bg-transparent p-0">
+              <button
+                onClick={() => setTab('pending')}
+                className={`
+                  relative rounded-t-xl rounded-b-none px-5 py-2.5 text-sm font-medium
+                  ${
+                    tab === 'pending'
+                      ? 'z-10 bg-white text-foreground border border-border border-b-white'
+                      : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+                  }
+                `}
+              >
+                Requests
+                {pendingCount > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-[#CD9A34] px-2 py-0.5 text-[10px] font-bold text-white">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setTab('completed')}
+                className={`
+                  relative rounded-t-xl rounded-b-none px-5 py-2.5 text-sm font-medium
+                  ${
+                    tab === 'completed'
+                      ? 'z-10 bg-white text-foreground border border-border border-b-white'
+                      : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+                  }
+                `}
+              >
+                Completed
+              </button>
+
+              <button
+                onClick={() => setTab('rejected')}
+                className={`
+                  relative rounded-t-xl rounded-b-none px-5 py-2.5 text-sm font-medium
+                  ${
+                    tab === 'rejected'
+                      ? 'z-10 bg-white text-foreground border border-border border-b-white'
+                      : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+                  }
+                `}
+              >
+                Rejected
+              </button>
+            </div>
+          </div>
+
+          {/* Connected Surface */}
+          <div className="rounded-b-2xl rounded-tr-2xl border bg-white overflow-hidden">
+            {/* Filters */}
+            <div className="border-b px-6 py-5">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by student name..."
+                  className="h-10 pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="p-6">
+              {tab === 'pending' && <PendingTable search={search} onRefresh={refreshCount} />}
+              {tab === 'completed' && <CompletedTable search={search} />}
+              {tab === 'rejected' && <RejectedTable search={search} />}
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

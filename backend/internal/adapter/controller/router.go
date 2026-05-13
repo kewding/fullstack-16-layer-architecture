@@ -15,10 +15,13 @@ import (
 	studenttransactions "github.com/kewding/backend/internal/student-transactions"
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/user"
+	userdashboard "github.com/kewding/backend/internal/user-dashboard"
 	vendordashboard "github.com/kewding/backend/internal/vendor-dashboard"
 	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
+	vendortransactions "github.com/kewding/backend/internal/vendor-transactions"
+	vendorwithdrawal "github.com/kewding/backend/internal/vendor-withdrawal"
 	"github.com/kewding/backend/internal/vendors"
 	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
 	"github.com/kewding/backend/internal/withdrawal"
@@ -46,6 +49,9 @@ type Dependencies struct {
 	WithdrawalController         *withdrawal.Controller
 	VendorDashboardController    *vendordashboard.Controller
 	ProductRatingsController     *productratings.Controller
+	VendorWithdrawalController   *vendorwithdrawal.Controller
+	VendorTransactionController  *vendortransactions.Controller
+	UserDashboardController      *userdashboard.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -179,6 +185,17 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 				cashierWithdraw.GET("/pending-count", deps.WithdrawalController.GetPendingCount)
 				cashierWithdraw.GET("/ws", deps.WithdrawalController.CashierWithdrawWebSocket)
 			}
+
+			cashierVendorWithdraw := cashier.Group("/vendor-withdraw")
+			{
+				cashierVendorWithdraw.GET("/requests", deps.VendorWithdrawalController.ListPendingRequests)
+				cashierVendorWithdraw.PATCH("/request/:id/complete", deps.VendorWithdrawalController.CompleteRequest)
+				cashierVendorWithdraw.PATCH("/request/:id/reject", deps.VendorWithdrawalController.RejectRequest)
+				cashierVendorWithdraw.GET("/completed", deps.VendorWithdrawalController.ListCompletedRequests)
+				cashierVendorWithdraw.GET("/rejected", deps.VendorWithdrawalController.ListRejectedRequests)
+				cashierVendorWithdraw.GET("/pending-count", deps.VendorWithdrawalController.GetPendingCount)
+				cashierVendorWithdraw.GET("/ws", deps.VendorWithdrawalController.CashierVendorWithdrawWebSocket)
+			}
 		}
 
 		// Customer only — role_id: 2
@@ -197,6 +214,9 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			// Transaction history
 			customer.GET("/transactions", deps.StudentTransactionController.ListTransactions)
+
+			customer.GET("/dashboard/nutrition", deps.UserDashboardController.GetNutritionData)
+			customer.GET("/dashboard/purchases", deps.UserDashboardController.GetRecentPurchases)
 
 			// Top-up request flow
 			customerTopUp := customer.Group("/top-up")
@@ -244,6 +264,17 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 			vendorAuth.GET("/dashboard/top-rated", deps.VendorDashboardController.GetTopRated)
 			vendorAuth.GET("/dashboard/allergen-count", deps.VendorDashboardController.GetAllergenCount)
 			vendorAuth.GET("/dashboard/allergen-table", deps.VendorDashboardController.GetAllergenTable)
+
+			vendorAuth.GET("/transactions", deps.VendorTransactionController.ListTransactions)
+
+			vendorWithdraw := vendorAuth.Group("/withdraw")
+			{
+				vendorWithdraw.GET("/balance", deps.VendorWithdrawalController.GetWalletBalance)
+				vendorWithdraw.POST("/request", deps.VendorWithdrawalController.SubmitRequest)
+				vendorWithdraw.GET("/pending", deps.VendorWithdrawalController.GetPendingRequest)
+				vendorWithdraw.DELETE("/request/:id", deps.VendorWithdrawalController.CancelRequest)
+				vendorWithdraw.GET("/history", deps.VendorWithdrawalController.ListHistory)
+			}
 		}
 	}
 

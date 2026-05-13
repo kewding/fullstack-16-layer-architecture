@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Inbox,
   Loader2,
   Search,
   X,
@@ -70,7 +71,7 @@ function ToastContainer({
         <div
           key={t.id}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border pointer-events-auto min-w-[300px]
-          ${t.type === 'success' ? 'bg-neutral-900 border-green-500/40' : 'bg-neutral-900 border-red-500/40'}`}
+          ${t.type === 'success' ? ' border-green-500/40' : ' border-red-500/40'}`}
         >
           {t.type === 'success' ? (
             <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
@@ -78,7 +79,10 @@ function ToastContainer({
             <XCircle className="w-4 h-4 text-red-400 shrink-0" />
           )}
           <p className="text-sm text-white flex-1">{t.message}</p>
-          <button onClick={() => onDismiss(t.id)} className="text-neutral-500 hover:text-white">
+          <button
+            onClick={() => onDismiss(t.id)}
+            className="text-muted-foreground500 hover:text-white"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -119,45 +123,56 @@ function SectionFilters({
   onDateEndChange,
 }: SectionFilters) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div className="relative w-64">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Search */}
+      <div className="relative w-full sm:w-[320px]">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <Search className="h-4 w-4 text-muted-foreground" />
+        </div>
+
         <Input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name…"
-          className="pl-9 h-9 text-sm bg-neutral-900 border-neutral-700"
+          placeholder="Search by customer name"
+          className="h-10 pl-10"
         />
       </div>
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-0.5">
-          <label className="text-xs text-neutral-500">From</label>
+
+      {/* Date Filters */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground font-medium">From</label>
           <Input
             type="date"
             value={dateStart}
             onChange={(e) => onDateStartChange(e.target.value)}
-            className="h-9 text-sm bg-neutral-900 border-neutral-700 w-36"
+            className="h-10 w-[160px]"
           />
         </div>
-        <div className="flex flex-col gap-0.5">
-          <label className="text-xs text-neutral-500">To</label>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground font-medium">To</label>
           <Input
             type="date"
             value={dateEnd}
             onChange={(e) => onDateEndChange(e.target.value)}
-            className="h-9 text-sm bg-neutral-900 border-neutral-700 w-36"
+            className="h-10 w-[160px]"
           />
         </div>
+
         {(dateStart || dateEnd) && (
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-lg"
             onClick={() => {
               onDateStartChange('');
               onDateEndChange('');
             }}
-            className="text-xs text-neutral-400 hover:text-white flex items-center gap-1 pb-0.5"
           >
-            <X className="w-3 h-3" /> Clear
-          </button>
+            <X className="mr-2 h-4 w-4" />
+            Clear
+          </Button>
         )}
       </div>
     </div>
@@ -180,30 +195,34 @@ function Pagination({
   onPageChange: (p: number) => void;
 }) {
   return (
-    <div className="flex items-center justify-between text-sm text-neutral-500 px-1 mt-3">
-      <span>
-        {total} {label ?? 'record'}
-        {total !== 1 ? 's' : ''}
-      </span>
+    <div className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        {total.toLocaleString()} {label ?? 'records'} total
+      </p>
+
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
+          className="h-9 w-9 rounded-lg"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="text-xs">
+
+        <div className="px-2 text-sm text-muted-foreground">
           Page {page} of {Math.max(totalPages, 1)}
-        </span>
+        </div>
+
         <Button
           variant="outline"
           size="icon"
+          className="h-9 w-9 rounded-lg"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -225,38 +244,64 @@ function UserDetailModal({ userID, onClose }: { userID: string; onClose: () => v
   }, [userID]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Customer Detail</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Customer Detail
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
-          </div>
-        ) : detail ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-lg font-semibold text-white">{detail.full_name}</p>
-            <div className="flex flex-col gap-2 bg-neutral-800/50 rounded-xl p-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-400">Current Balance</span>
-                <span className="text-white font-semibold">{peso(detail.current_balance)}</span>
+
+        {/* Body */}
+        <div className="mt-5">
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#3f6f64] border-t-transparent" />
+            </div>
+          ) : detail ? (
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-lg font-semibold text-foreground">{detail.full_name}</p>
+                <p className="text-sm text-muted-foreground">Customer wallet summary</p>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-400">Avg. Weekly Spend</span>
-                <span className="text-white">{peso(detail.avg_weekly_spend)}</span>
+
+              <div className="rounded-xl border bg-muted/30 p-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Current Balance</span>
+                  <span className="font-semibold text-foreground">
+                    {peso(detail.current_balance)}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex justify-between text-sm">
+                  <span className="text-muted-foreground">Avg. Weekly Spend</span>
+                  <span className="font-medium text-foreground">
+                    {peso(detail.avg_weekly_spend)}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <p className="text-sm text-neutral-500 text-center py-4">Failed to load details.</p>
-        )}
-        <Button variant="outline" onClick={onClose} className="w-full">
-          Close
-        </Button>
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Failed to load customer details.
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6">
+          <Button variant="outline" onClick={onClose} className="h-10 w-full rounded-lg">
+            Close
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -282,40 +327,56 @@ function AcceptModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Confirm Top-Up</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">Confirm Top-Up</h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-neutral-400">
-            Has <strong className="text-white">{row.full_name}</strong> paid the following amount in
-            cash?
+        {/* Body */}
+        <div className="mt-5 flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Has <span className="font-semibold text-foreground">{row.full_name}</span> paid the
+            following amount in cash?
           </p>
-          <div className="bg-neutral-800/60 rounded-xl p-4 text-center">
-            <p className="text-xs text-neutral-500 uppercase tracking-widest mb-1">Amount</p>
-            <p className="text-3xl font-bold text-white">{peso(row.amount)}</p>
+
+          <div className="rounded-xl border bg-muted/30 p-5 text-center">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Amount
+            </p>
+            <p className="mt-2 text-3xl font-bold text-foreground">{peso(row.amount)}</p>
           </div>
-          <p className="text-xs text-neutral-500">
-            Clicking confirm will credit this amount to the customer's wallet and cannot be undone
-            without a reject.
+
+          <p className="text-xs text-muted-foreground">
+            Confirming will credit the customer wallet immediately.
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1" disabled={confirming}>
+        {/* Footer */}
+        <div className="mt-6 flex gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-10 flex-1 rounded-lg"
+            disabled={confirming}
+          >
             Cancel
           </Button>
+
           <Button
             onClick={handleConfirm}
             disabled={confirming}
-            className="flex-1 bg-green-500 text-black hover:bg-green-400 font-semibold"
+            className="h-10 flex-1 rounded-lg bg-green-600 text-white hover:bg-green-500"
           >
-            {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Payment'}
+            {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Payment'}
           </Button>
         </div>
       </div>
@@ -350,37 +411,49 @@ function RejectModal({
       setError('Please select a reason.');
       return;
     }
+
     if (reason === 'other' && !comment.trim()) {
       setError('Please enter a comment.');
       return;
     }
+
     setError(null);
     setSubmitting(true);
+
     await onConfirm(reason as RejectionReason, comment);
+
     setSubmitting(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Reject Request</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">Reject Request</h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-neutral-400">
-            Rejecting top-up of <strong className="text-white">{peso(row.amount)}</strong> for{' '}
-            <strong className="text-white">{row.full_name}</strong>.
+        {/* Body */}
+        <div className="mt-5 flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Rejecting top-up of{' '}
+            <span className="font-semibold text-foreground">{peso(row.amount)}</span> for{' '}
+            <span className="font-semibold text-foreground">{row.full_name}</span>.
           </p>
-        </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-neutral-400 font-medium">Reason</label>
-            <div className="flex flex-col gap-2">
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Reason
+            </p>
+
+            <div className="mt-3 flex flex-col gap-2">
               {REJECTION_REASONS.map((r) => (
                 <button
                   key={r.value}
@@ -389,11 +462,14 @@ function RejectModal({
                     setReason(r.value);
                     setError(null);
                   }}
-                  className={`text-left text-sm px-3 py-2.5 rounded-lg border transition-colors ${
-                    reason === r.value
-                      ? 'border-red-500/60 bg-red-500/10 text-red-300'
-                      : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-white'
-                  }`}
+                  className={`
+                    rounded-lg border px-3 py-2.5 text-left text-sm transition-colors
+                    ${
+                      reason === r.value
+                        ? 'border-red-500 bg-red-500/10 text-red-600'
+                        : 'border-muted bg-white text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                    }
+                  `}
                 >
                   {r.label}
                 </button>
@@ -403,36 +479,42 @@ function RejectModal({
 
           {reason === 'other' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-neutral-400 font-medium">Comment</label>
+              <label className="text-xs font-medium text-muted-foreground">Comment</label>
               <textarea
                 rows={3}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Enter the reason for rejection…"
-                className="w-full text-sm bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-white resize-none focus:outline-none focus:border-neutral-500"
+                className="w-full resize-none rounded-lg border bg-white p-3 text-sm text-foreground outline-none focus:border-muted-foreground"
               />
             </div>
           )}
 
           {error && (
-            <p className="text-red-400 text-xs flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600">
+              <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
-            </p>
+            </div>
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1" disabled={submitting}>
+        {/* Footer */}
+        <div className="mt-6 flex gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-10 flex-1 rounded-lg"
+            disabled={submitting}
+          >
             Cancel
           </Button>
+
           <Button
             onClick={handleSubmit}
             disabled={submitting || !reason}
-            variant="destructive"
-            className="flex-1"
+            className="h-10 flex-1 rounded-lg bg-red-600 text-white hover:bg-red-500"
           >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reject'}
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reject'}
           </Button>
         </div>
       </div>
@@ -450,32 +532,50 @@ const REASON_LABELS: Record<string, string> = {
 
 function RejectedDetailModal({ row, onClose }: { row: CashierRejectedRow; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Rejection Detail</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Rejection Detail
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex flex-col gap-3">
+
+        {/* Body */}
+        <div className="mt-5 flex flex-col gap-3">
           <DetailRow label="Customer">{row.full_name}</DetailRow>
           <DetailRow label="Amount">{peso(row.amount)}</DetailRow>
           <DetailRow label="Date">{fmtDate(row.created_at)}</DetailRow>
           <DetailRow label="Processed by">{row.cashier_name || '—'}</DetailRow>
-          <div className="border-t border-neutral-800 pt-3">
-            <p className="text-xs text-neutral-500 mb-2">Rejection Reason</p>
-            <p className="text-sm text-white">
+
+          <div className="mt-2 rounded-xl border bg-muted/30 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Rejection Reason
+            </p>
+
+            <p className="mt-2 text-sm font-medium text-foreground">
               {REASON_LABELS[row.rejection_reason] ?? row.rejection_reason}
             </p>
+
             {row.rejection_comment && (
-              <p className="text-xs text-neutral-400 mt-1 italic">"{row.rejection_comment}"</p>
+              <p className="mt-2 text-xs text-muted-foreground italic">"{row.rejection_comment}"</p>
             )}
           </div>
         </div>
-        <Button variant="outline" onClick={onClose} className="w-full">
-          Close
-        </Button>
+
+        {/* Footer */}
+        <div className="mt-6">
+          <Button variant="outline" onClick={onClose} className="h-10 w-full rounded-lg">
+            Close
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -485,36 +585,56 @@ function RejectedDetailModal({ row, onClose }: { row: CashierRejectedRow; onClos
 
 function CompletedDetailModal({ row, onClose }: { row: CashierCompletedRow; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Transaction Detail</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Transaction Detail
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex flex-col gap-3">
+
+        {/* Body */}
+        <div className="mt-5 flex flex-col gap-3">
           <DetailRow label="Customer">{row.full_name}</DetailRow>
+
           <DetailRow label="Amount">
-            <span className="text-green-400 font-semibold">{peso(row.amount)}</span>
+            <span className="font-semibold text-green-600">{peso(row.amount)}</span>
           </DetailRow>
+
           <DetailRow label="Date">{fmtDate(row.created_at)}</DetailRow>
           <DetailRow label="Cashier">{row.cashier_name || '—'}</DetailRow>
-          <div className="border-t border-neutral-800 pt-3">
-            <p className="text-xs text-neutral-500 mb-2">Balance Snapshot</p>
-            <div className="flex justify-between text-sm">
-              <span className="text-neutral-400">Before</span>
-              <span className="text-white">{peso(row.balance_before)}</span>
+
+          <div className="mt-2 rounded-xl border bg-muted/30 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Balance Snapshot
+            </p>
+
+            <div className="mt-3 flex justify-between text-sm">
+              <span className="text-muted-foreground">Before</span>
+              <span className="font-medium text-foreground">{peso(row.balance_before)}</span>
             </div>
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-neutral-400">After</span>
-              <span className="text-green-400 font-semibold">{peso(row.balance_after)}</span>
+
+            <div className="mt-2 flex justify-between text-sm">
+              <span className="text-muted-foreground">After</span>
+              <span className="font-semibold text-green-600">{peso(row.balance_after)}</span>
             </div>
           </div>
         </div>
-        <Button variant="outline" onClick={onClose} className="w-full">
-          Close
-        </Button>
+
+        {/* Footer */}
+        <div className="mt-6">
+          <Button variant="outline" onClick={onClose} className="h-10 w-full rounded-lg">
+            Close
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -523,8 +643,8 @@ function CompletedDetailModal({ row, onClose }: { row: CashierCompletedRow; onCl
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-neutral-500">{label}</span>
-      <span className="text-sm text-white">{children}</span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground">{children}</span>
     </div>
   );
 }
@@ -536,6 +656,7 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [page, setPage] = useState(1);
+
   const [data, setData] = useState<CashierRequestRow[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -551,6 +672,7 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
 
   const fetch = useCallback(async () => {
     setLoading(true);
+
     try {
       const res = await topUpRequestService.listPendingRequests(
         page,
@@ -558,6 +680,7 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
         dateStart || undefined,
         dateEnd || undefined,
       );
+
       setData(res.data);
       setTotal(res.total);
       setTotalPages(res.total_pages);
@@ -571,11 +694,11 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, dateStart, dateEnd]);
+
   useEffect(() => {
     fetch();
   }, [fetch]);
 
-  // Auto-refresh every 15 s to pick up new requests
   useEffect(() => {
     const id = setInterval(() => fetch(), 15000);
     return () => clearInterval(id);
@@ -583,34 +706,41 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
 
   const handleAccept = async () => {
     if (!acceptRow) return;
+
     const res = await topUpRequestService.acceptRequest(acceptRow.id);
+
     if (res.success) {
       push('success', `Top-up of ${peso(acceptRow.amount)} for ${acceptRow.full_name} approved.`);
       setAcceptRow(null);
       fetch();
       onActionComplete();
-    } else {
-      push('error', res.error?.message ?? 'Failed to accept request.');
-      setAcceptRow(null);
+      return;
     }
+
+    push('error', res.error?.message ?? 'Failed to accept request.');
+    setAcceptRow(null);
   };
 
   const handleReject = async (reason: RejectionReason, comment: string) => {
     if (!rejectRow) return;
+
     const res = await topUpRequestService.rejectRequest(rejectRow.id, reason, comment);
+
     if (res.success) {
       push('success', `Request from ${rejectRow.full_name} rejected.`);
       setRejectRow(null);
       fetch();
       onActionComplete();
-    } else {
-      push('error', res.error?.message ?? 'Failed to reject request.');
-      setRejectRow(null);
+      return;
     }
+
+    push('error', res.error?.message ?? 'Failed to reject request.');
+    setRejectRow(null);
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
+      {/* Filters */}
       <SectionFilters
         search={search}
         onSearchChange={setSearch}
@@ -620,68 +750,72 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
         onDateEndChange={setDateEnd}
       />
 
-      <div className="rounded-lg border border-neutral-800 overflow-hidden">
+      {/* Table */}
+      <div className="mt-5 overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900/50">
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Date
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Name
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Customer
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Actions
               </TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center">
-                  <Loader2 className="mx-auto w-5 h-5 animate-spin text-neutral-500" />
+                <TableCell colSpan={4} className="h-32">
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3f6f64] border-t-transparent" />
+                    Loading requests...
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-500">
-                  No pending requests.
-                </TableCell>
-              </TableRow>
-            ) : (
+            ) : data.length ? (
               data.map((row) => (
-                <TableRow key={row.id} className="border-neutral-800 hover:bg-neutral-900/40">
-                  <TableCell className="text-sm text-neutral-400">
+                <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
+                  <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                     {fmtDate(row.created_at)}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-white">{row.full_name}</TableCell>
-                  <TableCell className="text-sm font-semibold text-white">
+
+                  <TableCell className="px-5 py-4 text-sm font-medium">{row.full_name}</TableCell>
+
+                  <TableCell className="px-5 py-4 text-sm font-semibold">
                     {peso(row.amount)}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+
+                  <TableCell className="px-5 py-4 align-middle text-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs border-neutral-700"
+                        className="h-9 rounded-lg"
                         onClick={() => setViewUserID(row.user_id)}
                       >
                         View
                       </Button>
+
                       <Button
                         size="sm"
-                        className="h-7 text-xs bg-green-500 text-black hover:bg-green-400"
+                        className="h-9 rounded-lg border-green-500/30 bg-green-500/5 text-green-500 hover:bg-green-500/10"
                         onClick={() => setAcceptRow(row)}
                       >
                         Accept
                       </Button>
+
                       <Button
-                        size="sm"
                         variant="outline"
-                        className="h-7 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                        size="sm"
+                        className="h-9 rounded-lg border-red-500/30 bg-red-500/5 text-red-500 hover:bg-red-500/10"
                         onClick={() => setRejectRow(row)}
                       >
                         Reject
@@ -690,23 +824,44 @@ function RequestsSection({ onActionComplete }: { onActionComplete: () => void })
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="h-40">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Inbox className="h-6 w-6 text-[#3f6f64]" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No pending requests</p>
+                      <p className="text-xs text-muted-foreground">
+                        New top-up requests will appear here automatically.
+                      </p>
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Footer Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}
         total={total}
-        label="request"
+        label="requests"
         onPageChange={setPage}
       />
 
+      {/* Modals */}
       {viewUserID && <UserDetailModal userID={viewUserID} onClose={() => setViewUserID(null)} />}
+
       {acceptRow && (
         <AcceptModal row={acceptRow} onClose={() => setAcceptRow(null)} onConfirm={handleAccept} />
       )}
+
       {rejectRow && (
         <RejectModal row={rejectRow} onClose={() => setRejectRow(null)} onConfirm={handleReject} />
       )}
@@ -723,16 +878,19 @@ function RejectedSection() {
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [page, setPage] = useState(1);
+
   const [data, setData] = useState<CashierRejectedRow[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+
   const [viewRow, setViewRow] = useState<CashierRejectedRow | null>(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
   const fetch = useCallback(async () => {
     setLoading(true);
+
     try {
       const res = await topUpRequestService.listRejectedRequests(
         page,
@@ -740,6 +898,7 @@ function RejectedSection() {
         dateStart || undefined,
         dateEnd || undefined,
       );
+
       setData(res.data);
       setTotal(res.total);
       setTotalPages(res.total_pages);
@@ -753,12 +912,13 @@ function RejectedSection() {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, dateStart, dateEnd]);
+
   useEffect(() => {
     fetch();
   }, [fetch]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       <SectionFilters
         search={search}
         onSearchChange={setSearch}
@@ -768,56 +928,58 @@ function RejectedSection() {
         onDateEndChange={setDateEnd}
       />
 
-      <div className="rounded-lg border border-neutral-800 overflow-hidden">
+      <div className="mt-5 overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900/50">
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Date
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Name
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Customer
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Reason
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500"></TableHead>
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Details</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center">
-                  <Loader2 className="mx-auto w-5 h-5 animate-spin text-neutral-500" />
+                <TableCell colSpan={5} className="h-32">
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3f6f64] border-t-transparent" />
+                    Loading rejected requests...
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-500">
-                  No rejected requests.
-                </TableCell>
-              </TableRow>
-            ) : (
+            ) : data.length ? (
               data.map((row) => (
-                <TableRow key={row.id} className="border-neutral-800 hover:bg-neutral-900/40">
-                  <TableCell className="text-sm text-neutral-400">
+                <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
+                  <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                     {fmtDate(row.created_at)}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-white">{row.full_name}</TableCell>
-                  <TableCell className="text-sm font-semibold text-white">
+
+                  <TableCell className="px-5 py-4 text-sm font-medium">{row.full_name}</TableCell>
+
+                  <TableCell className="px-5 py-4 text-sm font-semibold">
                     {peso(row.amount)}
                   </TableCell>
-                  <TableCell className="text-sm text-neutral-400">
+
+                  <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                     {REASON_LABELS[row.rejection_reason] ?? row.rejection_reason}
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className="px-5 py-4">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-xs border-neutral-700"
+                      className="h-9 rounded-lg"
                       onClick={() => setViewRow(row)}
                     >
                       View
@@ -825,6 +987,23 @@ function RejectedSection() {
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-40">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Inbox className="h-6 w-6 text-[#3f6f64]" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No rejected requests</p>
+                      <p className="text-xs text-muted-foreground">
+                        Rejected top-ups will be recorded here for auditing.
+                      </p>
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
@@ -834,7 +1013,7 @@ function RejectedSection() {
         page={page}
         totalPages={totalPages}
         total={total}
-        label="record"
+        label="records"
         onPageChange={setPage}
       />
 
@@ -850,16 +1029,19 @@ function CompletedSection() {
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [page, setPage] = useState(1);
+
   const [data, setData] = useState<CashierCompletedRow[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+
   const [viewRow, setViewRow] = useState<CashierCompletedRow | null>(null);
 
   const debouncedSearch = useDebounce(search, 400);
 
   const fetch = useCallback(async () => {
     setLoading(true);
+
     try {
       const res = await topUpRequestService.listCompletedRequests(
         page,
@@ -867,6 +1049,7 @@ function CompletedSection() {
         dateStart || undefined,
         dateEnd || undefined,
       );
+
       setData(res.data);
       setTotal(res.total);
       setTotalPages(res.total_pages);
@@ -880,12 +1063,13 @@ function CompletedSection() {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, dateStart, dateEnd]);
+
   useEffect(() => {
     fetch();
   }, [fetch]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       <SectionFilters
         search={search}
         onSearchChange={setSearch}
@@ -895,56 +1079,58 @@ function CompletedSection() {
         onDateEndChange={setDateEnd}
       />
 
-      <div className="rounded-lg border border-neutral-800 overflow-hidden">
+      <div className="mt-5 overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-neutral-800 bg-neutral-900/50">
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Date
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Name
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Customer
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Amount
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Cashier
               </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-500"></TableHead>
+              <TableHead className="h-12 px-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Details</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center">
-                  <Loader2 className="mx-auto w-5 h-5 animate-spin text-neutral-500" />
+                <TableCell colSpan={5} className="h-32">
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3f6f64] border-t-transparent" />
+                    Loading completed transactions...
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-500">
-                  No completed transactions.
-                </TableCell>
-              </TableRow>
-            ) : (
+            ) : data.length ? (
               data.map((row) => (
-                <TableRow key={row.id} className="border-neutral-800 hover:bg-neutral-900/40">
-                  <TableCell className="text-sm text-neutral-400">
+                <TableRow key={row.id} className="transition-colors hover:bg-muted/40">
+                  <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                     {fmtDate(row.created_at)}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-white">{row.full_name}</TableCell>
-                  <TableCell className="text-sm font-semibold text-green-400">
+
+                  <TableCell className="px-5 py-4 text-sm font-medium">{row.full_name}</TableCell>
+
+                  <TableCell className="px-5 py-4 text-sm font-semibold text-green-600">
                     {peso(row.amount)}
                   </TableCell>
-                  <TableCell className="text-sm text-neutral-400">
+
+                  <TableCell className="px-5 py-4 text-sm text-muted-foreground">
                     {row.cashier_name || '—'}
                   </TableCell>
-                  <TableCell>
+
+                  <TableCell className="px-5 py-4">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-xs border-neutral-700"
+                      className="h-9 rounded-lg"
                       onClick={() => setViewRow(row)}
                     >
                       View
@@ -952,6 +1138,23 @@ function CompletedSection() {
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-40">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Inbox className="h-6 w-6 text-[#3f6f64]" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No completed transactions</p>
+                      <p className="text-xs text-muted-foreground">
+                        Approved top-ups will appear here automatically.
+                      </p>
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
@@ -961,7 +1164,7 @@ function CompletedSection() {
         page={page}
         totalPages={totalPages}
         total={total}
-        label="record"
+        label="records"
         onPageChange={setPage}
       />
 
@@ -984,39 +1187,79 @@ const SECTION_TABS: { id: SectionTab; label: string }[] = [
 
 export const CashierTopUpPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SectionTab>('requests');
-  // Key to force re-render the Rejected/Completed sections after an action
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleActionComplete = () => setRefreshKey((k) => k + 1);
 
   return (
-    <div className="px-1 w-full">
-      <main className="flex flex-col w-full h-full gap-5">
-        <h1 className="text-2xl font-semibold">Top-Up</h1>
+    <div className="w-full px-1">
+      <main className="flex flex-col gap-5">
+        {/* ───────────────── Header ───────────────── */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold tracking-tight">Top-Up</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Review and process customer wallet top-up requests.
+            </p>
+          </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900/40 p-1 self-start">
-          {SECTION_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
-                activeTab === tab.id
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {/* Optional summary badge */}
+          {/* <div className="flex items-center gap-3">
+            <div className="inline-flex items-center rounded-full bg-[#cd9a34] px-3 py-1 text-xs font-semibold text-white">
+              Cashier Panel
+            </div>
+          </div> */}
         </div>
 
-        {/* Section content */}
-        {activeTab === 'requests' && (
-          <RequestsSection key={`req-${refreshKey}`} onActionComplete={handleActionComplete} />
-        )}
-        {activeTab === 'rejected' && <RejectedSection key={`rej-${refreshKey}`} />}
-        {activeTab === 'completed' && <CompletedSection key={`com-${refreshKey}`} />}
+        {/* ───────────────── Connected Tabs + Content ───────────────── */}
+        <div className="flex flex-col gap-0">
+          {/* Tabs */}
+          <div className="flex items-center gap-0">
+            <div className="flex items-center gap-1 bg-transparent p-0">
+              {SECTION_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    relative rounded-t-xl rounded-b-none
+                    px-5 py-2.5 text-sm font-medium
+                    transition-none
+
+                    ${
+                      activeTab === tab.id
+                        ? 'z-10 bg-white text-foreground border border-border border-b-white'
+                        : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+                    }
+                  `}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Connected Surface */}
+          <div className="rounded-b-2xl rounded-tr-2xl border bg-white overflow-hidden">
+            {/* Filters + Table wrapper */}
+            <div className="p-6">
+              <div className="bg-white border border-muted rounded-xl overflow-hidden">
+                {/* Section Content */}
+                <div className="border-b p-5">
+                  {activeTab === 'requests' && (
+                    <RequestsSection
+                      key={`req-${refreshKey}`}
+                      onActionComplete={handleActionComplete}
+                    />
+                  )}
+
+                  {activeTab === 'rejected' && <RejectedSection key={`rej-${refreshKey}`} />}
+
+                  {activeTab === 'completed' && <CompletedSection key={`com-${refreshKey}`} />}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

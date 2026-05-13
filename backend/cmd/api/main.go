@@ -26,11 +26,14 @@ import (
 	topup "github.com/kewding/backend/internal/top-up"
 	"github.com/kewding/backend/internal/usecase/service"
 	"github.com/kewding/backend/internal/user"
+	userdashboard "github.com/kewding/backend/internal/user-dashboard"
 	"github.com/kewding/backend/internal/validation"
 	vendordashboard "github.com/kewding/backend/internal/vendor-dashboard"
 	vendorinfo "github.com/kewding/backend/internal/vendor-info"
 	vendorinvite "github.com/kewding/backend/internal/vendor-invite"
 	vendorregister "github.com/kewding/backend/internal/vendor-register"
+	vendortransactions "github.com/kewding/backend/internal/vendor-transactions"
+	vendorwithdrawal "github.com/kewding/backend/internal/vendor-withdrawal"
 	"github.com/kewding/backend/internal/vendors"
 	vendorsledger "github.com/kewding/backend/internal/vendors-ledger"
 	"github.com/kewding/backend/internal/withdrawal"
@@ -202,6 +205,21 @@ func main() {
 	productRatingsUseCase := productratings.NewUseCase(productRatingsRepo)
 	productRatingsController := productratings.NewController(productRatingsUseCase)
 
+	// Vendor Withdrawal
+	vendorWithdrawalRepo := vendorwithdrawal.NewPostgresRepository(dbNode.Connection)
+	vendorWithdrawalUseCase := vendorwithdrawal.NewUseCase(vendorWithdrawalRepo)
+	vendorWithdrawalController := vendorwithdrawal.NewController(vendorWithdrawalUseCase)
+
+	// Vendor Transactions
+	vendorTxRepo := vendortransactions.NewPostgresRepository(dbNode.Connection)
+	vendorTxUseCase := vendortransactions.NewUseCase(vendorTxRepo)
+	vendorTxController := vendortransactions.NewController(vendorTxUseCase)
+
+	// --- User Dashboard ---
+	userDashboardRepo := userdashboard.NewPostgresRepository(dbNode.Connection)
+	userDashboardUseCase := userdashboard.NewUseCase(userDashboardRepo)
+	userDashboardController := userdashboard.NewController(userDashboardUseCase)
+
 	// --- Dependency Injection ---
 	deps := &controller.Dependencies{
 		RegisterController:    registerController,
@@ -225,6 +243,9 @@ func main() {
 		WithdrawalController:         withdrawalController,
 		VendorDashboardController:    vendorDashboardController,
 		ProductRatingsController:     productRatingsController,
+		VendorWithdrawalController:   vendorWithdrawalController,
+		VendorTransactionController:  vendorTxController,
+		UserDashboardController:      userDashboardController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)
