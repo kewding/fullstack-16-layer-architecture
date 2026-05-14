@@ -3,6 +3,7 @@ package vendorinfo
 import (
 	"context"
 	"fmt"
+	"log"
 	"mime/multipart"
 
 	"github.com/kewding/backend/internal/infra/cloudinary"
@@ -46,6 +47,7 @@ func (uc *vendorInfoUseCase) UploadDocument(ctx context.Context, userID string, 
 	if err != nil {
 		return fmt.Errorf("failed to upload document: %w", err)
 	}
+	log.Printf("[UploadDocument] cloudinary url=%q", url) // ← add this
 
 	return uc.repo.UpdateDocumentURL(ctx, userID, docType, url)
 }

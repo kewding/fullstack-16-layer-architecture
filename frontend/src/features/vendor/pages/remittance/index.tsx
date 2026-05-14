@@ -1,455 +1,497 @@
-// VendorWithdrawalPage.tsx
+// src/features/vendor/pages/VendorWithdrawPage.tsx
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
 import {
   AlertCircle,
   ArrowDownLeft,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Info,
   Loader2,
+  PhilippinePeso,
   X,
-  XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { PendingWithdrawalResponse, WithdrawalHistoryRow } from './schemas/remittance.schema';
-import { vendorWithdrawalService } from './services/remittance.service';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  REJECTION_REASON_LABELS,
+  vendorWithdrawalService,
+  type PendingWithdrawal,
+  type WithdrawalHistoryRow,
+} from './services/remittance.service';
+// ── Preset amounts ────────────────────────────────────────────────────────────
+const PRESET_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-const formatPeso = (v: number) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(v);
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; classes: string }> = {
-  completed: {
-    label: 'Completed',
-    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-    classes: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-  },
-  rejected: {
-    label: 'Rejected',
-    icon: <XCircle className="w-3.5 h-3.5" />,
-    classes: 'bg-red-500/15 text-red-400 border border-red-500/30',
-  },
-  pending: {
-    label: 'Pending',
-    icon: <Clock className="w-3.5 h-3.5" />,
-    classes: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-  },
-};
-
-// ── Popover tooltip beside the input ──────────────────────────────────────────
-
-interface WalletPopoverProps {
-  balance: number;
-  show: boolean;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function peso(val: number) {
+  return new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+  }).format(val);
 }
 
-function WalletPopover({ balance, show }: WalletPopoverProps) {
-  if (!show) return null;
+function fmtDate(iso: string) {
+  return format(new Date(iso), 'MMM d, yyyy · h:mm a');
+}
+
+// ── Status badge ──────────────────────────────────────────────────────────────
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    rejected: 'bg-red-500/10 text-red-400 border-red-500/30',
+  };
   return (
-    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-20 w-56 rounded-xl bg-[#1a2740] border border-[#2a3f60] shadow-2xl p-3 text-sm">
-      <div className="flex items-center gap-2 text-[#8da5c8] mb-1">
-        <Info className="w-3.5 h-3.5 text-[#CD9A34]" />
-        <span className="font-medium text-xs uppercase tracking-wide">Available Balance</span>
-      </div>
-      <p className="text-white font-semibold text-base">{formatPeso(balance)}</p>
-      <p className="text-[#6b8099] text-xs mt-1">You can withdraw up to this amount.</p>
-      {/* arrow */}
-      <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-[#2a3f60]" />
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+        map[status] ?? 'bg-neutral-700 text-neutral-300 border-neutral-600'
+      }`}
+    >
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  );
+}
+
+// ── Detail Row helper ─────────────────────────────────────────────────────────
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex justify-between items-start gap-4">
+      <span className="text-sm text-neutral-400 shrink-0">{label}</span>
+      <span className="text-sm text-white text-right">{value}</span>
     </div>
   );
 }
 
 // ── History detail modal ──────────────────────────────────────────────────────
-
-interface HistoryDetailModalProps {
-  row: WithdrawalHistoryRow;
-  onClose: () => void;
-}
-
-function HistoryDetailModal({ row, onClose }: HistoryDetailModalProps) {
-  const cfg = STATUS_CONFIG[row.status] ?? STATUS_CONFIG.pending;
-
+function HistoryDetailModal({ row, onClose }: { row: WithdrawalHistoryRow; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#111c2d] border border-[#1e2e45] rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e2e45]">
-          <h2 className="text-base font-semibold text-white">Withdrawal Detail</h2>
-          <button onClick={onClose} className="text-[#4a6080] hover:text-white transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Withdrawal Detail</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 flex flex-col gap-4">
-          {/* Amount */}
-          <div className="rounded-xl bg-[#0d1828] border border-[#1e2e45] p-4 text-center">
-            <p className="text-[#8da5c8] text-xs mb-1">Amount</p>
-            <p className="text-3xl font-bold text-white">{formatPeso(row.amount)}</p>
-          </div>
-
-          {/* Details grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <DetailCell label="Status">
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.classes}`}
-              >
-                {cfg.icon} {cfg.label}
-              </span>
-            </DetailCell>
-            <DetailCell label="Date">{formatDate(row.created_at)}</DetailCell>
-            <DetailCell label="Processed By">{row.cashier_name ?? '—'}</DetailCell>
-            <DetailCell label="Balance Before">
-              {row.balance_before != null ? formatPeso(row.balance_before) : '—'}
-            </DetailCell>
-            <DetailCell label="Balance After">
-              {row.balance_after != null ? formatPeso(row.balance_after) : '—'}
-            </DetailCell>
-          </div>
-
-          {/* Rejection info */}
-          {row.status === 'rejected' && (
-            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex flex-col gap-1">
-              <p className="text-red-400 text-xs font-semibold uppercase tracking-wide">
-                Rejection Info
-              </p>
-              <p className="text-red-300 text-sm capitalize">
-                {row.rejection_reason?.replace(/_/g, ' ') ?? '—'}
-              </p>
-              {row.rejection_comment && (
-                <p className="text-[#8da5c8] text-sm mt-1 italic">"{row.rejection_comment}"</p>
-              )}
-            </div>
-          )}
+        {/* Amount */}
+        <div className="bg-neutral-800 rounded-xl p-4 text-center">
+          <p className="text-xs text-neutral-400 uppercase tracking-widest mb-1">Amount</p>
+          <p
+            className={`text-3xl font-bold ${
+              row.status === 'completed' ? 'text-red-400' : 'text-neutral-300'
+            }`}
+          >
+            -{peso(row.amount)}
+          </p>
         </div>
+
+        {/* Details */}
+        <div className="flex flex-col gap-3">
+          <DetailRow label="Status" value={<StatusBadge status={row.status} />} />
+          <DetailRow label="Date" value={fmtDate(row.created_at)} />
+          {row.cashier_name && <DetailRow label="Processed by" value={row.cashier_name} />}
+          {row.status === 'completed' && row.balance_before != null && (
+            <>
+              <DetailRow label="Balance before" value={peso(row.balance_before)} />
+              <DetailRow label="Balance after" value={peso(row.balance_after ?? 0)} />
+            </>
+          )}
+          {row.status === 'rejected' && row.rejection_reason && (
+            <DetailRow
+              label="Rejection reason"
+              value={REJECTION_REASON_LABELS[row.rejection_reason] ?? row.rejection_reason}
+            />
+          )}
+          {row.rejection_comment && <DetailRow label="Comment" value={row.rejection_comment} />}
+        </div>
+
+        <Button
+          onClick={onClose}
+          className="w-full rounded-xl bg-white text-black hover:bg-neutral-200"
+        >
+          Close
+        </Button>
       </div>
     </div>
   );
 }
 
-function DetailCell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg bg-[#0d1828] border border-[#1e2e45] p-3">
-      <p className="text-[#4a6080] text-xs mb-1">{label}</p>
-      <div className="text-white text-sm font-medium">{children}</div>
-    </div>
-  );
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
-
-export const VendorWithdrawalPage: React.FC = () => {
-  // Wallet + pending state
+export const VendorWithdrawPage: React.FC = () => {
+  // balance
   const [balance, setBalance] = useState<number | null>(null);
-  const [pending, setPending] = useState<PendingWithdrawalResponse | null>(null);
-  const [loadingInit, setLoadingInit] = useState(true);
+  const [balanceLoading, setBalanceLoading] = useState(true);
 
-  // Request form
-  const [amount, setAmount] = useState('');
+  // form
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [inputFocused, setInputFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // History
-  const [historyPage, setHistoryPage] = useState(1);
-  const [historyData, setHistoryData] = useState<WithdrawalHistoryRow[]>([]);
-  const [historyTotal, setHistoryTotal] = useState(0);
-  const [historyTotalPages, setHistoryTotalPages] = useState(1);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<WithdrawalHistoryRow | null>(null);
-
-  // Cancelling
+  // pending
+  const [pending, setPending] = useState<PendingWithdrawal | null>(null);
+  const [pendingLoading, setPendingLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
 
-  const loadInit = useCallback(async () => {
+  // history
+  const [history, setHistory] = useState<WithdrawalHistoryRow[]>([]);
+  const [histTotal, setHistTotal] = useState(0);
+  const [histTotalPages, setHistTotalPages] = useState(1);
+  const [histPage, setHistPage] = useState(1);
+  const [histLoading, setHistLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<WithdrawalHistoryRow | null>(null);
+
+  // ── Loaders ─────────────────────────────────────────────────────────────────
+  const loadBalance = useCallback(async () => {
+    setBalanceLoading(true);
     try {
-      const [bal, pend] = await Promise.all([
-        vendorWithdrawalService.getWalletBalance(),
-        vendorWithdrawalService.getPendingRequest(),
-      ]);
-      setBalance(bal);
-      setPending(pend);
+      const w = await vendorWithdrawalService.getBalance();
+      setBalance(w.balance);
     } catch {
-      // non-fatal
+      /* silent */
     } finally {
-      setLoadingInit(false);
+      setBalanceLoading(false);
     }
   }, []);
 
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
+  const loadPending = useCallback(async () => {
+    setPendingLoading(true);
     try {
-      const res = await vendorWithdrawalService.listHistory(historyPage, '', '');
-      setHistoryData(res.data);
-      setHistoryTotal(res.total);
-      setHistoryTotalPages(res.total_pages);
+      const res = await vendorWithdrawalService.getPendingRequest();
+      setPending(res.success ? (res.data ?? null) : null);
     } catch {
-      // non-fatal
+      setPending(null);
     } finally {
-      setHistoryLoading(false);
+      setPendingLoading(false);
     }
-  }, [historyPage]);
+  }, []);
+
+  const loadHistory = useCallback(async (page: number) => {
+    setHistLoading(true);
+    try {
+      const res = await vendorWithdrawalService.listHistory(page);
+      setHistory(res.data);
+      setHistTotal(res.total);
+      setHistTotalPages(res.total_pages);
+    } catch {
+      /* silent */
+    } finally {
+      setHistLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadInit();
-  }, [loadInit]);
+    loadBalance();
+  }, [loadBalance]);
   useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+    loadPending();
+  }, [loadPending]);
+  useEffect(() => {
+    loadHistory(histPage);
+  }, [loadHistory, histPage]);
 
-  const parsedAmount = parseFloat(amount);
-  const amountValid =
-    !isNaN(parsedAmount) && parsedAmount >= 1 && balance !== null && parsedAmount <= balance;
+  // ── Derived ──────────────────────────────────────────────────────────────────
+  const effectiveAmount = selectedPreset !== null ? selectedPreset : parseFloat(customAmount) || 0;
+  const maxAmount = balance ?? 0;
+  const amountValid = effectiveAmount >= 1 && effectiveAmount <= maxAmount;
+  const hasPending = !pendingLoading && pending !== null;
 
+  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!amountValid) return;
     setSubmitting(true);
-    setSubmitError('');
-    try {
-      const pend = await vendorWithdrawalService.submitRequest(parsedAmount);
-      setPending(pend);
-      setAmount('');
-      if (balance !== null) setBalance(balance); // balance hasn't changed yet
-    } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
+    setSubmitError(null);
+    const res = await vendorWithdrawalService.submitRequest(effectiveAmount);
+    if (res.success) {
+      setSelectedPreset(null);
+      setCustomAmount('');
+      await loadPending();
+      await loadBalance();
+    } else {
+      const msgs: Record<string, string> = {
+        pending_request_exists: 'You already have a pending withdrawal request.',
+        amount_exceeds_balance: 'Amount exceeds your current wallet balance.',
+        invalid_amount: 'Amount must be at least ₱1.',
+      };
+      setSubmitError(msgs[res.error?.code ?? ''] ?? 'Something went wrong. Please try again.');
     }
+    setSubmitting(false);
   };
 
+  // ── Cancel ───────────────────────────────────────────────────────────────────
   const handleCancel = async () => {
     if (!pending) return;
     setCancelling(true);
-    try {
-      await vendorWithdrawalService.cancelRequest(pending.id);
+    const res = await vendorWithdrawalService.cancelRequest(pending.id);
+    if (res.success) {
       setPending(null);
-      loadHistory();
-    } catch {
-      // show nothing, request might already be processed
-    } finally {
-      setCancelling(false);
+      await loadBalance();
     }
+    setCancelling(false);
   };
 
   return (
-    <div className="w-full px-1">
-      <main className="flex flex-col gap-6 max-w-3xl">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Withdrawal</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Request a cash withdrawal from your wallet balance.
-          </p>
-        </div>
+    <div className="flex px-1 w-full">
+      <main className="flex flex-col w-full gap-6">
+        <h1 className="text-2xl font-semibold">Withdraw</h1>
 
-        {/* Wallet balance card */}
-        <div className="rounded-2xl border bg-white p-6 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Available Balance
-            </p>
-            <p className="text-3xl font-bold mt-1">
-              {loadingInit ? '—' : formatPeso(balance ?? 0)}
-            </p>
-          </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#CD9A34]/10">
-            <ArrowDownLeft className="w-6 h-6 text-[#CD9A34]" />
-          </div>
-        </div>
-
-        {/* Request section */}
-        <div className="rounded-2xl border bg-white p-6 flex flex-col gap-5">
-          <h2 className="text-sm font-semibold">Request Withdrawal</h2>
-
-          {pending ? (
-            /* Pending state card */
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-800">Pending Request</p>
-                  <p className="text-sm text-amber-700 mt-0.5">
-                    {formatPeso(pending.amount)} — submitted {formatDate(pending.created_at)}
-                  </p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    You cannot submit another request while one is pending.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="shrink-0 text-xs font-medium text-red-600 hover:text-red-700 underline underline-offset-2 disabled:opacity-50"
-              >
-                {cancelling ? 'Cancelling…' : 'Cancel'}
-              </button>
+        {/* ── Top section: balance card + form/pending side by side ── */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          {/* Balance card */}
+          <div className="rounded-xl border border-neutral-700 bg-neutral-900 p-5 flex items-center justify-between lg:w-72 shrink-0">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-neutral-400 uppercase tracking-wider">
+                Current Balance
+              </span>
+              {balanceLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-neutral-400 mt-1" />
+              ) : (
+                <span className="text-2xl font-bold text-white flex items-center gap-1">
+                  <PhilippinePeso className="w-5 h-5 text-neutral-400" />
+                  {(balance ?? 0).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              )}
             </div>
-          ) : (
-            /* Amount input */
-            <div className="flex flex-col gap-3">
-              <label className="text-xs font-medium text-muted-foreground">Amount (₱)</label>
-              <div className="relative flex items-center">
-                <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
-                    ₱
-                  </span>
-                  <input
-                    ref={inputRef}
-                    type="number"
-                    min={1}
-                    max={balance ?? undefined}
-                    value={amount}
-                    onChange={(e) => {
-                      setAmount(e.target.value);
-                      setSubmitError('');
-                    }}
-                    onFocus={() => setInputFocused(true)}
-                    onBlur={() => setInputFocused(false)}
-                    placeholder="0.00"
-                    className="w-full h-12 pl-9 pr-4 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#CD9A34]/50 focus:border-[#CD9A34]"
-                  />
-                  {/* Popover beside the input */}
-                  <WalletPopover balance={balance ?? 0} show={inputFocused && balance !== null} />
-                </div>
+            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+              <ArrowDownLeft className="w-5 h-5 text-red-400" />
+            </div>
+          </div>
 
+          {/* Request form (disabled when pending exists) */}
+          <div
+            className={`flex-1 rounded-xl border bg-neutral-900 p-5 flex flex-col gap-4 transition-opacity ${
+              hasPending
+                ? 'border-neutral-700/50 opacity-50 pointer-events-none select-none'
+                : 'border-neutral-700'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">Request Withdrawal</h2>
+              {hasPending && (
+                <span className="text-xs text-yellow-400 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Pending request active
+                </span>
+              )}
+            </div>
+
+            <p className="text-sm text-neutral-400">
+              Select a preset or enter a custom amount. Maximum is your current balance.
+            </p>
+
+            {/* Preset buttons */}
+            <div className="flex flex-wrap gap-2">
+              {PRESET_AMOUNTS.filter((a) => a <= maxAmount).map((a) => (
                 <button
-                  onClick={handleSubmit}
-                  disabled={!amountValid || submitting}
-                  className="ml-3 h-12 px-6 rounded-xl bg-[#CD9A34] text-white text-sm font-semibold
-                    hover:bg-[#b8862c] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
-                    flex items-center gap-2"
+                  key={a}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPreset(a);
+                    setCustomAmount('');
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                    selectedPreset === a
+                      ? 'bg-white text-black border-white'
+                      : 'border-neutral-600 text-neutral-300 hover:border-neutral-400 hover:text-white'
+                  }`}
                 >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Request
+                  {peso(a)}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              {/* Validation hints */}
-              {amount && !amountValid && (
-                <div className="flex items-center gap-2 text-red-500 text-xs">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {isNaN(parsedAmount) || parsedAmount < 1
-                    ? 'Minimum withdrawal amount is ₱1'
-                    : `Cannot exceed your available balance of ${formatPeso(balance ?? 0)}`}
-                </div>
-              )}
-
-              {submitError && (
-                <div className="flex items-center gap-2 text-red-500 text-xs">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {submitError}
-                </div>
+            {/* Custom amount */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-neutral-400">Custom Amount</label>
+              <Input
+                type="number"
+                min={1}
+                max={maxAmount}
+                placeholder="e.g. 750"
+                value={customAmount}
+                onChange={(e) => {
+                  setCustomAmount(e.target.value);
+                  setSelectedPreset(null);
+                }}
+                className="bg-neutral-800 border-neutral-600 text-white"
+              />
+              {customAmount && parseFloat(customAmount) > maxAmount && (
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Exceeds your current balance of {peso(maxAmount)}
+                </p>
               )}
             </div>
-          )}
+
+            {submitError && (
+              <p className="text-sm text-red-400 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {submitError}
+              </p>
+            )}
+
+            <Button
+              onClick={handleSubmit}
+              disabled={!amountValid || submitting || balanceLoading || hasPending}
+              className="w-full rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 disabled:opacity-40"
+            >
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting…
+                </span>
+              ) : (
+                `Request ${effectiveAmount >= 1 ? peso(effectiveAmount) : ''} Withdrawal`
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* History table */}
-        <div className="rounded-2xl border bg-white overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-sm font-semibold">Withdrawal History</h2>
+        {/* ── Pending request card ── */}
+        {pendingLoading ? (
+          <div className="flex items-center gap-2 text-neutral-500 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Checking for pending requests…
           </div>
+        ) : pending ? (
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-5 flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-yellow-400">
+              <Clock className="w-4 h-4" />
+              <span className="text-sm font-semibold">Pending Withdrawal Request</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-2xl font-bold text-white">{peso(pending.amount)}</span>
+                <span className="text-xs text-neutral-500">{fmtDate(pending.created_at)}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cancelling}
+                onClick={handleCancel}
+                className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-400"
+              >
+                {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cancel'}
+              </Button>
+            </div>
+            <p className="text-xs text-neutral-400">
+              Your request is awaiting cashier processing. You can cancel it at any time before it
+              is actioned.
+            </p>
+          </div>
+        ) : null}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/40">
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {/* ── History table ── */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-base font-semibold">Withdrawal History</h2>
+          <div className="rounded-lg border border-neutral-800 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-neutral-800 bg-neutral-900">
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Date
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Amount
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Status
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Cashier
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {historyLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center">
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Loading…
-                      </div>
-                    </td>
-                  </tr>
-                ) : historyData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-5 py-10 text-center text-sm text-muted-foreground"
-                    >
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {histLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-10 text-center">
+                      <Loader2 className="mx-auto w-5 h-5 animate-spin text-neutral-400" />
+                    </TableCell>
+                  </TableRow>
+                ) : history.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-10 text-center text-sm text-neutral-500">
                       No withdrawal history yet.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  historyData.map((row) => {
-                    const cfg = STATUS_CONFIG[row.status] ?? STATUS_CONFIG.pending;
-                    return (
-                      <tr key={row.id} className="border-t hover:bg-muted/20 transition-colors">
-                        <td className="px-5 py-4">{formatDate(row.created_at)}</td>
-                        <td className="px-5 py-4 font-medium">{formatPeso(row.amount)}</td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.classes}`}
-                          >
-                            {cfg.icon} {cfg.label}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-muted-foreground">
-                          {row.cashier_name ?? '—'}
-                        </td>
-                        <td className="px-5 py-4">
-                          <button
-                            onClick={() => setSelectedRow(row)}
-                            className="text-xs font-medium text-[#CD9A34] hover:underline"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  history.map((row) => (
+                    <TableRow key={row.id} className="border-neutral-800 hover:bg-neutral-800/40">
+                      <TableCell className="text-sm text-neutral-300">
+                        {format(new Date(row.created_at), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-red-400">
+                        -{peso(row.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="text-sm text-neutral-400">
+                        {row.cashier_name ?? '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs border-neutral-700 text-neutral-300 hover:text-white"
+                          onClick={() => setSelectedRow(row)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-5 py-4 border-t">
-            <p className="text-sm text-muted-foreground">{historyTotal} records total</p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                disabled={historyPage <= 1}
-                className="h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-muted/40 disabled:opacity-40"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-sm text-muted-foreground px-1">
-                Page {historyPage} of {Math.max(historyTotalPages, 1)}
+          {histTotal > 0 && (
+            <div className="flex items-center justify-between text-sm text-neutral-500 px-1">
+              <span>
+                {histTotal} record{histTotal !== 1 ? 's' : ''} total
               </span>
-              <button
-                onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
-                disabled={historyPage >= historyTotalPages}
-                className="h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-muted/40 disabled:opacity-40"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={histPage <= 1}
+                  onClick={() => setHistPage((p) => p - 1)}
+                  className="border-neutral-700"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-xs">
+                  Page {histPage} of {histTotalPages === 0 ? 1 : histTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={histPage >= histTotalPages}
+                  onClick={() => setHistPage((p) => p + 1)}
+                  className="border-neutral-700"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 

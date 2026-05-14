@@ -3,6 +3,7 @@ package cloudinary
 import (
 	"context"
 	"fmt"
+	"log"
 	"mime/multipart"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -25,11 +26,23 @@ func (u *Uploader) UploadFile(ctx context.Context, file multipart.File, filename
 	uploadResult, err := u.cld.Upload.Upload(ctx, file, uploader.UploadParams{
 		Folder:       "vendor-documents",
 		PublicID:     filename,
-		ResourceType: "raw",
+		ResourceType: "auto",
 		Type:         "upload",
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file to cloudinary: %w", err)
+	}
+
+	// Add this:
+	log.Printf("[Cloudinary] PublicID=%q SecureURL=%q Error=%+v AssetID=%q",
+		uploadResult.PublicID,
+		uploadResult.SecureURL,
+		uploadResult.Error,
+		uploadResult.AssetID,
+	)
+
+	if uploadResult.SecureURL == "" {
+		return "", fmt.Errorf("cloudinary returned empty URL for file: %s", filename)
 	}
 
 	return uploadResult.SecureURL, nil

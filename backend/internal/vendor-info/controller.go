@@ -123,6 +123,14 @@ func (c *Controller) UploadDocument(ctx *gin.Context) {
 	}
 	defer file.Close()
 
+	log.Printf("[UploadDocument] docType=%q userID=%q filename=%q size=%d contentType=%q",
+		docType,
+		userID,
+		header.Filename,
+		header.Size,
+		header.Header.Get("Content-Type"),
+	)
+
 	if header.Size > 10<<20 { // 10MB limit
 		ctx.JSON(http.StatusBadRequest, response.APIResponse{
 			Success: false,

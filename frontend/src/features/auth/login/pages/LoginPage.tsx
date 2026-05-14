@@ -224,16 +224,15 @@ export const LoginPage: React.FC = () => {
         </section>
 
         <footer className="w-full max-w-[330px] text-[#415B5A] text-xs text-center">
-          This site is protected by your MOM and our self imposed{' '}
-          <a href="#" className="text-[#CD9A34]">
-            EULA
-          </a>{' '}
-          and{' '}
-          <a href="#" className="text-[#CD9A34]">
-            Terms of Service
-          </a>{' '}
-          apply
-        </footer>
+  By using this site, you agree to our{' '}
+  <a href="/eula" className="text-[#CD9A34] hover:underline">
+    EULA
+  </a>{' '}
+  and{' '}
+  <a href="/terms" className="text-[#CD9A34] hover:underline">
+    Terms of Service
+  </a>.
+</footer>
       </main>
     </div>
   );
