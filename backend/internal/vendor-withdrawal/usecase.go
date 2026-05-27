@@ -6,6 +6,7 @@ import (
 	"math"
 )
 
+// UseCase is the business-logic contract for vendor withdrawal requests.
 type UseCase interface {
 	// ── vendor ────────────────────────────────────────────────────────────────
 	SubmitRequest(ctx context.Context, userID string, amount float64) (*PendingVendorWithdrawalResponse, error)
@@ -39,23 +40,23 @@ func (uc *vendorWithdrawalUseCase) GetWalletBalance(ctx context.Context, userID 
 }
 
 func (uc *vendorWithdrawalUseCase) SubmitRequest(ctx context.Context, userID string, amount float64) (*PendingVendorWithdrawalResponse, error) {
-	// 1. Resolve vendor_id and check current wallet balance
+	// 1. Resolve vendor_id and current wallet balance.
 	vendorID, balance, err := uc.repo.GetVendorByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("SubmitRequest resolve vendor: %w", err)
 	}
 
-	// 2. Validate amount ≥ 1
+	// 2. Minimum amount guard.
 	if amount < 1 {
-		return nil, fmt.Errorf("minimum withdrawal amount is ₱1")
+		return nil, ErrMinimumAmount
 	}
 
-	// 3. Amount must not exceed current wallet balance
+	// 3. Amount must not exceed wallet balance.
 	if amount > balance {
 		return nil, ErrAmountExceedsBalance
 	}
 
-	// 4. Block if there is already a pending request
+	// 4. Only one pending request at a time.
 	hasPending, err := uc.repo.HasPendingRequest(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("SubmitRequest check pending: %w", err)
@@ -64,12 +65,12 @@ func (uc *vendorWithdrawalUseCase) SubmitRequest(ctx context.Context, userID str
 		return nil, ErrPendingRequestExists
 	}
 
-	// 5. Insert
-	_, err = uc.repo.SubmitRequest(ctx, userID, vendorID, amount)
-	if err != nil {
+	// 5. Insert.
+	if _, err = uc.repo.SubmitRequest(ctx, userID, vendorID, amount); err != nil {
 		return nil, fmt.Errorf("SubmitRequest insert: %w", err)
 	}
 
+	// 6. Return the newly created row.
 	pending, err := uc.repo.GetPendingRequest(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("SubmitRequest fetch new: %w", err)
@@ -82,6 +83,7 @@ func (uc *vendorWithdrawalUseCase) GetPendingRequest(ctx context.Context, userID
 }
 
 func (uc *vendorWithdrawalUseCase) CancelRequest(ctx context.Context, requestID string, userID string) error {
+	// Hard-delete the pending row — cancelled requests do not appear in history.
 	return uc.repo.DeletePendingRequest(ctx, requestID, userID)
 }
 
@@ -145,9 +147,12 @@ func (uc *vendorWithdrawalUseCase) CompleteRequest(ctx context.Context, requestI
 		return err
 	}
 
-	// Fire vendor notification (non-blocking)
+	// Notify vendor (fire-and-forget).
 	go func() {
-		msg := fmt.Sprintf("Your withdrawal request of ₱%.2f has been completed. Please collect your cash from the cashier.", req.Amount)
+		msg := fmt.Sprintf(
+			"Your remittance request of ₱%.2f has been completed. Please collect your cash from the cashier.",
+			req.Amount,
+		)
 		_ = uc.repo.CreateUserNotification(
 			context.Background(),
 			req.UserID,
@@ -185,8 +190,12 @@ func (uc *vendorWithdrawalUseCase) RejectRequest(ctx context.Context, requestID 
 		return err
 	}
 
+	// Notify vendor (fire-and-forget).
 	go func() {
-		msg := fmt.Sprintf("Your withdrawal request of ₱%.2f has been rejected. Reason: %s.", req.Amount, string(input.Reason))
+		msg := fmt.Sprintf(
+			"Your remittance request of ₱%.2f has been rejected. Reason: %s.",
+			req.Amount, string(input.Reason),
+		)
 		_ = uc.repo.CreateUserNotification(
 			context.Background(),
 			req.UserID,

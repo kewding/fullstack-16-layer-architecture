@@ -40,7 +40,6 @@ func (r *postgresRepository) buildDateFilter(col string, dateStart, dateEnd stri
 	return strings.Join(parts, " AND ")
 }
 
-// GetVendorByUserID returns the vendor_id and current wallet balance for a vendor user.
 func (r *postgresRepository) GetVendorByUserID(ctx context.Context, userID string) (string, float64, error) {
 	var vendorID string
 	var balance float64
@@ -81,6 +80,19 @@ func (r *postgresRepository) GetCashierName(ctx context.Context, cashierID strin
 		return "", nil
 	}
 	return name, err
+}
+
+func (r *postgresRepository) GetRequestByID(ctx context.Context, requestID string) (*vendorWithdrawalRow, error) {
+	var row vendorWithdrawalRow
+	err := r.db.QueryRowContext(ctx,
+		`SELECT id, user_id, vendor_id, amount, status
+		 FROM vendor_withdrawal_requests WHERE id = $1`,
+		requestID,
+	).Scan(&row.ID, &row.UserID, &row.VendorID, &row.Amount, &row.Status)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrRequestNotFound
+	}
+	return &row, err
 }
 
 // ── vendor ────────────────────────────────────────────────────────────────────
@@ -205,19 +217,6 @@ func (r *postgresRepository) ListHistory(ctx context.Context, userID string, par
 
 // ── cashier ───────────────────────────────────────────────────────────────────
 
-func (r *postgresRepository) GetRequestByID(ctx context.Context, requestID string) (*vendorWithdrawalRow, error) {
-	var row vendorWithdrawalRow
-	err := r.db.QueryRowContext(ctx,
-		`SELECT id, user_id, vendor_id, amount, status
-		 FROM vendor_withdrawal_requests WHERE id = $1`,
-		requestID,
-	).Scan(&row.ID, &row.UserID, &row.VendorID, &row.Amount, &row.Status)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrRequestNotFound
-	}
-	return &row, err
-}
-
 func (r *postgresRepository) ListPendingRequests(ctx context.Context, params CashierVendorWithdrawalParams) ([]CashierVendorWithdrawalRow, int, error) {
 	if params.Limit <= 0 {
 		params.Limit = 10
@@ -248,9 +247,9 @@ func (r *postgresRepository) ListPendingRequests(ctx context.Context, params Cas
 	where := "WHERE " + strings.Join(conditions, " AND ")
 	base := fmt.Sprintf(`
 		FROM vendor_withdrawal_requests vwr
-		JOIN users u ON u.id = vwr.user_id
-		JOIN users_info ui ON ui.user_id = u.id
-		LEFT JOIN stalls s ON s.user_id = u.id AND s.deleted_at IS NULL
+		JOIN users u       ON u.id        = vwr.user_id
+		JOIN users_info ui ON ui.user_id  = u.id
+		LEFT JOIN stalls s ON s.user_id   = u.id AND s.deleted_at IS NULL
 		%s`, where)
 
 	var total int
@@ -262,7 +261,7 @@ func (r *postgresRepository) ListPendingRequests(ctx context.Context, params Cas
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
 		SELECT vwr.id, vwr.user_id, vwr.vendor_id,
 		       CONCAT(ui.first_name, ' ', ui.last_name) AS full_name,
-		       COALESCE(s.stall_name, '') AS stall_name,
+		       COALESCE(s.stall_name, '')               AS stall_name,
 		       vwr.amount, vwr.status, vwr.created_at
 		%s
 		ORDER BY vwr.created_at ASC
@@ -289,11 +288,11 @@ func (r *postgresRepository) ListPendingRequests(ctx context.Context, params Cas
 }
 
 // CompleteRequest atomically:
-//  1. Verifies request is pending (row-lock)
-//  2. Reads and locks wallet balance
-//  3. Deducts wallet balance
-//  4. Inserts vendors_ledger remittance DEBIT entry
-//  5. Updates vendor_withdrawal_requests row with status + snapshots + ledger_entry_id
+//  1. Row-locks and verifies the request is still pending.
+//  2. Row-locks and reads the vendor's wallet balance.
+//  3. Deducts the wallet balance (fails if insufficient).
+//  4. Inserts a vendors_ledger remittance DEBIT entry.
+//  5. Updates vendor_withdrawal_requests with status + snapshots + ledger_entry_id.
 func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID string, cashierID string, cashierName string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -303,15 +302,14 @@ func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID stri
 
 	// 1. Lock and verify
 	var req vendorWithdrawalRow
-	err = tx.QueryRowContext(ctx,
+	if err := tx.QueryRowContext(ctx,
 		`SELECT id, user_id, vendor_id, amount, status
 		 FROM vendor_withdrawal_requests WHERE id = $1 FOR UPDATE`,
 		requestID,
-	).Scan(&req.ID, &req.UserID, &req.VendorID, &req.Amount, &req.Status)
-	if errors.Is(err, sql.ErrNoRows) {
-		return ErrRequestNotFound
-	}
-	if err != nil {
+	).Scan(&req.ID, &req.UserID, &req.VendorID, &req.Amount, &req.Status); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrRequestNotFound
+		}
 		return fmt.Errorf("CompleteRequest lock: %w", err)
 	}
 	if req.Status != "pending" {
@@ -325,15 +323,13 @@ func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID stri
 	).Scan(&balanceBefore); err != nil {
 		return fmt.Errorf("CompleteRequest read balance: %w", err)
 	}
-
 	if balanceBefore < req.Amount {
 		return ErrInsufficientBalance
 	}
-
 	balanceAfter := balanceBefore - req.Amount
 
 	// 3. Deduct wallet
-	result, err := tx.ExecContext(ctx,
+	res, err := tx.ExecContext(ctx,
 		`UPDATE wallets SET balance = balance - $1, updated_at = NOW()
 		 WHERE user_id = $2 AND balance - $1 >= 0`,
 		req.Amount, req.UserID,
@@ -341,22 +337,20 @@ func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID stri
 	if err != nil {
 		return fmt.Errorf("CompleteRequest deduct wallet: %w", err)
 	}
-	if n, _ := result.RowsAffected(); n == 0 {
+	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrInsufficientBalance
 	}
 
 	// 4. Insert vendors_ledger remittance DEBIT
-	refType := "vendor_withdrawal_requests"
 	note := fmt.Sprintf("Vendor withdrawal payout approved, amount: %.2f", req.Amount)
-
 	var ledgerEntryID string
 	if err := tx.QueryRowContext(ctx, `
 		INSERT INTO vendors_ledger
 			(vendor_id, entry_type, amount, direction, billing_month, reference_id, reference_type, note)
 		VALUES
-			($1, 'remittance'::vendors_ledger_entry_type, $2, -1, NULL, $3::UUID, $4, $5)
+			($1, 'remittance'::vendors_ledger_entry_type, $2, -1, NULL, $3::UUID, 'vendor_withdrawal_requests', $4)
 		RETURNING id`,
-		req.VendorID, req.Amount, requestID, refType, note,
+		req.VendorID, req.Amount, requestID, note,
 	).Scan(&ledgerEntryID); err != nil {
 		return fmt.Errorf("CompleteRequest insert vendors_ledger: %w", err)
 	}
@@ -364,11 +358,11 @@ func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID stri
 	// 5. Update request row
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE vendor_withdrawal_requests
-		SET status = 'completed',
-		    cashier_id = $1,
-		    cashier_name = $2,
-		    balance_before = $3,
-		    balance_after = $4,
+		SET status          = 'completed',
+		    cashier_id      = $1,
+		    cashier_name    = $2,
+		    balance_before  = $3,
+		    balance_after   = $4,
 		    ledger_entry_id = $5::UUID
 		WHERE id = $6`,
 		cashierID, cashierName, balanceBefore, balanceAfter, ledgerEntryID, requestID,
@@ -382,10 +376,10 @@ func (r *postgresRepository) CompleteRequest(ctx context.Context, requestID stri
 func (r *postgresRepository) RejectRequest(ctx context.Context, requestID string, cashierID string, cashierName string, reason RejectionReason, comment string) error {
 	result, err := r.db.ExecContext(ctx, `
 		UPDATE vendor_withdrawal_requests
-		SET status = 'rejected',
-		    cashier_id = $1,
-		    cashier_name = $2,
-		    rejection_reason = $3::rejection_reason_type,
+		SET status            = 'rejected',
+		    cashier_id        = $1,
+		    cashier_name      = $2,
+		    rejection_reason  = $3::rejection_reason_type,
 		    rejection_comment = NULLIF($4, '')
 		WHERE id = $5 AND status = 'pending'`,
 		cashierID, cashierName, string(reason), comment, requestID,
@@ -429,9 +423,9 @@ func (r *postgresRepository) ListCompletedRequests(ctx context.Context, params C
 	where := "WHERE " + strings.Join(conditions, " AND ")
 	base := fmt.Sprintf(`
 		FROM vendor_withdrawal_requests vwr
-		JOIN users u ON u.id = vwr.user_id
-		JOIN users_info ui ON ui.user_id = u.id
-		LEFT JOIN stalls s ON s.user_id = u.id AND s.deleted_at IS NULL
+		JOIN users u       ON u.id        = vwr.user_id
+		JOIN users_info ui ON ui.user_id  = u.id
+		LEFT JOIN stalls s ON s.user_id   = u.id AND s.deleted_at IS NULL
 		%s`, where)
 
 	var total int
@@ -503,9 +497,9 @@ func (r *postgresRepository) ListRejectedRequests(ctx context.Context, params Ca
 	where := "WHERE " + strings.Join(conditions, " AND ")
 	base := fmt.Sprintf(`
 		FROM vendor_withdrawal_requests vwr
-		JOIN users u ON u.id = vwr.user_id
-		JOIN users_info ui ON ui.user_id = u.id
-		LEFT JOIN stalls s ON s.user_id = u.id AND s.deleted_at IS NULL
+		JOIN users u       ON u.id        = vwr.user_id
+		JOIN users_info ui ON ui.user_id  = u.id
+		LEFT JOIN stalls s ON s.user_id   = u.id AND s.deleted_at IS NULL
 		%s`, where)
 
 	var total int

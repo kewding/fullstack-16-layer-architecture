@@ -44,7 +44,8 @@ func (r *postgresRepository) GetDailyGrossProfit(ctx context.Context, vendorID s
 		JOIN vendors v  ON v.user_id = st.user_id
 		WHERE v.id = $1
 		  AND sa.created_at >= CURRENT_DATE
-		  AND sa.created_at <  CURRENT_DATE + INTERVAL '1 day'`,
+		  AND sa.created_at <  CURRENT_DATE + INTERVAL '1 day'
+		  AND sa.status = 'completed'`,
 		vendorID,
 	).Scan(&total)
 	if err != nil {
@@ -99,13 +100,14 @@ func (r *postgresRepository) GetTopSellingItems(ctx context.Context, vendorID st
 		SELECT
 			p.id::TEXT,
 			p.product_name,
-			COALESCE(SUM(si.quantity), 0)            AS total_qty,
-			COALESCE(SUM(si.extended_price), 0)      AS total_revenue,
+			COALESCE(SUM(si.quantity), 0)       AS total_qty,
+			COALESCE(SUM(si.extended_price), 0) AS total_revenue,
 			p.image_url
 		FROM products p
-		JOIN stalls st   ON st.id = p.stall_id
-		JOIN vendors v   ON v.user_id = st.user_id
+		JOIN stalls st       ON st.id = p.stall_id
+		JOIN vendors v       ON v.user_id = st.user_id
 		LEFT JOIN sales_items si ON si.products_id = p.id
+		LEFT JOIN sales sa       ON sa.id = si.sales_id AND sa.status = 'completed'
 		WHERE v.id = $1
 		  AND v.deleted_at IS NULL
 		GROUP BY p.id, p.product_name, p.image_url
@@ -141,13 +143,14 @@ func (r *postgresRepository) GetTopRatedItems(ctx context.Context, vendorID stri
 		SELECT
 			p.id::TEXT,
 			p.product_name,
-			ROUND(AVG(pr.rating)::NUMERIC, 1)  AS avg_rating,
-			COUNT(pr.id)                        AS rating_count,
+			ROUND(AVG(pr.rating)::NUMERIC, 1) AS avg_rating,
+			COUNT(pr.id)                      AS rating_count,
 			p.image_url
 		FROM products p
-		JOIN stalls st      ON st.id = p.stall_id
-		JOIN vendors v      ON v.user_id = st.user_id
+		JOIN stalls st          ON st.id = p.stall_id
+		JOIN vendors v          ON v.user_id = st.user_id
 		JOIN product_ratings pr ON pr.product_id = p.id
+		JOIN sales sa           ON sa.id = pr.sale_id AND sa.status = 'completed'
 		WHERE v.id = $1
 		  AND v.deleted_at IS NULL
 		GROUP BY p.id, p.product_name, p.image_url

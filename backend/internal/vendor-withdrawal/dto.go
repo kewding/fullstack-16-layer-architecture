@@ -1,6 +1,6 @@
 package vendorwithdrawal
 
-// RejectionReason mirrors the rejection_reason_type enum.
+// RejectionReason mirrors the rejection_reason_type enum used across the app.
 type RejectionReason string
 
 const (
@@ -9,17 +9,14 @@ const (
 	ReasonOther          RejectionReason = "other"
 )
 
-// ── Vendor-facing DTOs ────────────────────────────────────────────────────────
+// ── vendor-facing ─────────────────────────────────────────────────────────────
 
-type SubmitVendorWithdrawalRequest struct {
-	Amount float64 `json:"amount" validate:"required,gt=0"`
+// SubmitWithdrawalRequest is the body for POST /vendor-auth/withdraw/request.
+type SubmitWithdrawalRequest struct {
+	Amount float64 `json:"amount"`
 }
 
-type RejectVendorWithdrawalInput struct {
-	Reason  RejectionReason `json:"reason"  validate:"required"`
-	Comment string          `json:"comment"`
-}
-
+// PendingVendorWithdrawalResponse is returned for a single pending request.
 type PendingVendorWithdrawalResponse struct {
 	ID        string  `json:"id"`
 	Amount    float64 `json:"amount"`
@@ -27,7 +24,15 @@ type PendingVendorWithdrawalResponse struct {
 	CreatedAt string  `json:"created_at"`
 }
 
-// HistoryRow is what the vendor sees in the history table.
+// VendorWithdrawalHistoryParams filters for the vendor's own history list.
+type VendorWithdrawalHistoryParams struct {
+	Page      int
+	Limit     int
+	DateStart string
+	DateEnd   string
+}
+
+// VendorWithdrawalHistoryRow is one row in the vendor's history list.
 type VendorWithdrawalHistoryRow struct {
 	ID               string   `json:"id"`
 	Amount           float64  `json:"amount"`
@@ -40,13 +45,7 @@ type VendorWithdrawalHistoryRow struct {
 	CreatedAt        string   `json:"created_at"`
 }
 
-type VendorWithdrawalHistoryParams struct {
-	Page      int
-	Limit     int
-	DateStart string
-	DateEnd   string
-}
-
+// PaginatedVendorWithdrawalHistory is the paginated envelope for vendor history.
 type PaginatedVendorWithdrawalHistory struct {
 	Data       []VendorWithdrawalHistoryRow `json:"data"`
 	Total      int                          `json:"total"`
@@ -55,8 +54,9 @@ type PaginatedVendorWithdrawalHistory struct {
 	TotalPages int                          `json:"total_pages"`
 }
 
-// ── Cashier-facing DTOs ───────────────────────────────────────────────────────
+// ── cashier-facing ────────────────────────────────────────────────────────────
 
+// CashierVendorWithdrawalParams filters for cashier list views.
 type CashierVendorWithdrawalParams struct {
 	Page      int
 	Limit     int
@@ -65,6 +65,7 @@ type CashierVendorWithdrawalParams struct {
 	DateEnd   string
 }
 
+// CashierVendorWithdrawalRow is one row in the cashier's pending list.
 type CashierVendorWithdrawalRow struct {
 	ID        string  `json:"id"`
 	UserID    string  `json:"user_id"`
@@ -76,6 +77,7 @@ type CashierVendorWithdrawalRow struct {
 	CreatedAt string  `json:"created_at"`
 }
 
+// CashierVendorWithdrawalCompletedRow is one row in the completed list.
 type CashierVendorWithdrawalCompletedRow struct {
 	ID            string  `json:"id"`
 	FullName      string  `json:"full_name"`
@@ -87,6 +89,7 @@ type CashierVendorWithdrawalCompletedRow struct {
 	CreatedAt     string  `json:"created_at"`
 }
 
+// CashierVendorWithdrawalRejectedRow is one row in the rejected list.
 type CashierVendorWithdrawalRejectedRow struct {
 	ID               string  `json:"id"`
 	FullName         string  `json:"full_name"`
@@ -98,6 +101,7 @@ type CashierVendorWithdrawalRejectedRow struct {
 	CreatedAt        string  `json:"created_at"`
 }
 
+// PaginatedCashierVendorWithdrawals — pending list envelope.
 type PaginatedCashierVendorWithdrawals struct {
 	Data       []CashierVendorWithdrawalRow `json:"data"`
 	Total      int                          `json:"total"`
@@ -106,6 +110,7 @@ type PaginatedCashierVendorWithdrawals struct {
 	TotalPages int                          `json:"total_pages"`
 }
 
+// PaginatedCashierVendorCompleted — completed list envelope.
 type PaginatedCashierVendorCompleted struct {
 	Data       []CashierVendorWithdrawalCompletedRow `json:"data"`
 	Total      int                                   `json:"total"`
@@ -114,6 +119,7 @@ type PaginatedCashierVendorCompleted struct {
 	TotalPages int                                   `json:"total_pages"`
 }
 
+// PaginatedCashierVendorRejected — rejected list envelope.
 type PaginatedCashierVendorRejected struct {
 	Data       []CashierVendorWithdrawalRejectedRow `json:"data"`
 	Total      int                                  `json:"total"`
@@ -122,8 +128,20 @@ type PaginatedCashierVendorRejected struct {
 	TotalPages int                                  `json:"total_pages"`
 }
 
-// ── Internal ──────────────────────────────────────────────────────────────────
+// RejectVendorWithdrawalInput is the body for the reject endpoint.
+type RejectVendorWithdrawalInput struct {
+	Reason  RejectionReason `json:"reason"`
+	Comment string          `json:"comment"`
+}
 
+// WalletBalanceResponse is returned by GET /vendor-auth/withdraw/balance.
+type WalletBalanceResponse struct {
+	Balance float64 `json:"balance"`
+}
+
+// ── internal ──────────────────────────────────────────────────────────────────
+
+// vendorWithdrawalRow is the internal DB row used between repo and use-case.
 type vendorWithdrawalRow struct {
 	ID       string
 	UserID   string

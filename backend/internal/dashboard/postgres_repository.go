@@ -81,7 +81,8 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 	if err := r.db.QueryRowContext(ctx, `
 		SELECT COALESCE(SUM(total_amount), 0)
 		FROM sales
-		WHERE created_at BETWEEN $1 AND $2`,
+		WHERE created_at BETWEEN $1 AND $2
+		  AND status = 'completed'`,
 		from, to,
 	).Scan(&grossSales); err != nil {
 		return nil, fmt.Errorf("GetStatCards gross sales: %w", err)
@@ -111,6 +112,7 @@ func (r *postgresRepository) GetStatCards(ctx context.Context, req DateRangeRequ
 		JOIN sales_items si            ON si.sales_id   = s.id
 		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
 		WHERE s.created_at BETWEEN $1 AND $2
+		AND s.status = 'completed'
 		GROUP BY s.id`,
 		from, to,
 	)
@@ -173,6 +175,7 @@ func (r *postgresRepository) GetNQSTrend(ctx context.Context) (*NQSTrendResponse
 		JOIN sales_items si            ON si.sales_id   = s.id
 		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
 		WHERE s.created_at BETWEEN $1 AND $2
+		  AND s.status = 'completed'
 		GROUP BY s.id, DATE(s.created_at)
 		ORDER BY sale_date`,
 		monday, friday,
@@ -307,7 +310,8 @@ func (r *postgresRepository) GetNutritionalTarget(ctx context.Context, req DateR
 		FROM sales s
 		JOIN sales_items si            ON si.sales_id   = s.id
 		LEFT JOIN product_nutrition pn ON pn.product_id = si.products_id
-		WHERE s.created_at BETWEEN $1 AND $2`,
+		WHERE s.created_at BETWEEN $1 AND $2
+		  AND s.status = 'completed'`,
 		from, to,
 	).Scan(
 		&proteinG, &fiberG, &vitAMcg, &vitCMg, &vitEMg,
@@ -344,19 +348,19 @@ func (r *postgresRepository) GetRevenueDistribution(ctx context.Context, req Dat
 		return nil, fmt.Errorf("GetRevenueDistribution parse date: %w", err)
 	}
 
-	// LEFT JOIN vendors — stalls without a vendor record still appear with 0 fee
-	// LEFT JOIN sales   — stalls with no sales in range still appear with 0 revenue
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			s.stall_name,
-			COALESCE(SUM(sa.total_amount), 0)   AS gross_sales,
+			COALESCE(SUM(sa.total_amount), 0) AS gross_sales,
+			v.concession_fee_type,
 			v.concession_fee_value
 		FROM stalls s
-		LEFT JOIN vendors v  ON v.user_id = s.user_id AND v.deleted_at IS NULL
-		LEFT JOIN sales sa   ON sa.stall_id = s.id
+		LEFT JOIN vendors v ON v.user_id = s.user_id AND v.deleted_at IS NULL
+		LEFT JOIN sales sa  ON sa.stall_id = s.id
 			AND sa.created_at BETWEEN $1 AND $2
+			AND sa.status = 'completed'
 		WHERE s.deleted_at IS NULL
-		GROUP BY s.stall_name, v.concession_fee_value
+		GROUP BY s.stall_name, v.concession_fee_type, v.concession_fee_value
 		ORDER BY gross_sales DESC`,
 		from, to,
 	)
@@ -410,16 +414,16 @@ func (r *postgresRepository) GetStallSettlement(ctx context.Context) (*StallSett
 	// Use NullFloat64 for both aggregates — SUM returns NULL on empty set
 	// even when COALESCE wraps an empty FILTER subexpression on some PG versions.
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT
-			s.stall_name,
-			COALESCE(SUM(sa.total_amount), 0)                                AS total_revenue,
-			COALESCE(SUM(r.amount) FILTER (WHERE r.status = 'completed'), 0) AS remitted
-		FROM stalls s
-		LEFT JOIN sales       sa ON sa.stall_id = s.id
-		LEFT JOIN remittances r  ON r.user_id   = s.user_id
-		WHERE s.deleted_at IS NULL
-		GROUP BY s.stall_name
-		ORDER BY s.stall_name`)
+	SELECT
+		s.stall_name,
+		COALESCE(SUM(sa.total_amount), 0)                                AS total_revenue,
+		COALESCE(SUM(r.amount) FILTER (WHERE r.status = 'completed'), 0) AS remitted
+	FROM stalls s
+	LEFT JOIN sales       sa ON sa.stall_id = s.id AND sa.status = 'completed'
+	LEFT JOIN remittances r  ON r.user_id   = s.user_id
+	WHERE s.deleted_at IS NULL
+	GROUP BY s.stall_name
+	ORDER BY s.stall_name`)
 	if err != nil {
 		return nil, fmt.Errorf("GetStallSettlement query: %w", err)
 	}

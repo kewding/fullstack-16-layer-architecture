@@ -4,13 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"github.com/kewding/backend/internal/response"
 )
 
+// Controller handles all HTTP routes for the vendor withdrawal feature.
 type Controller struct {
 	uc UseCase
 }
@@ -19,38 +18,37 @@ func NewController(uc UseCase) *Controller {
 	return &Controller{uc: uc}
 }
 
-func parseIntQuery(val string, fallback int) int {
-	if val == "" {
-		return fallback
-	}
-	n, err := strconv.Atoi(val)
-	if err != nil || n < 1 {
-		return fallback
-	}
-	return n
-}
-
-// ── vendor endpoints ──────────────────────────────────────────────────────────
+// ── vendor routes ─────────────────────────────────────────────────────────────
 
 // GET /api/vendor-auth/withdraw/balance
 func (c *Controller) GetWalletBalance(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
 	balance, err := c.uc.GetWalletBalance(ctx.Request.Context(), userID)
 	if err != nil {
+		if errors.Is(err, ErrVendorNotFound) {
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "vendor_not_found", Message: "Vendor account not found"},
+			})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
 			Error:   &response.APIError{Code: "internal_error", Message: "An unexpected error occurred"},
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: gin.H{"balance": balance}})
+	ctx.JSON(http.StatusOK, response.APIResponse{
+		Success: true,
+		Data:    WalletBalanceResponse{Balance: balance},
+	})
 }
 
 // POST /api/vendor-auth/withdraw/request
 func (c *Controller) SubmitRequest(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
 
-	var req SubmitVendorWithdrawalRequest
+	var req SubmitWithdrawalRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.APIResponse{
 			Success: false,
@@ -67,9 +65,14 @@ func (c *Controller) SubmitRequest(ctx *gin.Context) {
 		return
 	}
 
-	pending, err := c.uc.SubmitRequest(ctx.Request.Context(), userID, req.Amount)
+	res, err := c.uc.SubmitRequest(ctx.Request.Context(), userID, req.Amount)
 	if err != nil {
 		switch {
+		case errors.Is(err, ErrVendorNotFound):
+			ctx.JSON(http.StatusNotFound, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "vendor_not_found", Message: err.Error()},
+			})
 		case errors.Is(err, ErrPendingRequestExists):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
 				Success: false,
@@ -80,10 +83,10 @@ func (c *Controller) SubmitRequest(ctx *gin.Context) {
 				Success: false,
 				Error:   &response.APIError{Code: "amount_exceeds_balance", Message: err.Error()},
 			})
-		case errors.Is(err, ErrVendorNotFound):
-			ctx.JSON(http.StatusNotFound, response.APIResponse{
+		case errors.Is(err, ErrMinimumAmount):
+			ctx.JSON(http.StatusBadRequest, response.APIResponse{
 				Success: false,
-				Error:   &response.APIError{Code: "vendor_not_found", Message: err.Error()},
+				Error:   &response.APIError{Code: "minimum_amount", Message: err.Error()},
 			})
 		default:
 			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
@@ -94,13 +97,13 @@ func (c *Controller) SubmitRequest(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, response.APIResponse{Success: true, Data: pending})
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
 // GET /api/vendor-auth/withdraw/pending
 func (c *Controller) GetPendingRequest(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
-	pending, err := c.uc.GetPendingRequest(ctx.Request.Context(), userID)
+	res, err := c.uc.GetPendingRequest(ctx.Request.Context(), userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -108,7 +111,7 @@ func (c *Controller) GetPendingRequest(ctx *gin.Context) {
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: pending})
+	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
 // DELETE /api/vendor-auth/withdraw/request/:id
@@ -120,7 +123,7 @@ func (c *Controller) CancelRequest(ctx *gin.Context) {
 		if errors.Is(err, ErrNotPending) {
 			ctx.JSON(http.StatusConflict, response.APIResponse{
 				Success: false,
-				Error:   &response.APIError{Code: "not_pending", Message: "Request is no longer pending and cannot be cancelled"},
+				Error:   &response.APIError{Code: "not_pending", Message: "Request is not pending and cannot be cancelled"},
 			})
 			return
 		}
@@ -134,17 +137,18 @@ func (c *Controller) CancelRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
 
-// GET /api/vendor-auth/withdraw/history?page=&date_start=&date_end=
+// GET /api/vendor-auth/withdraw/history
 func (c *Controller) ListHistory(ctx *gin.Context) {
 	userID := ctx.GetString("user_id")
-	params := VendorWithdrawalHistoryParams{
-		Page:      parseIntQuery(ctx.Query("page"), 1),
-		Limit:     10,
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	res, err := c.uc.ListHistory(ctx.Request.Context(), userID, VendorWithdrawalHistoryParams{
+		Page:      page,
+		Limit:     limit,
 		DateStart: ctx.Query("date_start"),
 		DateEnd:   ctx.Query("date_end"),
-	}
-
-	res, err := c.uc.ListHistory(ctx.Request.Context(), userID, params)
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -152,21 +156,24 @@ func (c *Controller) ListHistory(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
-// ── cashier endpoints ─────────────────────────────────────────────────────────
+// ── cashier routes ────────────────────────────────────────────────────────────
 
-// GET /api/cashier/vendor-withdraw/requests
+// GET /api/cashier/vendor-remit/requests
 func (c *Controller) ListPendingRequests(ctx *gin.Context) {
-	params := CashierVendorWithdrawalParams{
-		Page:      parseIntQuery(ctx.Query("page"), 1),
-		Limit:     10,
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	res, err := c.uc.ListPendingRequests(ctx.Request.Context(), CashierVendorWithdrawalParams{
+		Page:      page,
+		Limit:     limit,
 		Search:    ctx.Query("search"),
 		DateStart: ctx.Query("date_start"),
 		DateEnd:   ctx.Query("date_end"),
-	}
-	res, err := c.uc.ListPendingRequests(ctx.Request.Context(), params)
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -174,10 +181,11 @@ func (c *Controller) ListPendingRequests(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
-// PATCH /api/cashier/vendor-withdraw/request/:id/complete
+// PATCH /api/cashier/vendor-remit/request/:id/complete
 func (c *Controller) CompleteRequest(ctx *gin.Context) {
 	cashierID := ctx.GetString("user_id")
 	requestID := ctx.Param("id")
@@ -187,7 +195,7 @@ func (c *Controller) CompleteRequest(ctx *gin.Context) {
 		case errors.Is(err, ErrRequestNotFound):
 			ctx.JSON(http.StatusNotFound, response.APIResponse{
 				Success: false,
-				Error:   &response.APIError{Code: "request_not_found", Message: err.Error()},
+				Error:   &response.APIError{Code: "not_found", Message: err.Error()},
 			})
 		case errors.Is(err, ErrNotPending):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
@@ -211,7 +219,7 @@ func (c *Controller) CompleteRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
 
-// PATCH /api/cashier/vendor-withdraw/request/:id/reject
+// PATCH /api/cashier/vendor-remit/request/:id/reject
 func (c *Controller) RejectRequest(ctx *gin.Context) {
 	cashierID := ctx.GetString("user_id")
 	requestID := ctx.Param("id")
@@ -227,20 +235,20 @@ func (c *Controller) RejectRequest(ctx *gin.Context) {
 
 	if err := c.uc.RejectRequest(ctx.Request.Context(), requestID, cashierID, input); err != nil {
 		switch {
-		case errors.Is(err, ErrInvalidRejectionInput):
-			ctx.JSON(http.StatusBadRequest, response.APIResponse{
-				Success: false,
-				Error:   &response.APIError{Code: "comment_required", Message: err.Error()},
-			})
 		case errors.Is(err, ErrRequestNotFound):
 			ctx.JSON(http.StatusNotFound, response.APIResponse{
 				Success: false,
-				Error:   &response.APIError{Code: "request_not_found", Message: err.Error()},
+				Error:   &response.APIError{Code: "not_found", Message: err.Error()},
 			})
 		case errors.Is(err, ErrNotPending):
 			ctx.JSON(http.StatusConflict, response.APIResponse{
 				Success: false,
 				Error:   &response.APIError{Code: "not_pending", Message: err.Error()},
+			})
+		case errors.Is(err, ErrInvalidRejectionInput):
+			ctx.JSON(http.StatusBadRequest, response.APIResponse{
+				Success: false,
+				Error:   &response.APIError{Code: "invalid_rejection_input", Message: err.Error()},
 			})
 		default:
 			ctx.JSON(http.StatusInternalServerError, response.APIResponse{
@@ -254,16 +262,18 @@ func (c *Controller) RejectRequest(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true})
 }
 
-// GET /api/cashier/vendor-withdraw/completed
+// GET /api/cashier/vendor-remit/completed
 func (c *Controller) ListCompletedRequests(ctx *gin.Context) {
-	params := CashierVendorWithdrawalParams{
-		Page:      parseIntQuery(ctx.Query("page"), 1),
-		Limit:     10,
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	res, err := c.uc.ListCompletedRequests(ctx.Request.Context(), CashierVendorWithdrawalParams{
+		Page:      page,
+		Limit:     limit,
 		Search:    ctx.Query("search"),
 		DateStart: ctx.Query("date_start"),
 		DateEnd:   ctx.Query("date_end"),
-	}
-	res, err := c.uc.ListCompletedRequests(ctx.Request.Context(), params)
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -271,19 +281,22 @@ func (c *Controller) ListCompletedRequests(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
-// GET /api/cashier/vendor-withdraw/rejected
+// GET /api/cashier/vendor-remit/rejected
 func (c *Controller) ListRejectedRequests(ctx *gin.Context) {
-	params := CashierVendorWithdrawalParams{
-		Page:      parseIntQuery(ctx.Query("page"), 1),
-		Limit:     10,
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	res, err := c.uc.ListRejectedRequests(ctx.Request.Context(), CashierVendorWithdrawalParams{
+		Page:      page,
+		Limit:     limit,
 		Search:    ctx.Query("search"),
 		DateStart: ctx.Query("date_start"),
 		DateEnd:   ctx.Query("date_end"),
-	}
-	res, err := c.uc.ListRejectedRequests(ctx.Request.Context(), params)
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -291,10 +304,11 @@ func (c *Controller) ListRejectedRequests(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: res})
 }
 
-// GET /api/cashier/vendor-withdraw/pending-count
+// GET /api/cashier/vendor-remit/pending-count
 func (c *Controller) GetPendingCount(ctx *gin.Context) {
 	count, err := c.uc.GetPendingCount(ctx.Request.Context())
 	if err != nil {
@@ -305,29 +319,4 @@ func (c *Controller) GetPendingCount(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response.APIResponse{Success: true, Data: gin.H{"count": count}})
-}
-
-// GET /api/cashier/vendor-withdraw/ws
-func (c *Controller) CashierVendorWithdrawWebSocket(ctx *gin.Context) {
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		count, err := c.uc.GetPendingCount(ctx.Request.Context())
-		if err != nil {
-			return
-		}
-		if err := conn.WriteJSON(gin.H{"pending_count": count}); err != nil {
-			return
-		}
-	}
 }
