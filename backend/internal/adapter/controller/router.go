@@ -49,9 +49,10 @@ type Dependencies struct {
 	WithdrawalController         *withdrawal.Controller
 	VendorDashboardController    *vendordashboard.Controller
 	ProductRatingsController     *productratings.Controller
-	VendorWithdrawalController   *vendorwithdrawal.Controller
-	VendorTransactionController  *vendortransactions.Controller
-	UserDashboardController      *userdashboard.Controller
+	// VendorWithdrawalController   *vendorwithdrawal.Controller
+	VendorWithdrawController    *vendorwithdrawal.Controller
+	VendorTransactionController *vendortransactions.Controller
+	UserDashboardController     *userdashboard.Controller
 }
 
 func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
@@ -186,15 +187,25 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 				cashierWithdraw.GET("/ws", deps.WithdrawalController.CashierWithdrawWebSocket)
 			}
 
-			cashierVendorWithdraw := cashier.Group("/vendor-withdraw")
+			// cashierVendorWithdraw := cashier.Group("/vendor-withdraw")
+			// {
+			// 	cashierVendorWithdraw.GET("/requests", deps.VendorWithdrawalController.ListPendingRequests)
+			// 	cashierVendorWithdraw.PATCH("/request/:id/complete", deps.VendorWithdrawalController.CompleteRequest)
+			// 	cashierVendorWithdraw.PATCH("/request/:id/reject", deps.VendorWithdrawalController.RejectRequest)
+			// 	cashierVendorWithdraw.GET("/completed", deps.VendorWithdrawalController.ListCompletedRequests)
+			// 	cashierVendorWithdraw.GET("/rejected", deps.VendorWithdrawalController.ListRejectedRequests)
+			// 	cashierVendorWithdraw.GET("/pending-count", deps.VendorWithdrawalController.GetPendingCount)
+			// 	cashierVendorWithdraw.GET("/ws", deps.VendorWithdrawalController.CashierVendorWithdrawWebSocket)
+			// }
+
+			cashierVendorRemit := cashier.Group("/vendor-remit")
 			{
-				cashierVendorWithdraw.GET("/requests", deps.VendorWithdrawalController.ListPendingRequests)
-				cashierVendorWithdraw.PATCH("/request/:id/complete", deps.VendorWithdrawalController.CompleteRequest)
-				cashierVendorWithdraw.PATCH("/request/:id/reject", deps.VendorWithdrawalController.RejectRequest)
-				cashierVendorWithdraw.GET("/completed", deps.VendorWithdrawalController.ListCompletedRequests)
-				cashierVendorWithdraw.GET("/rejected", deps.VendorWithdrawalController.ListRejectedRequests)
-				cashierVendorWithdraw.GET("/pending-count", deps.VendorWithdrawalController.GetPendingCount)
-				cashierVendorWithdraw.GET("/ws", deps.VendorWithdrawalController.CashierVendorWithdrawWebSocket)
+				cashierVendorRemit.GET("/requests", deps.VendorWithdrawController.ListPendingRequests)
+				cashierVendorRemit.PATCH("/request/:id/complete", deps.VendorWithdrawController.CompleteRequest)
+				cashierVendorRemit.PATCH("/request/:id/reject", deps.VendorWithdrawController.RejectRequest)
+				cashierVendorRemit.GET("/completed", deps.VendorWithdrawController.ListCompletedRequests)
+				cashierVendorRemit.GET("/rejected", deps.VendorWithdrawController.ListRejectedRequests)
+				cashierVendorRemit.GET("/pending-count", deps.VendorWithdrawController.GetPendingCount)
 			}
 		}
 
@@ -267,13 +278,22 @@ func NewRouter(postgresNode *db.PostgresDB, deps *Dependencies) *gin.Engine {
 
 			vendorAuth.GET("/transactions", deps.VendorTransactionController.ListTransactions)
 
+			// vendorWithdraw := vendorAuth.Group("/withdraw")
+			// {
+			// 	vendorWithdraw.GET("/balance", deps.VendorWithdrawalController.GetWalletBalance)
+			// 	vendorWithdraw.POST("/request", deps.VendorWithdrawalController.SubmitRequest)
+			// 	vendorWithdraw.GET("/pending", deps.VendorWithdrawalController.GetPendingRequest)
+			// 	vendorWithdraw.DELETE("/request/:id", deps.VendorWithdrawalController.CancelRequest)
+			// 	vendorWithdraw.GET("/history", deps.VendorWithdrawalController.ListHistory)
+			// }
+
 			vendorWithdraw := vendorAuth.Group("/withdraw")
 			{
-				vendorWithdraw.GET("/balance", deps.VendorWithdrawalController.GetWalletBalance)
-				vendorWithdraw.POST("/request", deps.VendorWithdrawalController.SubmitRequest)
-				vendorWithdraw.GET("/pending", deps.VendorWithdrawalController.GetPendingRequest)
-				vendorWithdraw.DELETE("/request/:id", deps.VendorWithdrawalController.CancelRequest)
-				vendorWithdraw.GET("/history", deps.VendorWithdrawalController.ListHistory)
+				vendorWithdraw.GET("/balance", deps.VendorWithdrawController.GetWalletBalance)
+				vendorWithdraw.POST("/request", deps.VendorWithdrawController.SubmitRequest)
+				vendorWithdraw.GET("/pending", deps.VendorWithdrawController.GetPendingRequest)
+				vendorWithdraw.DELETE("/request/:id", deps.VendorWithdrawController.CancelRequest)
+				vendorWithdraw.GET("/history", deps.VendorWithdrawController.ListHistory)
 			}
 		}
 	}

@@ -206,9 +206,13 @@ func main() {
 	productRatingsController := productratings.NewController(productRatingsUseCase)
 
 	// Vendor Withdrawal
-	vendorWithdrawalRepo := vendorwithdrawal.NewPostgresRepository(dbNode.Connection)
-	vendorWithdrawalUseCase := vendorwithdrawal.NewUseCase(vendorWithdrawalRepo)
-	vendorWithdrawalController := vendorwithdrawal.NewController(vendorWithdrawalUseCase)
+	// vendorWithdrawalRepo := vendorwithdrawal.NewPostgresRepository(dbNode.Connection)
+	// vendorWithdrawalUseCase := vendorwithdrawal.NewUseCase(vendorWithdrawalRepo)
+	// vendorWithdrawalController := vendorwithdrawal.NewController(vendorWithdrawalUseCase)
+
+	vendorWithdrawRepo := vendorwithdrawal.NewPostgresRepository(dbNode.Connection)
+	vendorWithdrawUseCase := vendorwithdrawal.NewUseCase(vendorWithdrawRepo)
+	vendorWithdrawController := vendorwithdrawal.NewController(vendorWithdrawUseCase)
 
 	// Vendor Transactions
 	vendorTxRepo := vendortransactions.NewPostgresRepository(dbNode.Connection)
@@ -243,9 +247,10 @@ func main() {
 		WithdrawalController:         withdrawalController,
 		VendorDashboardController:    vendorDashboardController,
 		ProductRatingsController:     productRatingsController,
-		VendorWithdrawalController:   vendorWithdrawalController,
-		VendorTransactionController:  vendorTxController,
-		UserDashboardController:      userDashboardController,
+		// VendorWithdrawalController:   vendorWithdrawalController,
+		VendorWithdrawController:    vendorWithdrawController,
+		VendorTransactionController: vendorTxController,
+		UserDashboardController:     userDashboardController,
 	}
 
 	appRouter := controller.NewRouter(dbNode, deps)

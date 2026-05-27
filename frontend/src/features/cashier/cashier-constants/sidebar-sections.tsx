@@ -6,5 +6,6 @@ export const CashierSidebarSections = {
     // { title: 'Tagging', url: '/cashier/rfid-tagging', icon: Users },
     { title: 'Top-Up', url: '/cashier/top-up', icon: Settings },
     { title: 'Withdraw', url: '/cashier/withdraw', icon: ArrowDownLeft },
+    { title: 'Remit', url: '/cashier/remit', icon: ArrowDownLeft },
   ],
 };
